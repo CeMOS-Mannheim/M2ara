@@ -43,19 +43,16 @@ ui <- fluidPage(
     sidebarPanel = sidebarPanel(
       fluidRow(
         shinyDirButton('dir', '  Select folder', 'Please select a folder',
-                       FALSE, icon = icon("search"), style='padding:6px; font-size:80%'),
+                       multiple = FALSE,
+                       icon = icon("search"),
+                       style='padding:6px; font-size:80%',
+                       class = "btn-default"),
         actionButton("load", "  Load spectra ",
                      icon = icon("upload"), style='padding:6px; font-size:80%'),
         use_busy_spinner(spin = "half-circle",
                          position = "top-left",
                          height = "100px", width = "100px",
                          margins = c(100, 100))),
-      # fluidRow(
-      #   fileInput(inputId = "backgroundSpec",
-      #             label = "Matrix peaks (optional)",
-      #             multiple = FALSE,
-      #             placeholder = "Select .msd file",
-      #             accept = ".msd")),
       fluidRow(
         column(6,
                selectInput(inputId = "concUnits", label = "Conc. unit",
@@ -106,7 +103,7 @@ ui <- fluidPage(
         column(6,
                numericInput("alignTol", label = "align tol. [Da]", min = 0, value = 0.01, step = 0.05) ),
         column(6,
-               numericInput("binTol", label = "bin tol. [Da]", min = 0, value = 0.25, step = 0.05))
+               numericInput("binTol", label = "bin tol. [ppm]", min = 0, value = 200, step = 5))
       ),
       actionButton("process", "Process spectra",
                    icon = icon("redo", ), style='padding:6px; font-size:80%'),
@@ -145,22 +142,12 @@ ui <- fluidPage(
                                     column(4),
                                     column(2,
                                            sliderInput(inputId = "zoom", label = "displayed m/z-range",
-                                                       min = 0.1, max = 10, value = 4, ticks = FALSE))
+                                                       min = 0.1, max = 25, value = 4, ticks = FALSE))
                                   ),
                                   hr(),
                                   fluidRow(
-                                    column(6,
-                                           h5("Spectrum viewer"),
-                                           plotlyOutput('AvgSpec') %>%
-                                             withSpinner(color="#0dc5c1"),
+                                    column(12,
                                            fluidRow(
-                                             actionButton(inputId = "arrowLeft", label = "", icon = icon("arrow-left")),
-                                             actionButton(inputId = "arrowRight", label = "", icon = icon("arrow-right"))
-                                           )
-                                    ),
-                                    column(6,
-                                           fluidRow(
-                                             h5("Table of peaks"),
                                              dataTableOutput("mzTable") %>%
                                                withSpinner(color="#0dc5c1")
                                            ),
@@ -614,7 +601,7 @@ server <- function(input, output) {
                    SinglePointRecal = input$SinglePointRecal,
                    normMz = input$normMz,
                    normTol = input$normTol,
-                   binTol = input$binTol,
+                   binTol = input$binTol * 1e-6, # convert to ppm
                    alignTol = input$alignTol,
                    SNR = input$SNR,
                    varFilterMethod = input$VarFilterMethod,
@@ -625,7 +612,20 @@ server <- function(input, output) {
 
       cat("processing done\n")
 
-      stats <-   getPeakStatistics(res, TRUE) %>%
+      stats <-   getPeakStatistics(res, FALSE) %>%
+        mutate(mz = round(as.numeric(mz), 3)) %>%
+        group_by(mz, mzIdx) %>%
+        summarise(
+          pIC50 = first(pIC50),
+          R2 = first(R2),
+          wgof = first(wgof),
+          min = min(mean),
+          max = max(mean),
+          log2FC = log2(first(fc_window))
+        ) %>%
+        left_join(getFittingParameters(res, summarise = TRUE)) %>%
+        mutate(symetric = ifelse(npar < 5, TRUE, FALSE)) %>%
+        select(-npar) %>%
         ungroup() %>%
         mutate_if(is.numeric, function(x)
         {
@@ -649,24 +649,28 @@ server <- function(input, output) {
 
   #### data table ####
   # first initialization
-  output$mzTable <- renderDataTable({
+  output$mzTable <- DT::renderDataTable({
+    # check if data is already prepared and if not show dummy table
     if(show_plot() == "TRUE") {
-      RV$stats %>%
+      tableData <- RV$stats %>%
         select(-mzIdx)
     } else {
-      tibble(mz = c("load", rep("", 9)),
-             mzIdx = c("data", rep("", 9)),
-             pIC50 = c("to", rep("", 9)),
-             R2 = c("display", rep("", 9)),
-             wgof = c("peak", rep("", 9)),
-             FC = c("table", rep("", 9)))
+      tableData <- tibble(mz = c("load", rep("", 25)),
+                          mzIdx = c("data", rep("", 25)),
+                          pIC50 = c("to", rep("", 25)),
+                          R2 = c("display", rep("", 25)),
+                          wgof = c("peak", rep("", 25)),
+                          log2FC = c("table", rep("", 25)))
     }
+
+    tableData
+
   },
-  filter = "top",
+  filter = "bottom",
   options = list(searching = TRUE,
                  lengthChange = FALSE,
-                 paging= TRUE,
-                 pageLength = 5,
+                 paging = TRUE,
+                 pageLength = 20,
                  autoWidth = TRUE,
                  rownames= FALSE),
   selection = list(mode = 'single',
@@ -676,15 +680,16 @@ server <- function(input, output) {
   # on reprocess
   # not sure if this duplicate is needed
   observeEvent(input$process, {
-    output$mzTable <- renderDataTable({
+    output$mzTable <- DT::renderDataTable({
       if(show_plot() == "TRUE") {
         RV$stats
       }
     },
-    filter = "top",
+    server = TRUE,
+    filter = "bottom",
     options = list(searching = TRUE,
                    lengthChange = FALSE,
-                   paging= TRUE),
+                   paging = TRUE),
     selection = list(mode = 'single',
                      selected = 1)
     )
@@ -694,17 +699,23 @@ server <- function(input, output) {
   output$curve <- renderPlotly({
     if(show_plot() == "TRUE") {
       p_curve <<- plotCurves(RV$res,
-                             mzIdx = input$mzTable_rows_selected,
+                             mzIdx = input$mzTable_rows_selected[1],
                              errorbars = input$errorbars) +
-        labs(title = NULL)
+        labs(title = paste0("m/z = ",
+                            round(
+                              getMzFromMzIdx(RV$res,
+                                             input$mzTable_rows_selected[1]),
+                              2)))
+
       ggplotly(p_curve)
     } else {
       p_curve <- ggplot(tibble(label = "Load data\nto display plot",
                                x = 1,
                                y = 1),
                         aes(x = x, y = y, label = label)) +
-        geom_text(size = 5)+
+        geom_text(size = 5) +
         theme_light(base_size = 14)
+
       ggplotly(p_curve)
     }
 
@@ -713,7 +724,7 @@ server <- function(input, output) {
   output$peak <- renderPlotly({
     if(show_plot() == "TRUE") {
       p_peak <<- plotPeak(RV$res,
-                          mzIdx = input$mzTable_rows_selected,
+                          mzIdx = input$mzTable_rows_selected[1],
                           tol = input$zoom) +
         labs(title = NULL)
       ggplotly(p_peak)
@@ -727,46 +738,6 @@ server <- function(input, output) {
       ggplotly(p_peak)
     }
 
-  })
-
-  #### spectrum plot ####
-  output$AvgSpec <- renderPlotly({
-    if(show_plot() == "TRUE") {
-      selMz <- getMzFromMzIdx(RV$res, input$mzTable_rows_selected)
-      pavg <- RV$pspec[[RV$specIdx]] +
-        geom_vline(aes(xintercept = selMz), alpha = 0.75, linetype = "dashed")
-      ggplotly(pavg)
-    } else {
-      p <- ggplot(tibble(label = "Load data\nto display plot",
-                         x = 1,
-                         y = 1),
-                  aes(x = x, y = y, label = label)) +
-        geom_text(size = 5) +
-        theme_light(base_size = 14)
-      ggplotly(p)
-    }
-  })
-
-  observeEvent(input$arrowLeft, {
-
-    if(show_plot() == "TRUE") {
-      if(RV$specIdx == 1) {
-        # do nothing
-      } else {
-        RV$specIdx <- RV$specIdx - 1
-      }
-    }
-  })
-
-  observeEvent(input$arrowRight, {
-
-    if(show_plot() == "TRUE") {
-      if(RV$specIdx == RV$maxSpecIdx + 1) {
-        # do nothing
-      } else {
-        RV$specIdx <- RV$specIdx + 1
-      }
-    }
   })
 
   #### QC tab: recal check ####
@@ -791,12 +762,12 @@ server <- function(input, output) {
   #### PCA tab ####
   # default plot for PCA
   output$pca <- renderPlotly({
-      p <- ggplot(tibble(label = "Load data\nto display plot",
-                         x = 1,
-                         y = 1),
-                  aes(x = x, y = y, label = label)) +
-        geom_text(size = 5) +
-        theme_light(base_size = 14)
+    p <- ggplot(tibble(label = "Load data\nto display plot",
+                       x = 1,
+                       y = 1),
+                aes(x = x, y = y, label = label)) +
+      geom_text(size = 5) +
+      theme_light(base_size = 14)
 
     ggplotly(p)
   })
@@ -858,7 +829,7 @@ server <- function(input, output) {
       p <- loadingsPlot(RV$pca, pc = input$pcaY, simple = input$simpleLoadings) +
         labs(title = paste("Feature importance for", input$pcaY))
       if(input$simpleLoadings) {
-        p <- p + labs(title = paste("Top-Features for", input$pcaX))
+        p <- p + labs(title = paste("Top-Features for", input$pcaY))
       }
 
       ggplotly(p)
@@ -989,7 +960,7 @@ server <- function(input, output) {
     filename = function()  {
       if(show_plot() == "TRUE") {
         paste0(basename(getDirectory(RV$res)),
-               "_mz", round(getMzFromMzIdx(RV$res, input$mzTable_rows_selected), 2),
+               "_mz", round(getMzFromMzIdx(RV$res, input$mzTable_rows_selected[1]), 2),
                ".png")
       }
     },
@@ -1000,7 +971,7 @@ server <- function(input, output) {
                          res = 300, units = "in")
         }
         p_main <- ggarrange(p_curve, p_peak)
-        ggsave(file, plot = p_main, device = device)
+        ggsave(file, plot = p_main, device = device, scale = 1.8, bg = "white")
       } else {
         warning("Nothing to download. Load and process data.")
       }
