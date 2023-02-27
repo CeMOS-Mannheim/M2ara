@@ -1,18 +1,18 @@
 #### tidy up ####
-# clear workspace
+# clear work space
 rm(list = ls())
 gc()
 
-#### package check on startup ####
+#### package check on start up ####
 # If a package is installed, it will be loaded. If any
 # are not, the missing package(s) will be installed
 # from CRAN and then loaded.
 
 ## First specify the packages of interest
-packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles", "tidyverse", "MALDIquant",
+packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles", "MALDIquant",
              "MALDIquantForeign", "DT", "plotly", "shinycssloaders",
              "shinyhelper", "knitr", "shinybusy", "shinythemes", "shinyWidgets",
-             "devtools", "ggpubr")
+             "devtools", "ggpubr", "dendextend", "glmnet")
 
 ## Now load or install&load all
 package.check <- lapply(
@@ -64,9 +64,13 @@ ui <- fluidPage(
         h5("Preprocessing:") %>%
           helper(type = "markdown", content = "preprocessing"),
         column(6,
-               checkboxInput("smooth", "Smooth spectra", value = TRUE)),
+               checkboxInput("smooth", "Smooth", value = TRUE)),
         column(6,
-               checkboxInput("rmBl", "Remove baseline", value = TRUE))
+               checkboxInput("rmBl", "Remove baseline", value = TRUE)),
+      ),
+      fluidRow(
+        column(6,
+               checkboxInput("sqrtTrans", "Sqrt-transform", value = FALSE))
       ),
       fluidRow(
 
@@ -86,7 +90,7 @@ ui <- fluidPage(
         column(6,
                radioButtons("VarFilterMethod", label = "Variance filtering",
                             selected = "none",
-                            choices = c("mean", "median", "q25", "q75", "none")) %>%
+                            choices = c("mean", "q25","median", "q75", "none")) %>%
                  helper(type = "markdown", content = "filtering"))),
 
       fluidRow(
@@ -120,12 +124,6 @@ ui <- fluidPage(
                          #### Main tab ####
 
                          tabPanel("Main",
-                                  column(6,
-                                         plotlyOutput('curve') %>%
-                                           withSpinner(color="#0dc5c1")),
-                                  column(6,
-                                         plotlyOutput('peak') %>%
-                                           withSpinner(color="#0dc5c1")),
                                   fluidRow(
                                     column(1,
                                            materialSwitch(
@@ -137,13 +135,21 @@ ui <- fluidPage(
                                     column(1,
                                            downloadButton(outputId = "downloadPlot",
                                                           label = "Save plot",
+                                                          style='padding:6px; font-size:80%',
                                                           icon = icon("download"))
                                     ),
                                     column(4),
                                     column(2,
-                                           sliderInput(inputId = "zoom", label = "displayed m/z-range",
+                                           sliderInput(inputId = "zoom",
+                                                       label = "zoom",
                                                        min = 0.1, max = 25, value = 4, ticks = FALSE))
                                   ),
+                                  column(6,
+                                         plotlyOutput('curve') %>%
+                                           withSpinner(color="#0dc5c1")),
+                                  column(6,
+                                         plotlyOutput('peak') %>%
+                                           withSpinner(color="#0dc5c1")),
                                   hr(),
                                   fluidRow(
                                     column(12,
@@ -216,14 +222,18 @@ ui <- fluidPage(
                                              withSpinner(color="#0dc5c1"))
                                   )
                          ),
+
+                         #### LASSO tab #####
                          tabPanel("LASSO",
                                   h4("Feature importance using LASSO-model")  %>%
                                     helper(type = "markdown", content = "lasso", size = "l"),
                                   fluidRow(
                                     column(6,
-                                           plotlyOutput("glmTruePred")),
+                                           plotlyOutput("glmTruePred") %>%
+                                             withSpinner(color="#0dc5c1")),
                                     column(6,
-                                           plotlyOutput("glmVi"))
+                                           plotlyOutput("glmVi") %>%
+                                             withSpinner(color="#0dc5c1"))
                                   ),
                                   fluidRow(
                                     column(3,
@@ -233,8 +243,18 @@ ui <- fluidPage(
                                     )
                                   ),
                                   fluidRow(
-                                    column(6,
-                                           sliderInput(inputId = "penalty", label = "Log-Penalty", min = -10, max = 2, value = -5, step = 0.1)
+                                    column(3,
+                                           sliderInput(inputId = "penalty",
+                                                       label = "Log-Penalty",
+                                                       min = -10,
+                                                       max = 0,
+                                                       value = -5,
+                                                       step = 0.1)
+                                    ),
+                                    column(2,
+                                           checkboxInput(inputId = "sigmoidModel",
+                                                         label = "Sigmoid-fit",
+                                                         value = FALSE)
                                     )
                                   ),
                                   fluidRow(
@@ -245,7 +265,31 @@ ui <- fluidPage(
                                     ),
                                   )
                          ),
-
+                         #### Hierarchical Clustering ####
+                         tabPanel("HClust",
+                                  h4("Hierarchical clustering"),
+                                  fluidRow(
+                                    column(6,
+                                           plotlyOutput("hclustPlot") %>%
+                                             withSpinner(color="#0dc5c1")),
+                                    column(6,
+                                           plotlyOutput("clustCurvesPlot") %>%
+                                             withSpinner(color="#0dc5c1"))
+                                  ),
+                                  fluidRow(
+                                    column(3,
+                                           actionButton(inputId = "doHC",
+                                                        label = "Perform HC",
+                                                        icon = icon("circle-nodes"))),
+                                    column(3,
+                                           sliderInput(inputId = "num_cluster",
+                                                       label = "Number of cluster",
+                                                       min = 2,
+                                                       max = 25,
+                                                       value = 4,
+                                                       step = 1))
+                                  )
+                         ),
 
                          #### Manual tab ####
 
@@ -261,238 +305,16 @@ ui <- fluidPage(
 #### Sever ####
 
 server <- function(input, output) {
-  #### helpers ####
 
-  preprocess <- function(spectra, smooth, rmBaseline,
-                         smoothHalfWindowSize = 3,
-                         smoothMethod = "SavitzkyGolay",
-                         rmBlMethod = "TopHat") {
-    nm <- names(spectra)
-    if(!smooth & !rmBaseline) {
-      cat("No preprocessing selected. Returning unprocessed spectra.\n")
-      return(spectra)
-    }
-
-    if(smooth) {
-      cat("smoothing...\n")
-      spec_prc <- suppressWarnings(
-        smoothIntensity(spectra,
-                        method = smoothMethod,
-                        halfWindowSize = smoothHalfWindowSize)
-      )
-    } else {
-      spec_prc <- spectra
-    }
-    if(rmBaseline) {
-      cat("removing baseline...\n")
-      spec_prc <- suppressWarnings(
-        removeBaseline(spec_prc,
-                       method = rmBlMethod)
-      )
-    }
-
-    names(spec_prc) <- nm
-    return(spec_prc)
-  }
-
-  generateSpecPlots <- function(res) {
-    allPeaks <- getAvgPeaks(res)
-    avgSpec <- mergeMassPeaks(allPeaks)
-
-    mzRange <- range(mass(avgSpec))
-    specNames <- c("Global Average",
-                   paste(as.character(unique(getConc(res))), "M"))
-
-    l <- c(avgSpec, allPeaks)
-
-    p <- lapply(1:length(specNames), FUN = function(i) {
-
-      df <- tibble(mz = mass(l[[i]]),
-                   int = intensity(l[[i]]))
-      pspec <- ggplot(df, aes(x = mz, ymin = 0, ymax = int)) +
-        geom_linerange() +
-        theme_light(base_size = 14) +
-        scale_x_continuous(limits = mzRange) +
-        labs(x = "m/z",
-             y = "Intensity",
-             title = specNames[i])
-      return(pspec)
-    })
-    return(p)
-  }
-
-  generatePCA <- function(intmat, num_PC) {
-    cat("Performing PCA...\n")
-    scaled <- scale(intmat)
-
-    pca <- prcomp(scaled, rank. = num_PC)
-
-    scores <- as_tibble(pca$x)
-    loadings <- as_tibble(pca$rotation, rownames = NA)
-    vars <- pca$sdev^2
-    percExp<- vars/sum(vars)*100
-
-    cat("Done!\n")
-    return(list(scores = scores,
-                loadings = loadings,
-                explaindVar = percExp))
-  }
-
-  pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
-    xnum <- parse_number(x)
-    ynum <- parse_number(y)
-
-    exp <- round(pca[[3]], 1)
-
-    df <- tibble(
-      xax = pca[[1]] %>% pull(xnum),
-      yax = pca[[1]] %>% pull(ynum),
-      c = conc,
-      spot = spots
-    )
-
-    df %>%
-      ggplot(aes(x = xax,
-                 y = yax,
-                 col = c,
-                 text = spot)) +
-      geom_point() +
-      stat_ellipse(aes(group = c), level = ellipseLevel) +
-      scale_color_viridis_d(end = 0.75, option = "C") +
-      theme_light(base_size = 14) +
-      labs(col = "Conc. [M]",
-           x = paste0(x, " (", exp[xnum], "% expl. var.)"),
-           y = paste0(y, " (", exp[ynum], "% expl. var.)"))
-  }
-
-  loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
-    pcnum <- parse_number(pc)
-
-    df <- tibble(mz = rownames(pca[[2]]),
-                 val = pca[[2]] %>% pull(pcnum)) %>%
-      mutate(mz = round(as.numeric(mz), 2)) %>%
-      arrange(desc(val)) %>%
-      mutate(sign = ifelse(val > 0, "pos", "neg"))
-    if(simple) {
-      df_red <- slice_head(df, n = n) %>%
-        bind_rows(slice_tail(df, n = n)) %>%
-        mutate(mz = factor(mz)) %>%
-        mutate(mz = fct_reorder(mz, .x = val))
-
-      p <- df_red %>%
-        ggplot(aes(x = mz,
-                   y = val,
-                   fill = sign)) +
-        geom_col(show.legend = FALSE) +
-        geom_hline(yintercept = 0, alpha = 0.75, linetype = "dashed") +
-        theme_light(base_size = 14) +
-        coord_flip() +
-        labs(x = "m/z [Da]",
-             y = paste0(pc, " Loading")) +
-        theme(legend.position = "none")
-
-      return(p)
-    } else {
-      p <- df %>%
-        ggplot(aes(x = mz,
-                   y = val,
-                   col = sign)) +
-        geom_linerange(aes(ymin = 0, ymax = val), show.legend = FALSE) +
-        theme_light(base_size = 14) +
-        labs(x = "m/z [Da]",
-             y = paste0(pc, " Loading")) +
-        theme(legend.position = "none")
-      return(p)
-    }
-  }
-
-  fitGLM <- function(res) {
-
-    df <- getSinglePeaks(res) %>%
-      intensityMatrix() %>%
-      as_tibble(intmat) %>%
-      mutate(conc = getConc(res))
-
-    rec <- recipe(df, conc ~.) %>%
-      step_log(all_outcomes(), base = 10) %>%
-      step_normalize(all_predictors()) %>%
-      step_YeoJohnson(all_predictors()) %>%
-      step_corr(all_predictors())
-
-    df_rdy <- prep(rec) %>%
-      bake(new_data = NULL)
-
-    glm <- linear_reg(penalty = tune(), mixture = 1) %>%
-      set_engine("glmnet")
-
-    tune_rs <- tune_grid(object = glm,
-                         preprocessor = rec,
-                         resamples = bootstraps(df,
-                                                times = 5,
-                                                strata = "conc",
-                                                pool = 0.25),
-                         grid = grid_regular(penalty(range = c(-5,0)),  levels = 10))
-
-    best_penalty <- select_by_one_std_err(tune_rs, desc(penalty), metric = "rsq")
-
-    return(list(model = glm,
-                prepData = df_rdy,
-                penalty = pull(best_penalty, penalty)))
-  }
-
-  getVolumes <- function(exclude = NULL) {
-    osSystem <- Sys.info()["sysname"]
-    if (osSystem == "Darwin") {
-      volumes <- dir_ls("/Volumes")
-      names(volumes) <- basename(volumes)
-    }
-    else if (osSystem == "Linux") {
-      volumes <- c(Computer = "/")
-      if (isTRUE(dir_exists("/media"))) {
-        media <- dir_ls("/media")
-        names(media) <- basename(media)
-        volumes <- c(volumes, media)
-      }
-    }
-    else if (osSystem == "Windows") {
-      wmic <- paste0(Sys.getenv("SystemRoot"), "\\System32\\Wbem\\WMIC.exe")
-      if (!file.exists(wmic)) {
-        message("\nThe wmic program does not seem to be in the default location")
-        message("Please report this problem and include output from the command")
-        message("'where wmic' to https://github.com/thomasp85/shinyFiles/issues")
-        volumes <- Sys.getenv("HOMEDRIVE")
-        volNames <- ""
-      }
-      else {
-        volumes <- system(paste(wmic, "logicaldisk get Caption"),
-                          intern = TRUE, ignore.stderr = TRUE)
-        volumes <- sub(" *\\r$", "", volumes)
-        keep <- !tolower(volumes) %in% c("caption", "")
-        volumes <- volumes[keep]
-        volNames <- system(paste(wmic, "/FAILFAST:1000 logicaldisk get VolumeName"),
-                           intern = TRUE, ignore.stderr = TRUE)
-        volNames <- sub(" *\\r$", "", volNames)
-        volNames <- volNames[keep]
-        volNames <- paste0(volNames, ifelse(volNames ==
-                                              "", "", " "))
-      }
-      volNames <- paste0(volNames, "(", volumes, ")")
-      names(volumes) <- volNames
-      #volumes <- gsub(":$", ":/", volumes)
-    }
-    else {
-      stop("unsupported OS")
-    }
-    if (!is.null(exclude)) {
-      volumes <- volumes[!names(volumes) %in% exclude]
-    }
-    volumes
-  }
-
-
+  #### helper functions ####
+  source("preprocessFunction.R")
+  source("plotFunctions.R")
+  source("generatePCA.R")
+  source("fitGLM.R")
+  source("getVolumes.R")
+  source("hclust.R")
 
   #### variables ####
-
   p_main <- ggplot()
   observe_helpers(withMathJax = TRUE)
   res <- reactiveVal()
@@ -514,7 +336,8 @@ server <- function(input, output) {
                         maxSpecIdx = 1,
                         pspec = NULL,
                         pca = NULL,
-                        model = NULL)
+                        model = NULL,
+                        hc = NULL)
 
   vol <- tolower(getVolumes())
   names(vol) <- str_remove(vol, ":")
@@ -588,6 +411,7 @@ server <- function(input, output) {
 
       cat("start processing...\n")
       spec_prc <- preprocess(spectra = spec_raw,
+                             sqrtTransform = input$sqrtTrans,
                              smooth = input$smooth,
                              rmBaseline = input$rmBl)
 
@@ -618,13 +442,11 @@ server <- function(input, output) {
         summarise(
           pIC50 = first(pIC50),
           R2 = first(R2),
-          wgof = first(wgof),
           min = min(mean),
           max = max(mean),
           log2FC = log2(first(fc_window))
         ) %>%
         left_join(getFittingParameters(res, summarise = TRUE)) %>%
-        mutate(symetric = ifelse(npar < 5, TRUE, FALSE)) %>%
         select(-npar) %>%
         ungroup() %>%
         mutate_if(is.numeric, function(x)
@@ -654,18 +476,19 @@ server <- function(input, output) {
     if(show_plot() == "TRUE") {
       tableData <- RV$stats %>%
         select(-mzIdx)
+
     } else {
-      tableData <- tibble(mz = c("load", rep("", 25)),
-                          mzIdx = c("data", rep("", 25)),
-                          pIC50 = c("to", rep("", 25)),
-                          R2 = c("display", rep("", 25)),
-                          wgof = c("peak", rep("", 25)),
-                          log2FC = c("table", rep("", 25)))
+      tableData <- tibble(mz = c("load", rep("", 9)),
+                          mzIdx = c("data", rep("", 9)),
+                          pIC50 = c("to display", rep("", 9)),
+                          R2 = c("peak", rep("", 9)),
+                          log2FC = c("table", rep("", 9)))
     }
 
     tableData
 
   },
+  server = TRUE,
   filter = "bottom",
   options = list(searching = TRUE,
                  lengthChange = FALSE,
@@ -689,7 +512,10 @@ server <- function(input, output) {
     filter = "bottom",
     options = list(searching = TRUE,
                    lengthChange = FALSE,
-                   paging = TRUE),
+                   paging = TRUE,
+                   pageLength = 20,
+                   autoWidth = TRUE,
+                   rownames= FALSE),
     selection = list(mode = 'single',
                      selected = 1)
     )
@@ -774,7 +600,7 @@ server <- function(input, output) {
 
   observeEvent(input$doPca, {
     if(!is.null(RV$res)) {
-      RV$pca <- generatePCA(intensityMatrix(getSinglePeaks(RV$res)),
+      RV$pca <- generatePCA(RV$res,
                             num_PC = 20)
     }
 
@@ -803,7 +629,7 @@ server <- function(input, output) {
   })
 
   output$pcaLoading1 <- renderPlotly({
-    if(show_plot() == "TRUE") {
+    if(show_plot() == "TRUE" & !is.null(RV$pca)) {
       p <- loadingsPlot(RV$pca, pc = input$pcaX, simple = input$simpleLoadings) +
         labs(title = paste("Feature importance for", input$pcaX))
       if(input$simpleLoadings) {
@@ -825,7 +651,7 @@ server <- function(input, output) {
   })
 
   output$pcaLoading2 <- renderPlotly({
-    if(show_plot() == "TRUE") {
+    if(show_plot() == "TRUE" & !is.null(RV$pca)) {
       p <- loadingsPlot(RV$pca, pc = input$pcaY, simple = input$simpleLoadings) +
         labs(title = paste("Feature importance for", input$pcaY))
       if(input$simpleLoadings) {
@@ -883,7 +709,7 @@ server <- function(input, output) {
     if(info_state() == "processed") {
       cat("starting model fit...\n")
       show_spinner()
-      RV$model <- fitGLM(RV$res)
+      RV$model <- fitGLM(RV$res, sigmoid = input$sigmoidModel)
       updateSliderInput(inputId = "penalty", value = log10(RV$model$penalty))
       cat("model fitted.\n")
       hide_spinner()
@@ -953,7 +779,25 @@ server <- function(input, output) {
     }
   })
 
+  #### HClust tab #####
+  observeEvent(input$doHC, {
+               output$hclustPlot <- renderPlotly({
+                 if(show_plot() == "TRUE") {
 
+                   RV$hc <- doHClust(RV$res, cut = input$num_cluster)
+                   p <- plotDendro(RV$hc$dend)
+                   return(ggplotly(p))
+                 }
+               })
+
+               output$clustCurvesPlot <- renderPlotly({
+                 if(show_plot() == "TRUE" & !is.null(RV$hc)) {
+                   p <- plotClusterCurves(dend = RV$hc$dend,
+                                          tintmat = RV$hc$tintmat)
+                   return(ggplotly(p))
+                 }
+               })
+  })
 
   #### download handler ####
   output$downloadPlot = downloadHandler(
