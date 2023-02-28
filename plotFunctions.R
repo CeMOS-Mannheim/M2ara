@@ -91,3 +91,44 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
     return(p)
   }
 }
+
+glmRegPlot <- function(model, penalty) {
+  p <- model$model %>%
+    finalize_model(tibble(penalty = 10^penalty)) %>%
+    fit(data = model$prepData, formula = conc ~.) %>%
+    predict(model$prepData) %>%
+    mutate(truth = pull(model$prepData, conc)) %>%
+    ggplot(aes(x = .pred, y = truth)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm") +
+    ggpubr::stat_regline_equation(aes(label = paste0("R2adj.=", ..adj.rr..))) +
+    coord_obs_pred() +
+    labs(x = "Log-predicted conc.",
+         y = "Log-true conc.") +
+    theme_minimal(base_size = 14)
+
+  return(p)
+}
+
+viPlot <- function(vi) {
+  NumNonZeoroCoef <- vi %>%
+    pull(Importance) %>%
+    length()
+
+  p <- vi  %>%
+    arrange(desc(Importance)) %>%
+    slice_head(n = 20) %>%
+    mutate(Variable = round(readr::parse_number(Variable), 3)) %>%
+    mutate(imp = ifelse(Sign == "POS", Importance, -Importance)) %>%
+    mutate(Variable = fct_reorder(as.factor(Variable), imp)) %>%
+    ggplot(aes(x = Variable, y = imp, fill = Sign)) +
+    geom_col() +
+    coord_flip() +
+    theme_minimal(base_size = 14) +
+    theme(legend.position = "none") +
+    labs(x = "m/z",
+         y = "Variable importance",
+         subtitle = paste0("# non-zero coef. features =", NumNonZeoroCoef))
+
+  return(p)
+}

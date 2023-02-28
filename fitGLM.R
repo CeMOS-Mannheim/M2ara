@@ -15,7 +15,7 @@ fitGLM <- function(res, sigmoid = FALSE) {
 
   # select only those m/z values that were fitted to curves
   intmat <- intmat[,which(all_mz %in% getAllMz(res))]
-  colnames(intmat) <- round(as.numeric(colnames(intmat)), digits = 3)
+  colnames(intmat) <- round(as.numeric(colnames(intmat)), digits = 2)
 
   df <-intmat %>%
     as_tibble(intmat) %>%
@@ -25,7 +25,7 @@ fitGLM <- function(res, sigmoid = FALSE) {
     step_log(all_outcomes(), base = 10) %>% # x-axis has to be log10(conc)!
     step_nzv(all_predictors()) %>%
     step_normalize(all_predictors()) %>%
-    step_corr(all_predictors(), threshold = 0.9)
+    step_corr(all_predictors(), threshold = 0.95)
 
 
   df_rdy <- prep(rec) %>%
@@ -57,4 +57,14 @@ fitGLM <- function(res, sigmoid = FALSE) {
   return(list(model = glm,
               prepData = df_rdy,
               penalty = pull(best_penalty, penalty)))
+}
+
+getVi <- function(model, penalty) {
+  vi <- model$model %>%
+    finalize_model(tibble(penalty = 10^penalty)) %>%
+    fit(data = model$prepData, formula = conc ~.) %>%
+    vip::vi_model(lambda = 10^penalty) %>%
+    filter(Importance > 0)
+
+  return(vi)
 }

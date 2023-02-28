@@ -12,7 +12,7 @@ gc()
 packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles", "MALDIquant",
              "MALDIquantForeign", "DT", "plotly", "shinycssloaders",
              "shinyhelper", "knitr", "shinybusy", "shinythemes", "shinyWidgets",
-             "devtools", "ggpubr", "dendextend", "glmnet")
+             "devtools", "ggpubr", "dendextend", "glmnet", "proxy")
 
 ## Now load or install&load all
 package.check <- lapply(
@@ -90,7 +90,7 @@ ui <- fluidPage(
         column(6,
                radioButtons("VarFilterMethod", label = "Variance filtering",
                             selected = "none",
-                            choices = c("mean", "q25","median", "q75", "none")) %>%
+                            choices = c("mean", "q75","median", "q25", "none")) %>%
                  helper(type = "markdown", content = "filtering"))),
 
       fluidRow(
@@ -236,14 +236,14 @@ ui <- fluidPage(
                                              withSpinner(color="#0dc5c1"))
                                   ),
                                   fluidRow(
-                                    column(3,
+                                    column(2,
                                            actionButton(inputId = "doGLM",
                                                         label = "Fit model",
                                                         icon = icon("chart-line"))
                                     )
                                   ),
                                   fluidRow(
-                                    column(3,
+                                    column(2,
                                            sliderInput(inputId = "penalty",
                                                        label = "Log-Penalty",
                                                        min = -10,
@@ -258,14 +258,19 @@ ui <- fluidPage(
                                     )
                                   ),
                                   fluidRow(
-                                    column(6,
+                                    column(2,
                                            actionButton(inputId = "resetPenalty",
-                                                        label = "Reset penalty to tuned value",
+                                                        label = "Reset penalty",
                                                         icon = icon("chart-line"))
                                     ),
+                                    column(2,
+                                           actionButton(inputId = "lasso2peaksTable",
+                                                        label = "Send to Peak Table",
+                                                        icon = icon("share-from-square"))
+                                    )
                                   )
                          ),
-                         #### Hierarchical Clustering ####
+                         #### HClust tab ####
                          tabPanel("HClust",
                                   h4("Hierarchical clustering"),
                                   fluidRow(
@@ -277,17 +282,42 @@ ui <- fluidPage(
                                              withSpinner(color="#0dc5c1"))
                                   ),
                                   fluidRow(
-                                    column(3,
+                                    column(2,
                                            actionButton(inputId = "doHC",
                                                         label = "Perform HC",
                                                         icon = icon("circle-nodes"))),
-                                    column(3,
+                                    column(2,
                                            sliderInput(inputId = "num_cluster",
                                                        label = "Number of cluster",
                                                        min = 2,
                                                        max = 25,
                                                        value = 4,
-                                                       step = 1))
+                                                       step = 1)),
+                                    column(2,
+                                           selectInput(inputId = "hcDist",
+                                                       choices = c("Euclidean",
+                                                                   "Manhattan",
+                                                                   "correlation",
+                                                                   "cosine"),
+                                                       selected = "Euclidean",
+                                                       label = "Distance metric",
+                                                       multiple = FALSE)),
+                                    column(2,
+                                           selectInput(inputId = "hcMethod",
+                                                       choices = c("complete",
+                                                                   "ward.D2",
+                                                                   "average"),
+                                                       selected = "average",
+                                                       label = "Cluster method",
+                                                       multiple = FALSE)),
+                                    column(2, actionButton(inputId = "hc2peaksTable",
+                                                           label = "Send to Peak Table",
+                                                           icon = icon("share-from-square")))
+                                  ),
+                                  fluidRow(
+                                    column(6,
+                                           plotlyOutput("optNumClust")  %>%
+                                             withSpinner(color="#0dc5c1"))
                                   )
                          ),
 
@@ -331,13 +361,15 @@ server <- function(input, output) {
 
   #### main #####
   RV <<- reactiveValues(res = NULL,
+                        stats_original = NULL,
                         stats = NULL,
                         specIdx = 1,
                         maxSpecIdx = 1,
                         pspec = NULL,
                         pca = NULL,
                         model = NULL,
-                        hc = NULL)
+                        hc = NULL,
+                        opt = NULL)
 
   vol <- tolower(getVolumes())
   names(vol) <- str_remove(vol, ":")
@@ -446,7 +478,7 @@ server <- function(input, output) {
           max = max(mean),
           log2FC = log2(first(fc_window))
         ) %>%
-        left_join(getFittingParameters(res, summarise = TRUE)) %>%
+        left_join(getFittingParameters(res, summarise = TRUE), by = join_by(mz)) %>%
         select(-npar) %>%
         ungroup() %>%
         mutate_if(is.numeric, function(x)
@@ -455,6 +487,7 @@ server <- function(input, output) {
         })
 
       RV <<- reactiveValues(res = res,
+                            stats_original = stats, # copy of original stats for updates
                             stats = stats,
                             specIdx = 1,
                             maxSpecIdx = length(getAvgPeaks(res)),
@@ -469,7 +502,7 @@ server <- function(input, output) {
     }
   })
 
-  #### data table ####
+  #### Peak table ####
   # first initialization
   output$mzTable <- DT::renderDataTable({
     # check if data is already prepared and if not show dummy table
@@ -500,26 +533,26 @@ server <- function(input, output) {
                    selected = 1)
   )
 
-  # on reprocess
-  # not sure if this duplicate is needed
-  observeEvent(input$process, {
-    output$mzTable <- DT::renderDataTable({
-      if(show_plot() == "TRUE") {
-        RV$stats
-      }
-    },
-    server = TRUE,
-    filter = "bottom",
-    options = list(searching = TRUE,
-                   lengthChange = FALSE,
-                   paging = TRUE,
-                   pageLength = 20,
-                   autoWidth = TRUE,
-                   rownames= FALSE),
-    selection = list(mode = 'single',
-                     selected = 1)
-    )
-  })
+  # # on reprocess
+  # # not sure if this duplicate is needed
+  # observeEvent(input$process, {
+  #   output$mzTable <- DT::renderDataTable({
+  #     if(show_plot() == "TRUE") {
+  #       RV$stats
+  #     }
+  #   },
+  #   server = TRUE,
+  #   filter = "bottom",
+  #   options = list(searching = TRUE,
+  #                  lengthChange = FALSE,
+  #                  paging = TRUE,
+  #                  pageLength = 20,
+  #                  autoWidth = TRUE,
+  #                  rownames= FALSE),
+  #   selection = list(mode = 'single',
+  #                    selected = 1)
+  #   )
+  # })
 
   #### curve and peak plots ####
   output$curve <- renderPlotly({
@@ -535,6 +568,7 @@ server <- function(input, output) {
 
       ggplotly(p_curve)
     } else {
+      # dummy plot
       p_curve <- ggplot(tibble(label = "Load data\nto display plot",
                                x = 1,
                                y = 1),
@@ -555,6 +589,7 @@ server <- function(input, output) {
         labs(title = NULL)
       ggplotly(p_peak)
     } else {
+      # dummy plot
       p_peak <- ggplot(tibble(label = "Load data\nto display plot",
                               x = 1,
                               y = 1),
@@ -676,6 +711,7 @@ server <- function(input, output) {
   #### LASSO tab #####
 
   output$glmTruePred <- renderPlotly({
+    # dummy plot
     p <- tibble(label = "Fit model\nto display plot",
                 .pred = 1,
                 truth = 1) %>%
@@ -690,7 +726,7 @@ server <- function(input, output) {
   })
 
   output$glmVi <- renderPlotly({
-
+    # dummy plot
     p <- tibble(label = "Fit model\nto display plot",
                 Variable = 1,
                 imp = 1) %>%
@@ -707,26 +743,16 @@ server <- function(input, output) {
 
   observeEvent(input$doGLM, {
     if(info_state() == "processed") {
+
       cat("starting model fit...\n")
       show_spinner()
       RV$model <- fitGLM(RV$res, sigmoid = input$sigmoidModel)
       updateSliderInput(inputId = "penalty", value = log10(RV$model$penalty))
       cat("model fitted.\n")
       hide_spinner()
+
       output$glmTruePred <- renderPlotly({
-        p <- RV$model$model %>%
-          finalize_model(tibble(penalty = 10^input$penalty)) %>%
-          fit(data = RV$model$prepData, formula = conc ~.) %>%
-          predict(RV$model$prepData) %>%
-          mutate(truth = pull(RV$model$prepData, conc)) %>%
-          ggplot(aes(x = .pred, y = truth)) +
-          geom_point(alpha = 0.5) +
-          geom_smooth(method = "lm") +
-          ggpubr::stat_regline_equation(aes(label = paste0("R²adj.=", ..adj.rr..))) +
-          coord_obs_pred() +
-          labs(x = "Log-predicted conc.",
-               y = "Log-true conc.") +
-          theme_minimal(base_size = 14)
+        p <- glmRegPlot(model = RV$model, penalty = input$penalty)
 
         return(ggplotly(p))
       })
@@ -735,30 +761,8 @@ server <- function(input, output) {
       observeEvent(input$penalty, {
         output$glmVi <- renderPlotly({
 
-          vi <- RV$model$model %>%
-            finalize_model(tibble(penalty = 10^input$penalty)) %>%
-            fit(data = RV$model$prepData, formula = conc ~.) %>%
-            vip::vi_model(lambda = 10^input$penalty)
+          p <- viPlot(getVi(RV$model, input$penalty))
 
-          NumNonZeoroCoef <- vi %>%
-            filter(Importance > 0) %>%
-            pull(Importance) %>%
-            length()
-
-          p <- vi  %>%
-            arrange(desc(Importance)) %>%
-            slice_head(n = 20) %>%
-            mutate(Variable = round(readr::parse_number(Variable), 3)) %>%
-            mutate(imp = ifelse(Sign == "POS", Importance, -Importance)) %>%
-            mutate(Variable = fct_reorder(as.factor(Variable), imp)) %>%
-            ggplot(aes(x = Variable, y = imp, fill = Sign)) +
-            geom_col() +
-            coord_flip() +
-            geom_text(aes(x = 1, y = 0, label = paste0("# non-zero coef. features =", NumNonZeoroCoef))) +
-            theme_minimal(base_size = 14) +
-            theme(legend.position = "none") +
-            labs(x = "m/z",
-                 y = "Variable importance")
           return(ggplotly(p))
         })
       })
@@ -770,33 +774,68 @@ server <- function(input, output) {
   })
 
   observeEvent(input$resetPenalty, {
-    cat("button pressed\n")
     if(!is.null(RV$model)) {
-      cat("RV$model was different from NULL\n")
       updateSliderInput(inputId = "penalty", value = log10(RV$model$penalty))
     } else {
       cat("RV$model was NULL\n")
     }
   })
 
+  observeEvent(input$lasso2peaksTable, {
+    if(!is.null(RV$model)) {
+      vi <- getVi(RV$model, penalty = input$penalty) %>%
+        mutate(Variable = readr::parse_number(Variable)) %>%
+        mutate(`Lasso importance` = ifelse(Sign == "POS", Importance, -Importance)) %>%
+        mutate(mz = as.numeric(Variable)) %>%
+        select(mz, `Lasso importance`)
+
+      print(vi)
+
+
+      RV$stats <- RV$stats_original %>%
+        left_join(vi, by = join_by(mz))
+      cat("Updated peak table with lasso data.\n")
+    }
+  })
+
   #### HClust tab #####
   observeEvent(input$doHC, {
-               output$hclustPlot <- renderPlotly({
-                 if(show_plot() == "TRUE") {
+    output$hclustPlot <- renderPlotly({
+      if(show_plot() == "TRUE") {
 
-                   RV$hc <- doHClust(RV$res, cut = input$num_cluster)
-                   p <- plotDendro(RV$hc$dend)
-                   return(ggplotly(p))
-                 }
-               })
+        RV$hc <- doHClust(RV$res,
+                          cut = input$num_cluster,
+                          dist = input$hcDist,
+                          clustMethod = input$hcMethod)
+        p <- plotDendro(RV$hc$dend)
+        return(ggplotly(p))
+      }
+    })
 
-               output$clustCurvesPlot <- renderPlotly({
-                 if(show_plot() == "TRUE" & !is.null(RV$hc)) {
-                   p <- plotClusterCurves(dend = RV$hc$dend,
-                                          tintmat = RV$hc$tintmat)
-                   return(ggplotly(p))
-                 }
-               })
+    output$clustCurvesPlot <- renderPlotly({
+      if(show_plot() == "TRUE" & !is.null(RV$hc)) {
+        p <- plotClusterCurves(dend = RV$hc$dend,
+                               tintmat = RV$hc$tintmat)
+        return(ggplotly(p))
+      }
+    })
+
+    output$optNumClust <- renderPlotly({
+      if(show_plot() == "TRUE" & !is.null(RV$hc)) {
+        p <- optimalNumClustersPlot(RV$hc$opt,
+                                    sel_k = input$num_cluster)
+        return(ggplotly(p))
+      }
+    })
+  })
+
+  observeEvent(input$hc2peaksTable, {
+    if(show_plot() == "TRUE" & !is.null(RV$hc)) {
+      clusters <- extractClusters(RV$hc$dend)
+      RV$stats <- RV$stats_original %>%
+        left_join(clusters, by = join_by(mz))
+      cat("Updated peak table with HC data.\n")
+    }
   })
 
   #### download handler ####

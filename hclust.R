@@ -7,6 +7,33 @@ library(proxy)
 library(patchwork)
 library(zoo)
 
+optimalNumClusters <- function(dend) {
+  opt <- dendextend::find_k(dend, krange = 1:25)
+
+  return(opt)
+}
+
+optimalNumClustersPlot <- function(opt, sel_k) {
+  df <- tibble(k = 1:25,
+               crit = opt$crit)
+
+  p <-
+    ggplot(df, aes(x = k, y = crit)) +
+    geom_point() +
+    geom_vline(aes(xintercept = opt$nc),
+               col = "red",
+               linetype = "dashed",
+               alpha = 0.75) +
+    geom_vline(aes(xintercept = sel_k),
+               col = "green") +
+    geom_line() +
+    labs(x = "Number of clusters",
+         y = "Average silhouette width") +
+    theme_minimal(base_size = 16)
+  return(p)
+}
+
+
 doHClust <- function(res, cut = 5, dist = "correlation", clustMethod = "ward.D2") {
   avg <- getAvgSpectra(res)
 
@@ -22,7 +49,7 @@ doHClust <- function(res, cut = 5, dist = "correlation", clustMethod = "ward.D2"
   colnames(tintmat) <- names(avg)
 
   d <- proxy::dist(tintmat, method = dist)
-  attr(d, "Labels") <- round(as.numeric(colnames(intmat)), digits = 3)
+  attr(d, "Labels") <- round(as.numeric(colnames(intmat)), digits = 2)
   hc <- hclust(d, method = clustMethod)
 
 
@@ -30,9 +57,19 @@ doHClust <- function(res, cut = 5, dist = "correlation", clustMethod = "ward.D2"
   dend <- color_labels(dend, k = cut)
   dend <- color_branches(dend, k =  cut)
 
+  opt <- optimalNumClusters(dend)
 
   return(list(tintmat = tintmat,
-              dend = dend))
+              dend = dend,
+              opt = opt))
+}
+
+extractClusters <- function(dend) {
+  clusters <- tibble(mz = as.numeric(labels(dend)),
+                     cluster = as.numeric(factor(get_leaves_branches_col(dend)))) %>%
+    mutate(cluster = factor(cluster)) # turn back to factors to better sort table
+
+  return(clusters)
 }
 
 plotDendro <- function(dend) {
@@ -47,13 +84,10 @@ plotDendro <- function(dend) {
   return(p)
 }
 
+
 plotClusterCurves <- function(dend, tintmat) {
   cluster <- as.numeric(factor(get_leaves_branches_col(dend)))
   n_cluster <- length(unique(cluster))
-  cat("plotClusterCurves: n_cluster =", n_cluster, "\n")
-  cat("Clusters:", paste(unique(cluster), collapse = " "), "\n")
-  cat("dim t(intmat):", paste0(dim(tintmat), collapse = " "), "\n")
-  cat("len clusters:", length(cluster), "\n")
 
   df <-
     tintmat %>%
@@ -66,11 +100,6 @@ plotClusterCurves <- function(dend, tintmat) {
     summarise(meanInt = mean(int),
               n_mz = n()) %>%
     ungroup()
-
-  cat("df ready for plotting:\n")
-  cat("clusters in df:",
-      df %>% pull(cluster) %>% unique() %>% paste0(collapse = " "), "\n")
-  print(df)
 
   p_curves <-
     df %>%
