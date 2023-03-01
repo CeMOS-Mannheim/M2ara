@@ -12,7 +12,8 @@ gc()
 packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles", "MALDIquant",
              "MALDIquantForeign", "DT", "plotly", "shinycssloaders",
              "shinyhelper", "knitr", "shinybusy", "shinythemes", "shinyWidgets",
-             "devtools", "ggpubr", "dendextend", "glmnet", "proxy")
+             "devtools", "ggpubr", "dendextend", "glmnet", "proxy", "sparsepca",
+             "platetools")
 
 ## Now load or install&load all
 package.check <- lapply(
@@ -66,7 +67,7 @@ ui <- fluidPage(
         column(6,
                checkboxInput("smooth", "Smooth", value = TRUE)),
         column(6,
-               checkboxInput("rmBl", "Remove baseline", value = TRUE)),
+               checkboxInput("rmBl", "Remove baseline", value = TRUE))
       ),
       fluidRow(
         column(6,
@@ -110,7 +111,7 @@ ui <- fluidPage(
                numericInput("binTol", label = "bin tol. [ppm]", min = 0, value = 200, step = 5))
       ),
       actionButton("process", "Process spectra",
-                   icon = icon("redo", ), style='padding:6px; font-size:80%'),
+                   icon = icon("redo"), style='padding:6px; font-size:80%'),
       textOutput("info1", inline = FALSE),
       textOutput("info2", inline = FALSE),
       textOutput("info3", inline = FALSE),
@@ -169,9 +170,30 @@ ui <- fluidPage(
                          #### QC tab ####
 
                          tabPanel("QC",
-                                  h4("Recalibration check"),
-                                  plotlyOutput('checkRecal') %>%
-                                    withSpinner(color="#0dc5c1")),
+                                  fluidRow(
+                                    h4("Recalibration check"),
+                                    plotlyOutput('checkRecal') %>%
+                                      withSpinner(color="#0dc5c1")),
+                                  fluidRow(
+                                    column(2,
+                                           selectInput("plateStat",
+                                                       label = "Metric",
+                                                       choices = c("Concentration",
+                                                                   "Total Peak Intensity",
+                                                                   "Normalization factor",
+                                                                   "Recal-shift",
+                                                                   "Selected-mz"),
+                                                       multiple = FALSE,
+                                                       selected = "Recal-shift")),
+                                    column(2, checkboxInput("plateScale", label = "Log10 scale"))
+                                  ),
+                                  fluidRow(
+                                    column(6,
+                                           plotOutput("platemap")),
+                                    column(6,
+                                           uiOutput(outputId = "summaryText"))
+                                  )
+                         ),
 
                          #### PCA tab ####
 
@@ -185,6 +207,20 @@ ui <- fluidPage(
                                                         label = "Perform PCA",
                                                         icon = icon("chart-line"))
                                     ),
+                                    column(2,
+                                           sliderInput(inputId = "pcaAlpha",
+                                                       label = "Log(L1-Penalty)",
+                                                       min = -10,
+                                                       max = 0,
+                                                       value = -3,
+                                                       step = 0.1)),
+                                    column(2,
+                                           sliderInput(inputId = "pcaBeta",
+                                                       label = "Log(L2-Penalty)",
+                                                       min = -10,
+                                                       max = 0,
+                                                       value = -3,
+                                                       step = 0.1)),
                                     column(1,
                                            selectInput(inputId = "pcaX",
                                                        label = "x-axis",
@@ -211,7 +247,11 @@ ui <- fluidPage(
                                              label = "Summarise loadings",
                                              value = FALSE,
                                              status = "primary")
-                                    )
+                                    ),
+                                    column(2,
+                                           actionButton(inputId = "pca2peaksTable",
+                                                        label = "Send to Peak Table",
+                                                        icon = icon("share-from-square")))
                                   ),
                                   fluidRow(
                                     column(6,
@@ -245,7 +285,7 @@ ui <- fluidPage(
                                   fluidRow(
                                     column(2,
                                            sliderInput(inputId = "penalty",
-                                                       label = "Log-Penalty",
+                                                       label = "Log(L1-Penalty)",
                                                        min = -10,
                                                        max = 0,
                                                        value = -5,
@@ -343,6 +383,7 @@ server <- function(input, output) {
   source("fitGLM.R")
   source("getVolumes.R")
   source("hclust.R")
+  source("generateSummaryText.R")
 
   #### variables ####
   p_main <- ggplot()
@@ -533,26 +574,26 @@ server <- function(input, output) {
                    selected = 1)
   )
 
-  # # on reprocess
-  # # not sure if this duplicate is needed
-  # observeEvent(input$process, {
-  #   output$mzTable <- DT::renderDataTable({
-  #     if(show_plot() == "TRUE") {
-  #       RV$stats
-  #     }
-  #   },
-  #   server = TRUE,
-  #   filter = "bottom",
-  #   options = list(searching = TRUE,
-  #                  lengthChange = FALSE,
-  #                  paging = TRUE,
-  #                  pageLength = 20,
-  #                  autoWidth = TRUE,
-  #                  rownames= FALSE),
-  #   selection = list(mode = 'single',
-  #                    selected = 1)
-  #   )
-  # })
+  # on reprocess
+  # not sure if this duplicate is needed
+  observeEvent(input$process, {
+    output$mzTable <- DT::renderDataTable({
+      if(show_plot() == "TRUE") {
+        RV$stats
+      }
+    },
+    server = TRUE,
+    filter = "bottom",
+    options = list(searching = TRUE,
+                   lengthChange = FALSE,
+                   paging = TRUE,
+                   pageLength = 20,
+                   autoWidth = TRUE,
+                   rownames= FALSE),
+    selection = list(mode = 'single',
+                     selected = 1)
+    )
+  })
 
   #### curve and peak plots ####
   output$curve <- renderPlotly({
@@ -601,7 +642,8 @@ server <- function(input, output) {
 
   })
 
-  #### QC tab: recal check ####
+  #### QC tab ####
+  #  recal check
   output$checkRecal <- renderPlotly({
     if(show_plot() == "TRUE") {
       p <- checkRecalibration(RV$res, idx = 1:length(getAvgSpectra(RV$res)))
@@ -616,6 +658,23 @@ server <- function(input, output) {
       ggplotly(p)
     }
 
+  })
+
+  # platemap
+  output$platemap <- renderPlot({
+    if(show_plot() == "TRUE") {
+      plateMapPlot(RV$res,
+                   stat = input$plateStat,
+                   log10 = input$plateScale,
+                   mz_idx = input$mzTable_rows_selected[1])
+    }
+  })
+
+
+  # summary
+  output$summaryText <-  output$myText <- renderUI({
+    text <- paste0(generateSummaryText(RV$res), collapse = "<br>")
+    HTML(text)
   })
 
 
@@ -635,8 +694,13 @@ server <- function(input, output) {
 
   observeEvent(input$doPca, {
     if(!is.null(RV$res)) {
+      cat("pcaAlpha =", 10^input$pcaAlpha, "\n")
+      cat("pcaBeta =", 10^input$pcaBeta, "\n")
       RV$pca <- generatePCA(RV$res,
-                            num_PC = 20)
+                            num_PC = 5,
+                            alpha = 10^input$pcaAlpha,
+                            beta = 10^input$pcaBeta,
+                            verbose = FALSE)
     }
 
   })
@@ -706,6 +770,16 @@ server <- function(input, output) {
     }
   })
 
+  observeEvent(input$pca2peaksTable, {
+    if(show_plot() == "TRUE" & !is.null(RV$pca)) {
+      loadings <- extractLoadings(RV$pca, input$pcaX, input$pcaY)
+      print(loadings)
+
+      RV$stats <- RV$stats_original %>%
+        left_join(loadings, by = join_by(mz))
+    }
+  })
+
 
 
   #### LASSO tab #####
@@ -766,10 +840,6 @@ server <- function(input, output) {
           return(ggplotly(p))
         })
       })
-
-
-
-
     }
   })
 
@@ -788,9 +858,6 @@ server <- function(input, output) {
         mutate(`Lasso importance` = ifelse(Sign == "POS", Importance, -Importance)) %>%
         mutate(mz = as.numeric(Variable)) %>%
         select(mz, `Lasso importance`)
-
-      print(vi)
-
 
       RV$stats <- RV$stats_original %>%
         left_join(vi, by = join_by(mz))

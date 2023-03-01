@@ -123,12 +123,75 @@ viPlot <- function(vi) {
     mutate(Variable = fct_reorder(as.factor(Variable), imp)) %>%
     ggplot(aes(x = Variable, y = imp, fill = Sign)) +
     geom_col() +
+    geom_text(aes(x = 1, y = 0, label = paste0("#-features =", NumNonZeoroCoef))) +
     coord_flip() +
     theme_minimal(base_size = 14) +
     theme(legend.position = "none") +
     labs(x = "m/z",
-         y = "Variable importance",
-         subtitle = paste0("# non-zero coef. features =", NumNonZeoroCoef))
+         y = "Variable importance")
+
+  return(p)
+}
+
+plateMapPlot <- function(res,
+                         stat = c("Concentration", "Total Peak Intensity", "Normalization factor", "Recal-shift", "Selected-mz"),
+                         mz_idx = NULL,
+                         format = 384,
+                         log10 = FALSE) {
+  stat <- match.arg(stat)
+
+  spots <- getSpots(res)
+
+  switch(stat,
+         "Concentration" = {
+           df <- tibble(spot = spots,
+                        val = as.numeric(names(spots)))
+         },
+         "Total Peak Intensity" = {
+           df <- tibble(spot = spots,
+                        val = vapply(getSinglePeaks(res),
+                                     function(x) {
+                                       sum(intensity(x))
+                                     }, numeric(1)))
+         },
+         "Normalization factor" = {
+           df <- tibble(spot = spots,
+                        val = getAppliedNormFactors(res))
+         },
+         "Recal-shift" = {
+           df <- tibble(spot = spots,
+                        val = getAppliedMzShift(res))
+         },
+         "Selected-mz" = {
+           if(!is.null(mz_idx)) {
+             int <- getSingleSpecIntensity(res, mz_idx = mz_idx)
+           } else {
+             int <- rep(NA_integer_, length(spots))
+           }
+
+          df <- tibble(spot = spots,
+                       val = int)
+         })
+
+
+
+  p <- platetools::raw_map(data = df$val, well = df$spot, plate = format) +
+    labs(fill = stat) +
+    theme_minimal(base_size = 16)
+
+  if(log10) {
+   p <- p  +
+     scale_fill_viridis_c(trans = "log10")
+  } else {
+    p <- p +
+      scale_fill_viridis_c()
+  }
+
+  if(stat == "Selected-mz") {
+    p <- p +
+      labs(caption = paste0("m/z=", round(getMzFromMzIdx(res, mzIdx = mzIdx), digits = 2)))
+  }
+
 
   return(p)
 }
