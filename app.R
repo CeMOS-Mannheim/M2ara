@@ -13,7 +13,7 @@ packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles", "MALDIqua
              "MALDIquantForeign", "DT", "plotly", "shinycssloaders",
              "shinyhelper", "knitr", "shinybusy", "shinythemes", "shinyWidgets",
              "devtools", "ggpubr", "dendextend", "glmnet", "proxy", "sparsepca",
-             "platetools")
+             "platetools", "ggdendro", "zoo")
 
 ## Now load or install&load all
 package.check <- lapply(
@@ -383,6 +383,7 @@ server <- function(input, output) {
   source("fitGLM.R")
   source("getVolumes.R")
   source("hclust.R")
+  source("getVolumes.R")
   source("generateSummaryText.R")
 
   #### variables ####
