@@ -7,13 +7,22 @@ RUN apt-get update -qq && apt-get -y --no-install-recommends install \
     libxml2-dev \
     libcairo2-dev \
     libsqlite3-dev \
-    libmariadbd-dev \
+    #libmariadbd-dev \
     libpq-dev \
     libssh2-1-dev \
     unixodbc-dev \
 	libtiff-dev \
     libcurl4-openssl-dev \
-    libssl-dev
+	libgeos-dev \
+    libssl-dev \
+	cmake \
+	libharfbuzz-dev \
+	libfribidi-dev \
+	librsvg2-dev \
+	libudunits2-dev \
+	libgdal-dev \ 
+	libgeos-dev \
+	libproj-dev 
 
 ## update system libraries
 RUN apt-get update && \
@@ -26,11 +35,18 @@ COPY ./renv.lock ./renv.lock
 ## app folder
 COPY ./ ./app
 
-# install renv & restore packages
+# install renv
 RUN Rscript -e 'install.packages("renv")'
+
+# set renv library path
+ENV RENV_PATHS_LIBRARY renv/library
+
+# restore packages
+RUN Rscript -e 'renv::restore()'
+
+# install main package
 RUN Rscript -e 'install.packages("devtools")'
 RUN Rscript -e 'devtools::install_github("CeMOS-Mannheim/MALDIcellassay")'
-RUN Rscript -e 'renv::restore()'
 
 # expose port
 EXPOSE 3838

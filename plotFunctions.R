@@ -161,6 +161,12 @@ plateMapPlot <- function(res,
          "Recal-shift" = {
            df <- tibble(spot = spots,
                         val = getAppliedMzShift(res))
+           if(log10) {
+             # log will lead to NA for negative values, display abs. shift
+             stat <- "Abs. Recal-shift"
+             df <- df %>%
+               mutate(val = abs(val))
+           }
          },
          "Selected-mz" = {
            if(!is.null(mz_idx)) {
@@ -189,7 +195,7 @@ plateMapPlot <- function(res,
 
   if(stat == "Selected-mz") {
     p <- p +
-      labs(caption = paste0("m/z=", round(getMzFromMzIdx(res, mzIdx = mzIdx), digits = 2)))
+      labs(caption = paste0("m/z=", round(getMzFromMzIdx(res, mzIdx = mz_idx), digits = 2)))
   }
 
 

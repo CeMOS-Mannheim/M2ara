@@ -13,7 +13,7 @@ packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles", "MALDIqua
              "MALDIquantForeign", "DT", "plotly", "shinycssloaders",
              "shinyhelper", "knitr", "shinybusy", "shinythemes", "shinyWidgets",
              "devtools", "ggpubr", "dendextend", "glmnet", "proxy", "sparsepca",
-             "platetools", "ggdendro", "zoo")
+             "platetools", "ggdendro", "zoo", "fs")
 
 ## Now load or install&load all
 package.check <- lapply(
@@ -39,11 +39,12 @@ ui <- fluidPage(
   title = "Peak Explorer", theme = shinytheme("flatly"),
 
   #### Sidebar ####
-
   sidebarLayout(
     sidebarPanel = sidebarPanel(
       fluidRow(
-        shinyDirButton('dir', '  Select folder', 'Please select a folder',
+        shinyDirButton('dir',
+                       '  Select folder',
+                       'Please select a folder',
                        multiple = FALSE,
                        icon = icon("search"),
                        style='padding:6px; font-size:80%',
@@ -60,7 +61,6 @@ ui <- fluidPage(
                            choices = c("M", "mM", "µM", "nM", "pM"),
                            selected = "M", multiple = FALSE, width = "80%"))
       ),
-
       fluidRow(
         h5("Preprocessing:") %>%
           helper(type = "markdown", content = "preprocessing"),
@@ -118,12 +118,10 @@ ui <- fluidPage(
       width = 2L),
 
     #### Main panel ####
-
     mainPanel = mainPanel(
       shiny::tabsetPanel(type = "tabs",
 
                          #### Main tab ####
-
                          tabPanel("Main",
                                   fluidRow(
                                     column(1,
@@ -168,7 +166,6 @@ ui <- fluidPage(
                                   width = 9),
 
                          #### QC tab ####
-
                          tabPanel("QC",
                                   fluidRow(
                                     h4("Recalibration check"),
@@ -196,7 +193,6 @@ ui <- fluidPage(
                          ),
 
                          #### PCA tab ####
-
                          tabPanel("PCA",
                                   h4("PCA of single spectra"),
                                   plotlyOutput('pca') %>%
@@ -362,18 +358,14 @@ ui <- fluidPage(
                          ),
 
                          #### Manual tab ####
-
                          tabPanel("Manual", htmltools::includeMarkdown("manual.md")
                          )
-
       )
-
     )
   )
 )
 
 #### Sever ####
-
 server <- function(input, output) {
 
   #### helper functions ####
@@ -398,9 +390,6 @@ server <- function(input, output) {
   show_plot <- reactiveVal("FALSE")
   loaded <- reactiveVal("FALSE")
 
-  roots <- c(c = "c:", d = "d:", e = "e:",f = "f:",
-             x = "x:", y = "y:", z = "z:")
-
   #### main #####
   RV <<- reactiveValues(res = NULL,
                         stats_original = NULL,
@@ -418,13 +407,14 @@ server <- function(input, output) {
   #### choose dir ####
   shinyDirChoose(input,
                  'dir',
-                 roots = roots,
-                 allowDirCreate = FALSE, defaultRoot = names(vol)[1])
+                 roots = vol,
+                 allowDirCreate = FALSE,
+                 defaultRoot = names(vol)[1])
 
   observeEvent(input$dir, {
     # check if folder was selected
     # prepare info massage
-    selected_dir <<- parseDirPath(roots, input$dir)
+    selected_dir <<- parseDirPath(vol, input$dir)
     if(length(selected_dir)>0) {
       info_state("dir_set")
     }
@@ -452,7 +442,6 @@ server <- function(input, output) {
       output$info2 <- renderText(selected_dir)
       output$info3 <- renderText("If you change settings, press process again to apply them.")
     }
-
   })
 
   #### load spectra ####
@@ -671,14 +660,11 @@ server <- function(input, output) {
     }
   })
 
-
   # summary
   output$summaryText <-  output$myText <- renderUI({
     text <- paste0(generateSummaryText(RV$res), collapse = "<br>")
     HTML(text)
   })
-
-
 
   #### PCA tab ####
   # default plot for PCA
@@ -774,14 +760,11 @@ server <- function(input, output) {
   observeEvent(input$pca2peaksTable, {
     if(show_plot() == "TRUE" & !is.null(RV$pca)) {
       loadings <- extractLoadings(RV$pca, input$pcaX, input$pcaY)
-      print(loadings)
 
       RV$stats <- RV$stats_original %>%
         left_join(loadings, by = join_by(mz))
     }
   })
-
-
 
   #### LASSO tab #####
 
@@ -815,7 +798,6 @@ server <- function(input, output) {
     return(ggplotly(p))
   })
 
-
   observeEvent(input$doGLM, {
     if(info_state() == "processed") {
 
@@ -831,7 +813,6 @@ server <- function(input, output) {
 
         return(ggplotly(p))
       })
-
 
       observeEvent(input$penalty, {
         output$glmVi <- renderPlotly({
@@ -943,8 +924,6 @@ server <- function(input, output) {
         warning("Nothing to download. Load and process data.")
       }
     })
-
-
 }
 
 # Run the application
