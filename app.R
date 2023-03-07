@@ -9,11 +9,12 @@ gc()
 # from CRAN and then loaded.
 
 ## First specify the packages of interest
-packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles", "MALDIquant",
-             "MALDIquantForeign", "DT", "plotly", "shinycssloaders",
-             "shinyhelper", "knitr", "shinybusy", "shinythemes", "shinyWidgets",
-             "devtools", "ggpubr", "dendextend", "glmnet", "proxy", "sparsepca",
-             "platetools", "ggdendro", "zoo", "fs")
+packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles",
+             "MALDIquant", "MALDIquantForeign", "DT", "plotly",
+             "shinycssloaders", "shinyhelper", "knitr", "shinybusy",
+             "shinythemes", "shinyWidgets", "devtools", "ggpubr", "dendextend",
+             "glmnet", "proxy", "sparsepca", "platetools", "ggdendro", "zoo",
+             "fs")
 
 ## Now load or install&load all
 package.check <- lapply(
@@ -36,7 +37,9 @@ knit("manual.Rmd", quiet = TRUE)
 
 #### UI ####
 ui <- fluidPage(
-  title = "Peak Explorer", theme = shinytheme("flatly"),
+  title = "Peak Explorer",
+  lang = "en",
+  theme = shinytheme("flatly"),
 
   #### Sidebar ####
   sidebarLayout(
@@ -507,7 +510,8 @@ server <- function(input, output) {
           R2 = first(R2),
           min = min(mean),
           max = max(mean),
-          log2FC = log2(first(fc_window))
+          log2FC = log2(first(fc_window)),
+          `abs. log2FC` = abs(log2FC)
         ) %>%
         left_join(getFittingParameters(res, summarise = TRUE), by = join_by(mz)) %>%
         select(-npar) %>%
@@ -838,7 +842,8 @@ server <- function(input, output) {
       vi <- getVi(RV$model, penalty = input$penalty) %>%
         mutate(Variable = readr::parse_number(Variable)) %>%
         mutate(`Lasso importance` = ifelse(Sign == "POS", Importance, -Importance)) %>%
-        mutate(mz = as.numeric(Variable)) %>%
+        mutate(mz = as.numeric(Variable),
+               `Lasso importance` = round(`Lasso importance`, digits = 4)) %>%
         select(mz, `Lasso importance`)
 
       RV$stats <- RV$stats_original %>%
