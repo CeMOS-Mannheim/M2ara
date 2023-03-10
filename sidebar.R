@@ -1,0 +1,79 @@
+appSidebar <- function() {
+  s <- sidebarPanel(
+    fluidRow(
+      shinyDirButton('dir',
+                     '  Select folder',
+                     'Please select a folder',
+                     multiple = FALSE,
+                     icon = icon("search"),
+                     style='padding:6px; font-size:80%',
+                     class = "btn-default"),
+      actionButton("load", "  Load spectra ",
+                   icon = icon("upload"), style='padding:6px; font-size:80%'),
+      use_busy_spinner(spin = "half-circle",
+                       position = "top-left",
+                       height = "100px", width = "100px",
+                       margins = c(100, 100))),
+    fluidRow(
+      column(6,
+             selectInput(inputId = "concUnits", label = "Conc. unit",
+                         choices = c("M", "mM", "µM", "nM", "pM"),
+                         selected = "M", multiple = FALSE, width = "80%"))
+    ),
+    fluidRow(
+      h5("Preprocessing:") %>%
+        helper(type = "markdown", content = "preprocessing"),
+      column(6,
+             checkboxInput("smooth", "Smooth", value = TRUE)),
+      column(6,
+             checkboxInput("rmBl", "Remove baseline", value = TRUE))
+    ),
+    fluidRow(
+      column(6,
+             checkboxInput("sqrtTrans", "Sqrt-transform", value = FALSE))
+    ),
+    fluidRow(
+
+      h5("Peak detection:") %>%
+        helper(type = "markdown", content = "peakdetection"),
+      column(6,
+             numericInput("SNR", label = "S/N-ratio", min = 1, step = 1, value = 3)),
+      column(6)
+    ),
+    fluidRow(
+      column(6,
+             radioButtons(inputId = "normMeth",
+                          label = "Normalization method",
+                          selected = "mz",
+                          choices = c("mz", "TIC", "PQN", "median", "none")) %>%
+               helper(type = "markdown", content = "normalization")),
+      column(6,
+             radioButtons("VarFilterMethod", label = "Variance filtering",
+                          selected = "none",
+                          choices = c("mean", "q75","median", "q25", "none")) %>%
+               helper(type = "markdown", content = "filtering"))),
+
+    fluidRow(
+      h5("m/z for recal. and mz-norm.:"),
+      checkboxInput("SinglePointRecal", "Single point recal.", value = TRUE) %>%
+        helper(type = "markdown", content = "recalibration"),
+      column(5,
+             numericInput("normTol", label = "tol. [Da]", min = 0, value = 0.1, step = 0.05)),
+      column(7,
+             numericInput("normMz", label = "m/z [Da]", min = 0, value = 760.585, step = 0.05))),
+    fluidRow(
+      h5("Aligment / binning:")  %>%
+        helper(type = "markdown", content = "alignment"),
+      column(6,
+             numericInput("alignTol", label = "align tol. [Da]", min = 0, value = 0.01, step = 0.05) ),
+      column(6,
+             numericInput("binTol", label = "bin tol. [ppm]", min = 0, value = 200, step = 5))
+    ),
+    actionButton("process", "Process spectra",
+                 icon = icon("redo"), style='padding:6px; font-size:80%'),
+    textOutput("info1", inline = FALSE),
+    textOutput("info2", inline = FALSE),
+    textOutput("info3", inline = FALSE),
+    width = 2L)
+  return(s)
+}
