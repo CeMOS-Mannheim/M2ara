@@ -12,7 +12,7 @@ preprocess <- function(spectra,
   }
 
   if(sqrtTransform) {
-    cat("Applying variance stabilitzation by sqrt-transfrom...\n")
+    cat("Applying variance stabilitzation by sqrt-transform...\n")
     spectra <- suppressWarnings(
       transformIntensity(spectra,
                       method = "sqrt")
@@ -38,5 +38,6 @@ preprocess <- function(spectra,
   }
 
   names(spectra) <- nm
+  cat("Preprocessing done.\n")
   return(spectra)
 }

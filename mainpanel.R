@@ -45,7 +45,6 @@ appMainPanel <- function() {
                                   )
                                 ),
                                 width = 9),
-
                        #### QC tab ####
                        tabPanel("QC",
                                 fluidRow(
@@ -72,7 +71,6 @@ appMainPanel <- function() {
                                          uiOutput(outputId = "summaryText"))
                                 )
                        ),
-
                        #### PCA tab ####
                        tabPanel("PCA",
                                 h4("PCA of single spectra"),
@@ -139,7 +137,6 @@ appMainPanel <- function() {
                                            withSpinner(color="#0dc5c1"))
                                 )
                        ),
-
                        #### LASSO tab #####
                        tabPanel("LASSO",
                                 h4("Feature importance using LASSO-model")  %>%
@@ -192,11 +189,9 @@ appMainPanel <- function() {
                                 h4("Hierarchical clustering"),
                                 fluidRow(
                                   column(6,
-                                         plotlyOutput("hclustPlot") %>%
-                                           withSpinner(color="#0dc5c1")),
+                                         plotlyOutput("hclustPlot")),
                                   column(6,
-                                         plotlyOutput("clustCurvesPlot") %>%
-                                           withSpinner(color="#0dc5c1"))
+                                         plotlyOutput("clustCurvesPlot"))
                                 ),
                                 fluidRow(
                                   column(2,
@@ -233,11 +228,9 @@ appMainPanel <- function() {
                                 ),
                                 fluidRow(
                                   column(6,
-                                         plotlyOutput("optNumClust")  %>%
-                                           withSpinner(color="#0dc5c1"))
+                                         plotlyOutput("optNumClust"))
                                 )
                        ),
-
                        #### Manual tab ####
                        tabPanel("Manual", htmltools::includeMarkdown("manual.md")
                        )

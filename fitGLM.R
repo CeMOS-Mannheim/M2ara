@@ -1,31 +1,16 @@
 fitGLM <- function(res, sigmoid = FALSE) {
 
-  intmat <- intensityMatrix(getSinglePeaks(res))
-
-  all_mz <- round(as.numeric(colnames(intmat)), digits = 3)
-
-  # filter out normalization mz
-  normMz <- getNormMz(res)
-
-  if(!is.null(normMz)) {
-    normMzIdx <- match.closest(normMz, all_mz)
-    intmat <- intmat[,-normMzIdx]
-    all_mz <- round(as.numeric(colnames(intmat)), digits = 3)
-  }
-
-  # select only those m/z values that were fitted to curves
-  intmat <- intmat[,which(all_mz %in% getAllMz(res))]
-  colnames(intmat) <- round(as.numeric(colnames(intmat)), digits = 2)
+  intmat <- getIntensityMatrix(res)
 
   df <-intmat %>%
     as_tibble(intmat) %>%
     mutate(conc = getConc(res))
 
   rec <- recipe(df, conc ~.) %>%
-    step_log(all_outcomes(), base = 10) %>% # x-axis has to be log10(conc)!
-    step_nzv(all_predictors()) %>%
-    step_normalize(all_predictors()) %>%
-    step_corr(all_predictors(), threshold = 0.95)
+    step_mutate_at(all_outcomes(), fn = transformConc2Log) %>% # x-axis has to be log10(conc)!
+    #step_nzv(all_predictors()) %>%
+    step_normalize(all_predictors()) #%>%
+    #step_corr(all_predictors(), threshold = 0.95)
 
 
   df_rdy <- prep(rec) %>%
@@ -63,8 +48,7 @@ getVi <- function(model, penalty) {
   vi <- model$model %>%
     finalize_model(tibble(penalty = 10^penalty)) %>%
     fit(data = model$prepData, formula = conc ~.) %>%
-    vip::vi_model(lambda = 10^penalty) %>%
-    filter(Importance > 0)
+    vip::vi_model(lambda = 10^penalty)
 
   return(vi)
 }

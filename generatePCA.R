@@ -1,17 +1,9 @@
 generatePCA <- function(res, num_PC, alpha = 1e-3, beta = 1e-3, verbose = FALSE, max_iter = 750) {
 
-  intmat <- intensityMatrix(getSinglePeaks(res))
-
-  # select only those m/z values that were fitted to curves
-  all_mz <- round(as.numeric(colnames(intmat)), digits = 3)
-
-  intmat <- intmat[,which(all_mz %in% getAllMz(res))]
-
-  colnames(intmat) <- round(as.numeric(colnames(intmat)), digits = 2)
+  intmat <- getIntensityMatrix(res)
 
   cat("Performing PCA...\n")
   scaled <- scale(intmat)
-
 
   pca <- spca(X = intmat,
        k = num_PC,
@@ -47,7 +39,10 @@ extractLoadings <- function(pca, sel1, sel2) {
   res <- pca$loadings %>%
     as_tibble(rownames = "mz") %>%
     mutate(mz = as.numeric(mz)) %>%
-    select(mz, {{sel}})
+    mutate(mzIdx = match.closest(x = mz,
+                                 table = getAllMz(RV$res),
+                                 tolerance = 0.1)) %>%
+    select(mzIdx, {{sel}})
 
   return(res)
 }

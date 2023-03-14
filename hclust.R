@@ -6,6 +6,8 @@ library(ggdendro)
 library(proxy)
 library(patchwork)
 library(zoo)
+library(dendextend)
+library(cluster)
 
 optimalNumClusters <- function(dend) {
   opt <- dendextend::find_k(dend, krange = 1:25)

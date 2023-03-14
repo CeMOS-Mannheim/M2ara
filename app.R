@@ -14,7 +14,7 @@ packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles",
              "shinycssloaders", "shinyhelper", "knitr", "shinybusy",
              "shinythemes", "shinyWidgets", "devtools", "ggpubr", "dendextend",
              "glmnet", "proxy", "sparsepca", "platetools", "ggdendro", "zoo",
-             "fs")
+             "fs", "cluster")
 
 ## Now load or install&load all
 package.check <- lapply(
@@ -58,7 +58,7 @@ ui <- fluidPage(
 #### Sever ####
 server <- function(input, output) {
 
-  #### helper functions ####
+  #### load functions ####
   source("preprocessFunction.R")
   source("plotFunctions.R")
   source("generatePCA.R")
@@ -67,6 +67,7 @@ server <- function(input, output) {
   source("hclust.R")
   source("getVolumes.R")
   source("generateSummaryText.R")
+  source("helpers.R")
 
   #### variables ####
   p_main <- ggplot()
@@ -139,11 +140,29 @@ server <- function(input, output) {
   observeEvent(input$load, {
     if(info_state() == "dir_set") {
       show_spinner()
-      spec_raw <- loadSpectra(selected_dir)
-      info_state("loaded")
+
+      # check if all spectra names are numeric/concentrations
+      # for later: if pos and neg ctrls are included
+      # checkSpecNames needs to return indices of the numeric folders
+      if(!checkSpecNames(selected_dir)) {
+        spec_raw <- loadSpectra(selected_dir)
+        info_state("loaded")
+      } else {
+        warning("Found folder names that could not be converted to numeric.
+                All folders/spectra need to have concentrations as names.\n")
+        hide_spinner()
+        return()
+      }
+
+      # make sure that the concentrations are in acending order
+      conc <- as.numeric(names(spec_raw))
+      spec_raw <- spec_raw[order(conc)]
+
       cat("check for empty spectra...\n")
       conc <- names(spec_raw)
-      peaks <- detectPeaks(spec_raw, SNR = input$SNR, method = "MAD")
+
+      # MAD would be faster but may fail in some circumstances...
+      peaks <- detectPeaks(spec_raw, SNR = input$SNR, method = "SuperSmoother")
       filPeaks <- vapply(peaks,
                          function(x) {
                            ifelse(length(mz(x)) > 0, TRUE, FALSE)
@@ -191,7 +210,7 @@ server <- function(input, output) {
       cat("processing done\n")
 
       stats <-   getPeakStatistics(res, FALSE) %>%
-        mutate(mz = round(as.numeric(mz), 3)) %>%
+        mutate(mz = as.numeric(mz)) %>%
         group_by(mz, mzIdx) %>%
         summarise(
           pIC50 = first(pIC50),
@@ -201,13 +220,9 @@ server <- function(input, output) {
           log2FC = log2(first(fc_window)),
           `abs. log2FC` = abs(log2FC)
         ) %>%
-        left_join(getFittingParameters(res, summarise = TRUE), by = join_by(mz)) %>%
-        select(-npar) %>%
-        ungroup() %>%
-        mutate_if(is.numeric, function(x)
-        {
-          round(x, 2)
-        })
+        # left_join(getFittingParameters(res, summarise = TRUE), by = join_by(mz)) %>%
+        # select(-npar) %>%
+        ungroup()
 
       RV <<- reactiveValues(res = res,
                             stats_original = stats, # copy of original stats for updates
@@ -231,7 +246,10 @@ server <- function(input, output) {
     # check if data is already prepared and if not show dummy table
     if(show_plot() == "TRUE") {
       tableData <- RV$stats %>%
-        select(-mzIdx)
+        mutate_if(is.numeric, function(x)
+        {
+          round(x, 3)
+        })
 
     } else {
       tableData <- tibble(mz = c("load", rep("", 9)),
@@ -261,7 +279,11 @@ server <- function(input, output) {
   observeEvent(input$process, {
     output$mzTable <- DT::renderDataTable({
       if(show_plot() == "TRUE") {
-        RV$stats
+        RV$stats %>%
+          mutate_if(is.numeric, function(x)
+          {
+            round(x, 2)
+          })
       }
     },
     server = TRUE,
@@ -454,7 +476,7 @@ server <- function(input, output) {
       loadings <- extractLoadings(RV$pca, input$pcaX, input$pcaY)
 
       RV$stats <- RV$stats_original %>%
-        left_join(loadings, by = join_by(mz))
+        left_join(loadings, by = join_by(mzIdx))
     }
   })
 
@@ -527,15 +549,22 @@ server <- function(input, output) {
 
   observeEvent(input$lasso2peaksTable, {
     if(!is.null(RV$model)) {
+
+      View(getVi(RV$model, penalty = input$penalty))
+
       vi <- getVi(RV$model, penalty = input$penalty) %>%
         mutate(Variable = readr::parse_number(Variable)) %>%
         mutate(`Lasso importance` = ifelse(Sign == "POS", Importance, -Importance)) %>%
         mutate(mz = as.numeric(Variable),
                `Lasso importance` = round(`Lasso importance`, digits = 4)) %>%
-        select(mz, `Lasso importance`)
+        select(mz, `Lasso importance`) %>%
+        mutate(mzIdx = match.closest(x = mz, table = getAllMz(RV$res), tolerance = 0.1)) %>%
+        filter(!`Lasso importance` == 0) %>%
+        select(-mz)
 
       RV$stats <- RV$stats_original %>%
-        left_join(vi, by = join_by(mz))
+
+        left_join(vi, by = join_by(mzIdx))
       cat("Updated peak table with lasso data.\n")
     }
   })
@@ -544,28 +573,33 @@ server <- function(input, output) {
   observeEvent(input$doHC, {
     output$hclustPlot <- renderPlotly({
       if(show_plot() == "TRUE") {
-
+        show_spinner()
         RV$hc <- doHClust(RV$res,
                           cut = input$num_cluster,
                           dist = input$hcDist,
                           clustMethod = input$hcMethod)
         p <- plotDendro(RV$hc$dend)
+        hide_spinner()
         return(ggplotly(p))
       }
     })
 
     output$clustCurvesPlot <- renderPlotly({
       if(show_plot() == "TRUE" & !is.null(RV$hc)) {
+        show_spinner()
         p <- plotClusterCurves(dend = RV$hc$dend,
                                tintmat = RV$hc$tintmat)
+        hide_spinner()
         return(ggplotly(p))
       }
     })
 
     output$optNumClust <- renderPlotly({
       if(show_plot() == "TRUE" & !is.null(RV$hc)) {
+        show_spinner()
         p <- optimalNumClustersPlot(RV$hc$opt,
                                     sel_k = input$num_cluster)
+        hide_spinner()
         return(ggplotly(p))
       }
     })

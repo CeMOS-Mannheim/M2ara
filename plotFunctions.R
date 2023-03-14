@@ -112,6 +112,7 @@ glmRegPlot <- function(model, penalty) {
 
 viPlot <- function(vi) {
   NumNonZeoroCoef <- vi %>%
+    filter(Importance > 0) %>%
     pull(Importance) %>%
     length()
 
