@@ -607,9 +607,12 @@ server <- function(input, output) {
 
   observeEvent(input$hc2peaksTable, {
     if(show_plot() == "TRUE" & !is.null(RV$hc)) {
-      clusters <- extractClusters(RV$hc$dend)
+      clusters <- extractClusters(RV$hc$dend) %>%
+        mutate(mzIdx = match.closest(x = mz, table = getAllMz(RV$res), tolerance = 0.1)) %>%
+        select(-mz)
+
       RV$stats <- RV$stats_original %>%
-        left_join(clusters, by = join_by(mz))
+        left_join(clusters, by = join_by(mzIdx))
       cat("Updated peak table with HC data.\n")
     }
   })

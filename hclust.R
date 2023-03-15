@@ -37,18 +37,11 @@ optimalNumClustersPlot <- function(opt, sel_k) {
 
 
 doHClust <- function(res, cut = 5, dist = "correlation", clustMethod = "ward.D2") {
-  avg <- getAvgSpectra(res)
-
-  intmat <- intensityMatrix(getAvgPeaks(res), spectra = avg)
-
-  # select only those m/z values that were fitted to curves
-  all_mz <- round(as.numeric(colnames(intmat)), digits = 3)
-
-  intmat <- intmat[,which(all_mz %in% getAllMz(res))]
-  colnames(intmat) <- round(as.numeric(colnames(intmat)), digits = 3)
+  intmat <- getIntensityMatrix(res, avg = TRUE)
+  conc <- names(getAvgSpectra(res))
 
   tintmat <- t(scale(intmat))
-  colnames(tintmat) <- names(avg)
+  colnames(tintmat) <- conc
 
   d <- proxy::dist(tintmat, method = dist)
   attr(d, "Labels") <- round(as.numeric(colnames(intmat)), digits = 2)
@@ -97,7 +90,7 @@ plotClusterCurves <- function(dend, tintmat) {
     rownames_to_column("label") %>%
     mutate(cluster = cluster) %>%
     gather(conc, int, -cluster, -label) %>%
-    mutate(conc = log10(as.numeric(conc))) %>%
+    mutate(conc = transformConc2Log(as.numeric(conc))) %>%
     group_by(conc, cluster) %>%
     summarise(meanInt = mean(int),
               n_mz = n()) %>%
