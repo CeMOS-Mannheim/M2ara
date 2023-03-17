@@ -155,10 +155,12 @@ plateMapPlot <- function(RV,
 
   switch(stat,
          "Concentration" = {
+           stat <- "Conc."
            df <- tibble(spot = spots,
                         val = as.numeric(names(spots)))
          },
          "Total Peak Intensity" = {
+           stat <- "Total peak int."
            df <- tibble(spot = spots,
                         val = vapply(getSinglePeaks(res),
                                      function(x) {
@@ -166,6 +168,7 @@ plateMapPlot <- function(RV,
                                      }, numeric(1)))
          },
          "Normalization factor" = {
+           stat <- "Norm. factor"
            df <- tibble(spot = spots,
                         val = getAppliedNormFactors(res))
          },
@@ -181,6 +184,7 @@ plateMapPlot <- function(RV,
          },
          "Selected-mz" = {
            if(!is.null(mz_idx)) {
+             stat <- paste0("m/z=", round(getMzFromMzIdx(res, mzIdx = mz_idx), digits = 2))
              int <- getSingleSpecIntensity(res, mz_idx = mz_idx)
            } else {
              int <- rep(NA_integer_, length(spots))
@@ -204,6 +208,11 @@ plateMapPlot <- function(RV,
                  val = RV$pca[[1]] %>% pull(xnum),
                  spot = spots)
              }
+           } else {
+             stat <- "No PCA data"
+             df <- tibble(
+               val = rep(NA_integer_, length(spots)),
+               spot = spots)
            }
          },
          "PC-y" = {
@@ -221,6 +230,11 @@ plateMapPlot <- function(RV,
                  val = RV$pca[[1]] %>% pull(ynum),
                  spot = spots)
              }
+           } else {
+             stat <- "No PCA data"
+             df <- tibble(
+               val = rep(NA_integer_, length(spots)),
+               spot = spots)
            }
          },
          "LASSO-error" = {
@@ -238,6 +252,11 @@ plateMapPlot <- function(RV,
              } else {
                stat <- "Abs. error"
              }
+           } else {
+             stat <- "No LASSO data"
+             df <- tibble(
+               val = rep(NA_integer_, length(spots)),
+               spot = spots)
            }
          })
 
@@ -254,12 +273,6 @@ plateMapPlot <- function(RV,
     p <- p +
       scale_fill_viridis_c()
   }
-
-  if(stat == "Selected-mz") {
-    p <- p +
-      labs(caption = paste0("m/z=", round(getMzFromMzIdx(res, mzIdx = mz_idx), digits = 2)))
-  }
-
 
   return(p)
 }
