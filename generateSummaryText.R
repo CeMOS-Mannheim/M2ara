@@ -32,17 +32,22 @@ generateSummaryText <- function(object) {
                      "\n", normStr)
 
 
-
   if (object@settings$SinglePointRecal) {
     singlePointRecalStr<- c(paste("Single point recalibation on", mz, "with", tol, "Da tolerance."),
                             paste("Avg. mass shift before recal.:", meanMzShift, "Da. Max abs. shift:", absMaxMzShift, "Da."),
                             paste("Avg. mass shift after recal. :", round(mzdev$mean, 4), "Da. Max abs. shift:", round(mzdev$meanAbs, 4), "Da."),
                             "\n")
   }
+  if(object@settings$monoisotopicFilter) {
+    numPeaksStr <- c(paste0("Found ", numPeaksTotal, " <strong>monoisotopic peaks</strong> (SNR ", getSNR(object), ") and ", hiVarPeaks, " high variance peaks"),
+                     paste("using variance filtering method:", paste0(varFilterMethod, ".")),
+                     "\n")
+  } else {
+    numPeaksStr <- c(paste0("Found ", numPeaksTotal, " peaks (SNR ", getSNR(object), ") and ", hiVarPeaks, " high variance peaks"),
+                     paste("using variance filtering method:", paste0(varFilterMethod, ".")),
+                     "\n")
+  }
 
-  numPeaksStr <- c(paste0("Found ", numPeaksTotal, " peaks (SNR ", getSNR(object), ") and ", hiVarPeaks, " high variance peaks"),
-                   paste("using variance filtering method:", paste0(varFilterMethod, ".")),
-                   "\n")
 
   # merge meta data
   metaData <- MALDIquant:::.mergeMetaData(
