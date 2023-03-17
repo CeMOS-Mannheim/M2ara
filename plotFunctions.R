@@ -134,11 +134,21 @@ viPlot <- function(vi) {
   return(p)
 }
 
-plateMapPlot <- function(res,
-                         stat = c("Concentration", "Total Peak Intensity", "Normalization factor", "Recal-shift", "Selected-mz"),
+plateMapPlot <- function(RV,
+                         stat = c("Concentration",
+                                  "Total Peak Intensity",
+                                  "Normalization factor",
+                                  "Recal-shift",
+                                  "Selected-mz",
+                                  "PC-x",
+                                  "PC-y",
+                                  "LASSO-error"),
+                         PCs,
+                         penalty,
                          mz_idx = NULL,
                          format = 384,
                          log10 = FALSE) {
+  res <- RV$res
   stat <- match.arg(stat)
 
   spots <- getSpots(res)
@@ -176,8 +186,59 @@ plateMapPlot <- function(res,
              int <- rep(NA_integer_, length(spots))
            }
 
-          df <- tibble(spot = spots,
-                       val = int)
+           df <- tibble(spot = spots,
+                        val = int)
+         },
+         "PC-x" = {
+           if(!is.null(RV$pca)) {
+             xnum <- parse_number(PCs[1])
+             if(log10) {
+               stat <- paste("Abs.", PCs[1])
+               df <- tibble(
+                 val = RV$pca[[1]] %>% pull(xnum),
+                 spot = spots) %>%
+                 mutate(val = (val-min(val))/(max(val)-min(val))*100)
+             } else {
+             stat <- PCs[1]
+               df <- tibble(
+                 val = RV$pca[[1]] %>% pull(xnum),
+                 spot = spots)
+             }
+           }
+         },
+         "PC-y" = {
+           if(!is.null(RV$pca)) {
+             ynum <- parse_number(PCs[2])
+             if(log10) {
+               stat <- paste("Abs.", PCs[2])
+               df <- tibble(
+                 val = RV$pca[[1]] %>% pull(ynum),
+                 spot = spots) %>%
+                 mutate(val = (val-min(val))/(max(val)-min(val))*100)
+             } else {
+               stat <- PCs[2]
+               df <- tibble(
+                 val = RV$pca[[1]] %>% pull(ynum),
+                 spot = spots)
+             }
+           }
+         },
+         "LASSO-error" = {
+           if(!is.null(RV$model)) {
+             df <- RV$model$model %>%
+               finalize_model(tibble(penalty = 10^penalty)) %>%
+               fit(data = RV$model$prepData, formula = conc ~.) %>%
+               predict(RV$model$prepData) %>%
+               mutate(truth = pull(RV$model$prepData, conc)) %>%
+               mutate(val = abs(truth - .pred),
+                      spot = spots)
+
+             if(log10) {
+               stat <- "log10(Abs. error)"
+             } else {
+               stat <- "Abs. error"
+             }
+           }
          })
 
 
@@ -187,8 +248,8 @@ plateMapPlot <- function(res,
     theme_minimal(base_size = 16)
 
   if(log10) {
-   p <- p  +
-     scale_fill_viridis_c(trans = "log10")
+    p <- p  +
+      scale_fill_viridis_c(trans = "log10")
   } else {
     p <- p +
       scale_fill_viridis_c()

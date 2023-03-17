@@ -1,4 +1,13 @@
 generateSummaryText <- function(object) {
+  # helper functions
+  parentDir <- function(path, times) {
+    newPath <- path
+    for(i in 1:times) {
+      newPath <- dirname(newPath)
+    }
+    return(newPath)
+  }
+
   mz <- round(getNormMz(object), digits = 2)
   varFilterMethod <- getVarFilterMethod(object)
   tol <- getNormMzTol(object)
@@ -17,8 +26,7 @@ generateSummaryText <- function(object) {
   }
 
 
-  mzConcNormStr <- c("MALDIassay object",
-                     "\n",
+  mzConcNormStr <- c("<h4>MALDIassay object</h4>",
                      paste("Including", length(unique(conc)), "concentrations,\n"),
                      paste("ranging from", min(conc), "to", max(conc), "."),
                      "\n", normStr)
@@ -32,16 +40,31 @@ generateSummaryText <- function(object) {
                             "\n")
   }
 
-  numPeaksStr <- c(paste("Found ", numPeaksTotal, " peaks (SNR ", getSNR(object), ") and ", hiVarPeaks, " high variance peaks"),
+  numPeaksStr <- c(paste0("Found ", numPeaksTotal, " peaks (SNR ", getSNR(object), ") and ", hiVarPeaks, " high variance peaks"),
                    paste("using variance filtering method:", paste0(varFilterMethod, ".")),
                    "\n")
 
+  # merge meta data
+  metaData <- MALDIquant:::.mergeMetaData(
+    lapply(getAvgSpectra(object),
+           function(x) {
+             x@metaData
+           })
+  )
+  # format meta data
+  head <- c("<h4>Measurement method</h4>")
+  instrument <- paste("<strong>Instrument:</strong>", metaData$instrument, metaData$spectrometerType, metaData$tofMode, "\n")
+  method <- paste("<strong>Method:</strong>", metaData$acquisitionMethod, "\n")
+  laser <- paste0("<strong>Laser:</strong> ", metaData$laserAttenuation, "%, ", metaData$laserShots, " shots @", metaData$laserShots/1e3, " kHz\n")
+  path <- paste("<strong>Path:</strong>", parentDir(metaData$path[1], 4), "\n")
+
+  instrumentSettingStr <- c(head, instrument, laser, method, path)
+
   if(object@settings$SinglePointRecal) {
-    outputStr <- c(mzConcNormStr, singlePointRecalStr, numPeaksStr)
+    outputStr <- c(mzConcNormStr, singlePointRecalStr, numPeaksStr, instrumentSettingStr)
     return(outputStr)
   }
 
-  outputStr <- c(mzConcNormStr, numPeaksStr)
+  outputStr <- c(mzConcNormStr, numPeaksStr, instrumentSettingStr)
   return(outputStr)
-
 }

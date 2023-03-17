@@ -59,7 +59,10 @@ appMainPanel <- function() {
                                                                  "Total Peak Intensity",
                                                                  "Normalization factor",
                                                                  "Recal-shift",
-                                                                 "Selected-mz"),
+                                                                 "Selected-mz",
+                                                                 "PC-x",
+                                                                 "PC-y",
+                                                                 "LASSO-error"),
                                                      multiple = FALSE,
                                                      selected = "Recal-shift")),
                                   column(2, checkboxInput("plateScale", label = "Log10 scale"))
@@ -154,21 +157,33 @@ appMainPanel <- function() {
                                          actionButton(inputId = "doGLM",
                                                       label = "Fit model",
                                                       icon = icon("chart-line"))
-                                  )
-                                ),
-                                fluidRow(
-                                  column(2,
-                                         sliderInput(inputId = "penalty",
-                                                     label = "Log(L1-Penalty)",
-                                                     min = -10,
-                                                     max = 0,
-                                                     value = -5,
-                                                     step = 0.1)
                                   ),
                                   column(2,
                                          checkboxInput(inputId = "sigmoidModel",
                                                        label = "Sigmoid-fit",
-                                                       value = FALSE)
+                                                       value = FALSE,
+                                                       width = "60%")
+                                  ),
+                                  column(2,
+                                         checkboxInput(inputId = "elasticNet",
+                                                       label = "Elastic net",
+                                                       value = FALSE,
+                                                       width = "60%")
+                                  )
+                                ),
+                                fluidRow(
+                                  column(2,
+                                         fluidRow(
+                                           sliderInput(inputId = "penalty",
+                                                       label = "Log(Penalty)",
+                                                       min = -10,
+                                                       max = 0,
+                                                       value = -5,
+                                                       step = 0.1)
+                                         ),
+                                         fluidRow(
+                                           textOutput("mixture")
+                                         )
                                   )
                                 ),
                                 fluidRow(

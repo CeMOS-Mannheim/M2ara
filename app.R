@@ -14,7 +14,7 @@ packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles",
              "shinycssloaders", "shinyhelper", "knitr", "shinybusy",
              "shinythemes", "shinyWidgets", "devtools", "ggpubr", "dendextend",
              "glmnet", "proxy", "sparsepca", "platetools", "ggdendro", "zoo",
-             "fs", "cluster")
+             "fs", "cluster", "shinyjs")
 
 ## Now load or install&load all
 package.check <- lapply(
@@ -137,6 +137,21 @@ server <- function(input, output) {
   })
 
   #### load spectra ####
+  # disable load button if no dir is set
+  disable("load")
+  # disable process button if no spectra are loaded
+  disable("process")
+
+  # enable buttons when state is reached
+  observeEvent(info_state(), {
+    if(info_state() == "dir_set") {
+      enable("load")
+    }
+    if(info_state() == "loaded") {
+      enable("process")
+    }
+  })
+
   observeEvent(input$load, {
     if(info_state() == "dir_set") {
       show_spinner()
@@ -196,6 +211,7 @@ server <- function(input, output) {
                    unit = input$concUnits,
                    normMeth = input$normMeth,
                    SinglePointRecal = input$SinglePointRecal,
+                   monoisotopicFilter = input$monoisotopicFilter,
                    normMz = input$normMz,
                    normTol = input$normTol,
                    binTol = input$binTol * 1e-6, # convert to ppm
@@ -367,8 +383,10 @@ server <- function(input, output) {
   # platemap
   output$platemap <- renderPlot({
     if(show_plot() == "TRUE") {
-      plateMapPlot(RV$res,
+      plateMapPlot(RV,
                    stat = input$plateStat,
+                   PCs = c(input$pcaX, input$pcaY),
+                   penalty = input$penalty,
                    log10 = input$plateScale,
                    mz_idx = input$mzTable_rows_selected[1])
     }
@@ -376,8 +394,10 @@ server <- function(input, output) {
 
   # summary
   output$summaryText <-  output$myText <- renderUI({
-    text <- paste0(generateSummaryText(RV$res), collapse = "<br>")
-    HTML(text)
+    if(info_state() == "processed") {
+      text <- markdown(paste0(generateSummaryText(RV$res), collapse = "<br>"))
+      text
+    }
   })
 
   #### PCA tab ####
@@ -481,7 +501,10 @@ server <- function(input, output) {
   })
 
   #### LASSO tab #####
-
+  # inital dummy text output
+  output$mixture <- renderText({
+    paste("Mixture = 1")
+  })
   output$glmTruePred <- renderPlotly({
     # dummy plot
     p <- tibble(label = "Fit model\nto display plot",
@@ -517,8 +540,20 @@ server <- function(input, output) {
 
       cat("starting model fit...\n")
       show_spinner()
-      RV$model <- fitGLM(RV$res, sigmoid = input$sigmoidModel)
+      RV$model <- fitGLM(RV$res,
+                         sigmoid = input$sigmoidModel,
+                         elasticNet = input$elasticNet)
       updateSliderInput(inputId = "penalty", value = log10(RV$model$penalty))
+      if(input$elasticNet) {
+        output$mixture <- renderText({
+          paste("Mixture =", round(RV$model$mixture, 2))
+        })
+      } else {
+        output$mixture <- renderText({
+          paste("Mixture = 1")
+        })
+      }
+
       cat("model fitted.\n")
       hide_spinner()
 
