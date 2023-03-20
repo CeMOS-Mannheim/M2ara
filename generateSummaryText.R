@@ -1,4 +1,4 @@
-generateSummaryText <- function(object) {
+generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoisotopicFilter) {
   # helper functions
   parentDir <- function(path, times) {
     newPath <- path
@@ -26,11 +26,23 @@ generateSummaryText <- function(object) {
   }
 
 
-  mzConcNormStr <- c("<h4>MALDIassay object</h4>",
-                     paste("Including", length(unique(conc)), "concentrations,\n"),
-                     paste("ranging from", min(conc), "to", max(conc), "."),
-                     "\n", normStr)
+  concStr <- c("<h4>MALDIassay object</h4>",
+              paste("Including", length(unique(conc)), "concentrations,\n"),
+              paste("ranging from", min(conc), "to", max(conc), "."),
+              "\n")
 
+  # Compose processing steps
+  if(any(sqrtTrans, smooth, rmBl, monoisotopicFilter)) {
+    preprocessStr <- paste0("<ul>",
+                            ifelse(sqrtTrans, "<li>Square-root transformation</li>", ""),
+                            ifelse(smooth, "<li>Savitzky Golay smoothing (half-window size = 3)</li>", ""),
+                            ifelse(rmBl, "<li>Baseline removal (TopHat, half-window size = 3)</li>", ""),
+                            ifelse(monoisotopicFilter, "<li>Monoisotopic peak filter</li>", ""),
+                            "</ul>"
+    )
+  } else (
+    preprocessStr <- "No processing steps applied.\n\n"
+  )
 
   if (object@settings$SinglePointRecal) {
     singlePointRecalStr<- c(paste("Single point recalibation on", mz, "with", tol, "Da tolerance."),
@@ -66,10 +78,10 @@ generateSummaryText <- function(object) {
   instrumentSettingStr <- c(head, instrument, laser, method, path)
 
   if(object@settings$SinglePointRecal) {
-    outputStr <- c(mzConcNormStr, singlePointRecalStr, numPeaksStr, instrumentSettingStr)
+    outputStr <- c(concStr, preprocessStr, normStr, singlePointRecalStr, numPeaksStr, instrumentSettingStr)
     return(outputStr)
   }
 
-  outputStr <- c(mzConcNormStr, numPeaksStr, instrumentSettingStr)
+  outputStr <- c(concStr, preprocessStr, normStr, numPeaksStr, instrumentSettingStr)
   return(outputStr)
 }

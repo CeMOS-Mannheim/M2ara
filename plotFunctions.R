@@ -265,9 +265,11 @@ plateMapPlot <- function(RV,
 
 
 
-  p <- platetools::raw_map(data = df$val, well = df$spot, plate = format) +
+  p <- suppressWarnings(
+    platetools::raw_map(data = df$val, well = df$spot, plate = format) +
     labs(fill = stat) +
     theme_minimal(base_size = 16)
+    )
 
   if(log10) {
     p <- p  +

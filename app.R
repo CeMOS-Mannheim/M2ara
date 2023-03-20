@@ -99,6 +99,7 @@ server <- function(input, output) {
 
   #### main #####
   RV <<- reactiveValues(res = NULL,
+                        preprocessing = NULL,
                         stats_original = NULL,
                         stats = NULL,
                         specIdx = 1,
@@ -254,11 +255,14 @@ server <- function(input, output) {
           log2FC = log2(first(fc_window)),
           `abs. log2FC` = abs(log2FC)
         ) %>%
-        # left_join(getFittingParameters(res, summarise = TRUE), by = join_by(mz)) %>%
-        # select(-npar) %>%
         ungroup()
 
       RV <<- reactiveValues(res = res,
+                            preprocessing = data.frame(
+                              smooth = input$smooth,
+                              rmBl = input$rmBl,
+                              sqrtTrans = input$sqrtTrans,
+                              monoisotopicFilter = input$monoisotopicFilter),
                             stats_original = stats, # copy of original stats for updates
                             stats = stats,
                             specIdx = 1,
@@ -411,11 +415,18 @@ server <- function(input, output) {
   })
 
   # summary
-  output$summaryText <-  output$myText <- renderUI({
+  observeEvent(input$process, {
+  output$summaryText <- renderUI({
     if(info_state() == "processed") {
-      text <- markdown(paste0(generateSummaryText(RV$res), collapse = "<br>"))
+      text <- markdown(paste0(generateSummaryText(RV$res,
+                                                  smooth = RV$preprocessing$smooth,
+                                                  rmBl = RV$preprocessing$rmBl,
+                                                  sqrtTrans = RV$preprocessing$sqrtTrans,
+                                                  monoisotopicFilter = RV$preprocessing$monoisotopicFilter),
+                              collapse = "<br>"))
       text
     }
+  })
   })
 
   #### PCA tab ####
@@ -603,8 +614,6 @@ server <- function(input, output) {
 
   observeEvent(input$lasso2peaksTable, {
     if(!is.null(RV$model)) {
-
-      View(getVi(RV$model, penalty = input$penalty))
 
       vi <- getVi(RV$model, penalty = input$penalty) %>%
         mutate(Variable = readr::parse_number(Variable)) %>%
