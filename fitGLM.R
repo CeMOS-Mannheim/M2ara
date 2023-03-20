@@ -1,6 +1,7 @@
-fitGLM <- function(res, sigmoid = FALSE, elasticNet = FALSE) {
+fitGLM <- function(res, sigmoid = FALSE, elasticNet = FALSE, corFilter = TRUE) {
 
   intmat <- getIntensityMatrix(res)
+  cat("Number of features before preprocessing:", dim(intmat)[2], "\n")
 
   df <-intmat %>%
     as_tibble(intmat) %>%
@@ -8,13 +9,20 @@ fitGLM <- function(res, sigmoid = FALSE, elasticNet = FALSE) {
 
   rec <- recipe(df, conc ~.) %>%
     step_mutate_at(all_outcomes(), fn = transformConc2Log) %>% # x-axis has to be log10(conc)!
-    #step_nzv(all_predictors()) %>%
-    step_normalize(all_predictors()) #%>%
-  #step_corr(all_predictors(), threshold = 0.95)
+    step_nzv(all_predictors()) %>%
+    step_normalize(all_predictors())
+
+  if(corFilter) {
+    rec <- rec %>%
+      step_corr(all_predictors(), threshold = 0.975)
+  }
+
 
 
   df_rdy <- prep(rec) %>%
     bake(new_data = NULL)
+
+  cat("Number of features after preprocessing:", dim(df_rdy)[2]-1, "\n")
 
   if(elasticNet) {
     glm <- linear_reg(penalty = tune(), mixture = tune()) %>%

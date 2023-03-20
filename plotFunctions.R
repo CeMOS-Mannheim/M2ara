@@ -168,7 +168,10 @@ plateMapPlot <- function(RV,
                                      }, numeric(1)))
          },
          "Normalization factor" = {
-           stat <- "Norm. factor"
+
+           normMz <- getNormMz(RV$res)
+           normTol <- getNormMzTol(RV$res)
+           stat <- paste0("Norm. factor\n","mz=", normMz, "+/-", normTol)
            df <- tibble(spot = spots,
                         val = getAppliedNormFactors(res))
          },

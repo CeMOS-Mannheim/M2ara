@@ -169,6 +169,12 @@ appMainPanel <- function() {
                                                        label = "Elastic net",
                                                        value = FALSE,
                                                        width = "60%")
+                                  ),
+                                  column(2,
+                                         checkboxInput(inputId = "corFilter",
+                                                       label = "Corr. filter",
+                                                       value = FALSE,
+                                                       width = "60%")
                                   )
                                 ),
                                 fluidRow(

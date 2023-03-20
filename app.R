@@ -38,6 +38,21 @@ knit("manual.Rmd", quiet = TRUE)
 #### load UI functions
 source("sidebar.R")
 source("mainpanel.R")
+source("writeDefaults.R")
+
+#### check for defaults ####
+if(!file.exists("defaults.conf")) {
+  # check if there is a defaults file
+  # create it if not
+  writeDefaults()
+}
+
+if(!file.exists("defaults.conf")) {
+  # this check should be redundant but we need to make sure we have defaults
+  # to load
+  stop("No defaults.conf file found. Was not able to create it.\n")
+}
+defaults <- read.csv("defaults.conf")
 
 #### UI ####
 ui <- fluidPage(
@@ -48,7 +63,7 @@ ui <- fluidPage(
   # shiny sidebar layout
   sidebarLayout(
     #### Sidebar ####
-    sidebarPanel = appSidebar(),
+    sidebarPanel = appSidebar(defaults),
 
     #### Main panel ####
     mainPanel = appMainPanel()
@@ -68,6 +83,7 @@ server <- function(input, output) {
   source("getVolumes.R")
   source("generateSummaryText.R")
   source("helpers.R")
+
 
   #### variables ####
   p_main <- ggplot()
@@ -95,6 +111,8 @@ server <- function(input, output) {
 
   vol <- tolower(getVolumes())
   names(vol) <- str_remove(vol, ":")
+
+
 
   #### choose dir ####
   shinyDirChoose(input,
@@ -542,7 +560,8 @@ server <- function(input, output) {
       show_spinner()
       RV$model <- fitGLM(RV$res,
                          sigmoid = input$sigmoidModel,
-                         elasticNet = input$elasticNet)
+                         elasticNet = input$elasticNet,
+                         corFilter = input$corFilter)
       updateSliderInput(inputId = "penalty", value = log10(RV$model$penalty))
       if(input$elasticNet) {
         output$mixture <- renderText({
