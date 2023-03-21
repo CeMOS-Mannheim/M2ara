@@ -1,4 +1,4 @@
-appMainPanel <- function() {
+appMainPanel <- function(defaults) {
   m <- mainPanel(
     shiny::tabsetPanel(type = "tabs",
 
@@ -9,7 +9,7 @@ appMainPanel <- function() {
                                          materialSwitch(
                                            inputId = "errorbars",
                                            label = "Errorbars",
-                                           value = FALSE,
+                                           value = defaults$errorbars,
                                            status = "primary")
                                   ),
                                   column(1,
@@ -22,7 +22,10 @@ appMainPanel <- function() {
                                   column(2,
                                          sliderInput(inputId = "zoom",
                                                      label = "zoom",
-                                                     min = 0.1, max = 25, value = 4, ticks = FALSE))
+                                                     min = 0.1,
+                                                     max = 25,
+                                                     value = defaults$zoom,
+                                                     ticks = FALSE))
                                 ),
                                 column(6,
                                        plotlyOutput('curve') %>%
@@ -64,8 +67,10 @@ appMainPanel <- function() {
                                                                  "PC-y",
                                                                  "LASSO-error"),
                                                      multiple = FALSE,
-                                                     selected = "Recal-shift")),
-                                  column(2, checkboxInput("plateScale", label = "Log10 scale"))
+                                                     selected = defaults$plateStat)),
+                                  column(2, checkboxInput("plateScale",
+                                                          label = "Log10 scale",
+                                                          value = defaults$plateScale))
                                 ),
                                 fluidRow(
                                   column(6,
@@ -90,40 +95,40 @@ appMainPanel <- function() {
                                                      label = "Log(L1-Penalty)",
                                                      min = -10,
                                                      max = 0,
-                                                     value = -3,
+                                                     value = defaults$pcaAlpha,
                                                      step = 0.1)),
                                   column(2,
                                          sliderInput(inputId = "pcaBeta",
                                                      label = "Log(L2-Penalty)",
                                                      min = -10,
                                                      max = 0,
-                                                     value = -3,
+                                                     value = defaults$pcaBeta,
                                                      step = 0.1)),
                                   column(1,
                                          selectInput(inputId = "pcaX",
                                                      label = "x-axis",
                                                      choices = paste0("PC", 1:5),
                                                      multiple = FALSE,
-                                                     selected = "PC1")
+                                                     selected = defaults$pcaX)
                                   ),
                                   column(1,
                                          selectInput(inputId = "pcaY",
                                                      label = "y-axis",
                                                      choices = paste0("PC", 1:5),
                                                      multiple = FALSE,
-                                                     selected = "PC2")
+                                                     selected = defaults$pcaY)
                                   ),
                                   column(1,
                                          selectInput(inputId = "pcaEllipse",
                                                      label = "Ellipse size",
                                                      choices = c(0.5, 0.67, 0.95, 0.99),
                                                      multiple = FALSE,
-                                                     selected = 0.67)),
+                                                     selected = defaults$pcaEllipse)),
                                   column(1,
                                          materialSwitch(
                                            inputId = "simpleLoadings",
                                            label = "Summarise loadings",
-                                           value = FALSE,
+                                           value = defaults$simpleLoadings,
                                            status = "primary")
                                   ),
                                   column(2,
@@ -161,19 +166,19 @@ appMainPanel <- function() {
                                   column(2,
                                          checkboxInput(inputId = "sigmoidModel",
                                                        label = "Sigmoid-fit",
-                                                       value = FALSE,
+                                                       value = defaults$sigmoidModel,
                                                        width = "60%")
                                   ),
                                   column(2,
                                          checkboxInput(inputId = "elasticNet",
                                                        label = "Elastic net",
-                                                       value = FALSE,
+                                                       value = defaults$elasticNet,
                                                        width = "60%")
                                   ),
                                   column(2,
                                          checkboxInput(inputId = "corFilter",
                                                        label = "Corr. filter",
-                                                       value = FALSE,
+                                                       value = defaults$corrFilter,
                                                        width = "60%")
                                   )
                                 ),
@@ -184,7 +189,7 @@ appMainPanel <- function() {
                                                        label = "Log(Penalty)",
                                                        min = -10,
                                                        max = 0,
-                                                       value = -5,
+                                                       value = defaults$penalty,
                                                        step = 0.1)
                                          ),
                                          fluidRow(
@@ -224,7 +229,7 @@ appMainPanel <- function() {
                                                      label = "Number of cluster",
                                                      min = 2,
                                                      max = 25,
-                                                     value = 4,
+                                                     value = defaults$num_cluster,
                                                      step = 1)),
                                   column(2,
                                          selectInput(inputId = "hcDist",
@@ -232,7 +237,7 @@ appMainPanel <- function() {
                                                                  "Manhattan",
                                                                  "correlation",
                                                                  "cosine"),
-                                                     selected = "Euclidean",
+                                                     selected = defaults$hcDist,
                                                      label = "Distance metric",
                                                      multiple = FALSE)),
                                   column(2,
@@ -240,7 +245,7 @@ appMainPanel <- function() {
                                                      choices = c("complete",
                                                                  "ward.D2",
                                                                  "average"),
-                                                     selected = "average",
+                                                     selected = defaults$hcMethod,
                                                      label = "Cluster method",
                                                      multiple = FALSE)),
                                   column(2, actionButton(inputId = "hc2peaksTable",
@@ -250,6 +255,17 @@ appMainPanel <- function() {
                                 fluidRow(
                                   column(6,
                                          plotlyOutput("optNumClust"))
+                                )
+                       ),
+                       #### Settings ####
+                       tabPanel("Settings",
+                                fluidRow(
+                                  column(2,
+                                         actionButton("saveSettings",
+                                                      style='padding:6px; font-size:80%',
+                                                      label = "Save settings",
+                                                      icon = icon("floppy-disk"))
+                                  )
                                 )
                        ),
                        #### Manual tab ####

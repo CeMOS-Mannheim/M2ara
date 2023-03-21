@@ -38,21 +38,10 @@ knit("manual.Rmd", quiet = TRUE)
 #### load UI functions
 source("sidebar.R")
 source("mainpanel.R")
-source("writeDefaults.R")
+source("defaultSettingsHandler.R")
 
-#### check for defaults ####
-if(!file.exists("defaults.conf")) {
-  # check if there is a defaults file
-  # create it if not
-  writeDefaults()
-}
-
-if(!file.exists("defaults.conf")) {
-  # this check should be redundant but we need to make sure we have defaults
-  # to load
-  stop("No defaults.conf file found. Was not able to create it.\n")
-}
-defaults <- read.csv("defaults.conf")
+defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf",
+                                    defaultsFile = "defaults.conf")
 
 #### UI ####
 ui <- fluidPage(
@@ -66,7 +55,7 @@ ui <- fluidPage(
     sidebarPanel = appSidebar(defaults),
 
     #### Main panel ####
-    mainPanel = appMainPanel()
+    mainPanel = appMainPanel(defaults)
   )
 )
 
@@ -98,13 +87,16 @@ server <- function(input, output) {
   loaded <- reactiveVal("FALSE")
 
   #### main #####
-  RV <<- reactiveValues(res = NULL,
-                        preprocessing = NULL,
-                        stats_original = NULL,
+  RV <<- reactiveValues(selected_dir = NULL,
+                        res = NULL, # MALDIcellassay object
+                        spec_all = NULL, # all spectra
+                        spec_idx = NULL, # indices of non-empty spectra
+                        preprocessing = NULL, # preprocessing
+                        stats_original = NULL, # original stats
                         stats = NULL,
                         specIdx = 1,
                         maxSpecIdx = 1,
-                        pspec = NULL,
+                        pspec = NULL, # spectra plots
                         pca = NULL,
                         model = NULL,
                         hc = NULL,
@@ -113,7 +105,15 @@ server <- function(input, output) {
   vol <- tolower(getVolumes())
   names(vol) <- str_remove(vol, ":")
 
+  defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf",
+                                      defaultsFile = "defaults.conf")
 
+  # check if "dir" is set in defaults
+  if(!is.null(defaults$dir)) {
+    RV$selected_dir <- defaults$dir
+    cat("Dir set from loaded default value.\n")
+    info_state("dir_set")
+  }
 
   #### choose dir ####
   shinyDirChoose(input,
@@ -125,8 +125,8 @@ server <- function(input, output) {
   observeEvent(input$dir, {
     # check if folder was selected
     # prepare info massage
-    selected_dir <<- parseDirPath(vol, input$dir)
-    if(length(selected_dir)>0) {
+    RV$selected_dir <- parseDirPath(vol, input$dir)
+    if(length(RV$selected_dir)>0) {
       info_state("dir_set")
     }
   })
@@ -140,17 +140,17 @@ server <- function(input, output) {
     }
     if(info_state() == "dir_set") {
       output$info1 <- renderText("Selected:")
-      output$info2 <- renderText(selected_dir)
+      output$info2 <- renderText(RV$selected_dir)
       output$info3 <- renderText("Press load button.")
     }
     if(info_state() == "loaded") {
       output$info1 <- renderText("Loaded:")
-      output$info2 <- renderText(selected_dir)
+      output$info2 <- renderText(RV$selected_dir)
       output$info3 <- renderText("Press process button.")
     }
     if(info_state() == "processed") {
       output$info1 <- renderText(("Dataset:"))
-      output$info2 <- renderText(selected_dir)
+      output$info2 <- renderText(RV$selected_dir)
       output$info3 <- renderText("If you change settings, press process again to apply them.")
     }
   })
@@ -178,8 +178,8 @@ server <- function(input, output) {
       # check if all spectra names are numeric/concentrations
       # for later: if pos and neg ctrls are included
       # checkSpecNames needs to return indices of the numeric folders
-      if(!checkSpecNames(selected_dir)) {
-        spec_raw <- loadSpectra(selected_dir)
+      if(!checkSpecNames(RV$selected_dir)) {
+        spec_raw <- loadSpectra(RV$selected_dir)
         info_state("loaded")
       } else {
         warning("Found folder names that could not be converted to numeric.
@@ -194,19 +194,17 @@ server <- function(input, output) {
 
       cat("check for empty spectra...\n")
       conc <- names(spec_raw)
+      RV$spec_all <- spec_raw
 
       # MAD would be faster but may fail in some circumstances...
-      peaks <- detectPeaks(spec_raw, SNR = input$SNR, method = "SuperSmoother")
-      filPeaks <- vapply(peaks,
-                         function(x) {
-                           ifelse(length(mz(x)) > 0, TRUE, FALSE)
-                         },
-                         FUN.VALUE = TRUE)
-      cat(sum(filPeaks), "/", length(spec_raw), "spectra retained.\n")
-      peaks_fil <- peaks[filPeaks]
+      peaks <- detectPeaks(RV$spec_all, SNR = input$SNR, method = "SuperSmoother")
+      RV$spec_idx <- vapply(peaks,
+                            function(x) {
+                              ifelse(length(mz(x)) > 0, TRUE, FALSE)
+                            },
+                            FUN.VALUE = TRUE)
+      cat(sum(RV$spec_idx), "/", length(RV$spec_all), "spectra retained.\n")
 
-      spec_raw <<- spec_raw[filPeaks]
-      names(spec_raw) <- conc[filPeaks]
       hide_spinner()
     }
   })
@@ -217,7 +215,7 @@ server <- function(input, output) {
       show_spinner()
 
       cat("start processing...\n")
-      spec_prc <- preprocess(spectra = spec_raw,
+      spec_prc <- preprocess(spectra = RV$spec_all[RV$spec_idx],
                              sqrtTransform = input$sqrtTrans,
                              smooth = input$smooth,
                              rmBaseline = input$rmBl)
@@ -225,7 +223,7 @@ server <- function(input, output) {
       res <- suppressMessages(
         suppressWarnings(
           fitCurve(spec = spec_prc,
-                   dir = selected_dir,
+                   dir = RV$selected_dir,
                    conc = NA,
                    unit = input$concUnits,
                    normMeth = input$normMeth,
@@ -416,17 +414,17 @@ server <- function(input, output) {
 
   # summary
   observeEvent(input$process, {
-  output$summaryText <- renderUI({
-    if(info_state() == "processed") {
-      text <- markdown(paste0(generateSummaryText(RV$res,
-                                                  smooth = RV$preprocessing$smooth,
-                                                  rmBl = RV$preprocessing$rmBl,
-                                                  sqrtTrans = RV$preprocessing$sqrtTrans,
-                                                  monoisotopicFilter = RV$preprocessing$monoisotopicFilter),
-                              collapse = "<br>"))
-      text
-    }
-  })
+    output$summaryText <- renderUI({
+      if(info_state() == "processed") {
+        text <- markdown(paste0(generateSummaryText(RV$res,
+                                                    smooth = RV$preprocessing$smooth,
+                                                    rmBl = RV$preprocessing$rmBl,
+                                                    sqrtTrans = RV$preprocessing$sqrtTrans,
+                                                    monoisotopicFilter = RV$preprocessing$monoisotopicFilter),
+                                collapse = "<br>"))
+        text
+      }
+    })
   })
 
   #### PCA tab ####
@@ -573,7 +571,8 @@ server <- function(input, output) {
                          sigmoid = input$sigmoidModel,
                          elasticNet = input$elasticNet,
                          corFilter = input$corFilter)
-      updateSliderInput(inputId = "penalty", value = log10(RV$model$penalty))
+      updateSliderInput(inputId = "penalty",
+                        value = log10(RV$model$penalty))
       if(input$elasticNet) {
         output$mixture <- renderText({
           paste("Mixture =", round(RV$model$mixture, 2))
@@ -678,6 +677,26 @@ server <- function(input, output) {
         left_join(clusters, by = join_by(mzIdx))
       cat("Updated peak table with HC data.\n")
     }
+  })
+
+  #### save settings ####
+  observeEvent(input$saveSettings, {
+    inputList <- reactiveValuesToList(input)
+
+    # filter inputs
+    classes <- vapply(inputList, function(x) class(x)[1], character(1))
+    fil_inputList <- inputList[!grepl("mzTable|shiny", classes)]
+    fil_inputList <- fil_inputList[!grepl("mzTable|shiny|plotly|dir", names(fil_inputList))]
+
+    # add dir value
+    if(info_state() == "dir_set") {
+
+      fil_inputList$dir <- as.character(parseDirPath(vol, input$dir))
+    }
+
+
+    write.csv(fil_inputList, file = "settings.conf", row.names = FALSE)
+    cat("Inputs written.\n")
   })
 
   #### download handler ####
