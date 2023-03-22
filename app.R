@@ -264,7 +264,6 @@ server <- function(input, output) {
       RV$stats <- stats
       RV$specIdx <- 1
       RV$maxSpecIdx <- length(getAvgPeaks(res))
-      RV$psepc <- generateSpecPlots(res)
 
       info_state("processed")
       show_plot("TRUE")
