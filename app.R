@@ -253,19 +253,18 @@ server <- function(input, output) {
         ) %>%
         ungroup()
 
-      RV <<- reactiveValues(res = res,
-                            preprocessing = data.frame(
-                              smooth = input$smooth,
-                              rmBl = input$rmBl,
-                              sqrtTrans = input$sqrtTrans,
-                              monoisotopicFilter = input$monoisotopicFilter),
-                            stats_original = stats, # copy of original stats for updates
-                            stats = stats,
-                            specIdx = 1,
-                            maxSpecIdx = length(getAvgPeaks(res)),
-                            pspec = generateSpecPlots(res),
-                            pca = NULL,
-                            model = NULL)
+      # write everything needed into RV
+      RV$res <- res
+      RV$preprocessing <- data.frame(
+                            smooth = input$smooth,
+                            rmBl = input$rmBl,
+                            sqrtTrans = input$sqrtTrans,
+                            monoisotopicFilter = input$monoisotopicFilter)
+      RV$stats_original <- stats # copy of original stats for updates
+      RV$stats <- stats
+      RV$specIdx <- 1
+      RV$maxSpecIdx <- length(getAvgPeaks(res))
+      RV$psepc <- generateSpecPlots(res)
 
       info_state("processed")
       show_plot("TRUE")
