@@ -40,8 +40,7 @@ source("sidebar.R")
 source("mainpanel.R")
 source("defaultSettingsHandler.R")
 
-defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf",
-                                    defaultsFile = "defaults.conf")
+defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf")
 
 #### UI ####
 ui <- fluidPage(
@@ -105,8 +104,7 @@ server <- function(input, output) {
   vol <- tolower(getVolumes())
   names(vol) <- str_remove(vol, ":")
 
-  defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf",
-                                      defaultsFile = "defaults.conf")
+  defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf")
 
   # check if "dir" is set in defaults
   if(!is.null(defaults$dir)) {

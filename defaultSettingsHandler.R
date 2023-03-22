@@ -1,4 +1,4 @@
-writeDefaults <- function(defaultsFile) {
+generateDefaults <- function() {
   defaults <- data.frame(concUnits = "M",
                          smooth = TRUE,
                          rmBl = TRUE,
@@ -29,33 +29,20 @@ writeDefaults <- function(defaultsFile) {
                          num_cluster = 4,
                          hcDist = "Euclidean",
                          hcMethod = "average")
-
-  write.csv(defaults, file = defaultsFile, row.names = FALSE)
-  cat(defaultsFile, "written.\n")
+  return(defaults)
 }
 
-defaultsSettingsHandler <- function(userSavedSettings = "settings.conf", defaultsFile = "defaults.conf") {
+defaultsSettingsHandler <- function(userSavedSettings = "settings.conf") {
   stopifnot(is.character(userSavedSettings))
-  stopifnot(is.character(defaultsFile))
 
   #### check for defaults ####
   if(file.exists(userSavedSettings)) {
-    # if user saved settings exit, use them
+    # if user saved settings exist use them
     defaults <- read.csv(userSavedSettings)
     cat(userSavedSettings, "loaded.\n")
   } else {
-    if(!file.exists(defaultsFile)) {
-      # check if there is a defaults file
-      # create it if not
-      writeDefaults(defaultsFile)
-    }
-
-    if(!file.exists(defaultsFile)) {
-      # this check should be redundant but we need to make sure we have defaults
-      # to load
-      stop(paste(defaultsFile, "not found and unable to create it.\nPlease check your permissions.\n"))
-    }
-    defaults <- read.csv(defaultsFile)
+    defaults <- generateDefaults()
+    cat("defaults loaded")
   }
   return(defaults)
 }
