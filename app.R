@@ -3,35 +3,10 @@
 rm(list = ls())
 gc()
 
-#### package check on start up ####
-# If a package is installed, it will be loaded. If any
-# are not, the missing package(s) will be installed
-# from CRAN and then loaded.
-
-## First specify the packages of interest
-packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles",
-             "MALDIquant", "MALDIquantForeign", "DT", "plotly",
-             "shinycssloaders", "shinyhelper", "knitr", "shinybusy",
-             "shinythemes", "shinyWidgets", "devtools", "ggpubr", "dendextend",
-             "glmnet", "proxy", "sparsepca", "platetools", "ggdendro", "zoo",
-             "fs", "cluster", "shinyjs")
-
-## Now load or install&load all
-package.check <- lapply(
-  packages,
-  FUN = function(x) {
-    if (!require(x, character.only = TRUE)) {
-      install.packages(x, dependencies = TRUE)
-      library(x, character.only = TRUE)
-    }
-  }
-)
-
-# special case for packages not on CRAN
-if (!require("MALDIcellassay", character.only = TRUE)) {
-  devtools::install_github("CeMOS-Mannheim/MALDIcellassay", dependencies = TRUE)
-  library(MALDIcellassay, character.only = TRUE)
-}
+# check if all required packages are installed
+# install missing packages
+source("checkInstalledPackages.R")
+checkInstalledPackages()
 
 knit("manual.Rmd", quiet = TRUE)
 
@@ -74,16 +49,10 @@ server <- function(input, output) {
 
 
   #### variables ####
-  p_main <- ggplot()
   observe_helpers(withMathJax = TRUE)
-  res <- reactiveVal()
-  stats <- reactiveVal()
-  pspec <- reactiveVal()
   info_state <- reactiveVal("inital")
 
-  dir_set <- reactiveVal("FALSE")
   show_plot <- reactiveVal("FALSE")
-  loaded <- reactiveVal("FALSE")
 
   #### main #####
   RV <<- reactiveValues(selected_dir = NULL,
@@ -677,6 +646,7 @@ server <- function(input, output) {
 
   #### save settings ####
   observeEvent(input$saveSettings, {
+
     inputList <- reactiveValuesToList(input)
 
     # filter inputs
@@ -684,8 +654,10 @@ server <- function(input, output) {
     fil_inputList <- inputList[!grepl("mzTable|shiny", classes)]
     fil_inputList <- fil_inputList[!grepl("mzTable|shiny|plotly|dir", names(fil_inputList))]
 
+    dir <- as.character(parseDirPath(vol, input$dir))
+
     # add dir value
-    if(info_state() == "dir_set") {
+    if(info_state() == "dir_set" & length(dir) > 0) {
 
       fil_inputList$dir <- as.character(parseDirPath(vol, input$dir))
     }
@@ -711,7 +683,15 @@ server <- function(input, output) {
                          res = 300, units = "in")
         }
         p_main <- ggarrange(p_curve, p_peak)
-        ggsave(file, plot = p_main, device = device, scale = 1.8, bg = "white")
+        ggsave(file,
+               plot = p_main,
+               device = device,
+               scale = 1.8,
+               bg = "white",
+               dpi = 600,
+               width = 183,
+               height = 122,
+               units = "mm")
       } else {
         warning("Nothing to download. Load and process data.")
       }
