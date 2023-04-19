@@ -40,7 +40,7 @@ extractLoadings <- function(pca, sel1, sel2) {
     as_tibble(rownames = "mz") %>%
     mutate(mz = as.numeric(mz)) %>%
     mutate(mzIdx = match.closest(x = mz,
-                                 table = getAllMz(RV$res),
+                                 table = getAllMz(res),
                                  tolerance = 0.1)) %>%
     select(mzIdx, {{sel}})
 

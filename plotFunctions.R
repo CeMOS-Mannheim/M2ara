@@ -93,9 +93,7 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
 }
 
 glmRegPlot <- function(model, penalty) {
-  p <- model$model %>%
-    finalize_model(tibble(penalty = 10^penalty)) %>%
-    fit(data = model$prepData, formula = conc ~.) %>%
+  p <- getModelFit(model, penalty) %>%
     predict(model$prepData) %>%
     mutate(truth = pull(model$prepData, conc)) %>%
     ggplot(aes(x = .pred, y = truth)) +
@@ -134,7 +132,7 @@ viPlot <- function(vi) {
   return(p)
 }
 
-plateMapPlot <- function(RV,
+plateMapPlot <- function(appData,
                          stat = c("Concentration",
                                   "Total Peak Intensity",
                                   "Normalization factor",
@@ -148,7 +146,7 @@ plateMapPlot <- function(RV,
                          mz_idx = NULL,
                          format = 384,
                          log10 = FALSE) {
-  res <- RV$res
+  res <- appData$res
   stat <- match.arg(stat)
 
   spots <- getSpots(res)
@@ -169,8 +167,8 @@ plateMapPlot <- function(RV,
          },
          "Normalization factor" = {
 
-           normMz <- getNormMz(RV$res)
-           normTol <- getNormMzTol(RV$res)
+           normMz <- getNormMz(appData$res)
+           normTol <- getNormMzTol(appData$res)
            stat <- paste0("Norm. factor\n","mz=", normMz, "+/-", normTol)
            df <- tibble(spot = spots,
                         val = getAppliedNormFactors(res))
@@ -197,18 +195,18 @@ plateMapPlot <- function(RV,
                         val = int)
          },
          "PC-x" = {
-           if(!is.null(RV$pca)) {
+           if(!is.null(appData$pca)) {
              xnum <- parse_number(PCs[1])
              if(log10) {
                stat <- paste("Abs.", PCs[1])
                df <- tibble(
-                 val = RV$pca[[1]] %>% pull(xnum),
+                 val = appData$pca[[1]] %>% pull(xnum),
                  spot = spots) %>%
                  mutate(val = (val-min(val))/(max(val)-min(val))*100)
              } else {
              stat <- PCs[1]
                df <- tibble(
-                 val = RV$pca[[1]] %>% pull(xnum),
+                 val = appData$pca[[1]] %>% pull(xnum),
                  spot = spots)
              }
            } else {
@@ -219,18 +217,18 @@ plateMapPlot <- function(RV,
            }
          },
          "PC-y" = {
-           if(!is.null(RV$pca)) {
+           if(!is.null(appData$pca)) {
              ynum <- parse_number(PCs[2])
              if(log10) {
                stat <- paste("Abs.", PCs[2])
                df <- tibble(
-                 val = RV$pca[[1]] %>% pull(ynum),
+                 val = appData$pca[[1]] %>% pull(ynum),
                  spot = spots) %>%
                  mutate(val = (val-min(val))/(max(val)-min(val))*100)
              } else {
                stat <- PCs[2]
                df <- tibble(
-                 val = RV$pca[[1]] %>% pull(ynum),
+                 val = appData$pca[[1]] %>% pull(ynum),
                  spot = spots)
              }
            } else {
@@ -241,12 +239,12 @@ plateMapPlot <- function(RV,
            }
          },
          "LASSO-error" = {
-           if(!is.null(RV$model)) {
-             df <- RV$model$model %>%
+           if(!is.null(appData$model)) {
+             df <- appData$model$model %>%
                finalize_model(tibble(penalty = 10^penalty)) %>%
-               fit(data = RV$model$prepData, formula = conc ~.) %>%
-               predict(RV$model$prepData) %>%
-               mutate(truth = pull(RV$model$prepData, conc)) %>%
+               fit(data = appData$model$prepData, formula = conc ~.) %>%
+               predict(appData$model$prepData) %>%
+               mutate(truth = pull(appData$model$prepData, conc)) %>%
                mutate(val = abs(truth - .pred),
                       spot = spots)
 
@@ -281,3 +279,4 @@ plateMapPlot <- function(RV,
 
   return(p)
 }
+

@@ -2,7 +2,7 @@ library(tidymodels)
 library(tidyverse)
 
 
-intmat <- intensityMatrix(getSinglePeaks(RV$res))
+intmat <- intensityMatrix(getSinglePeaks(appData$res))
 
 df <- as_tibble(intmat) %>%
   mutate(conc = getConc(res))

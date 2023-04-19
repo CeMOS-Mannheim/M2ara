@@ -33,4 +33,5 @@ res <- fitCurve(spec = spec,
                 saveIntensityMatrix = FALSE,
                 plot = FALSE,
                 SinglePointRecal = TRUE,
-                varFilterMethod = "none")
+                varFilterMethod = "mean")
+
