@@ -1,4 +1,4 @@
-generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoisotopicFilter) {
+generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil) {
   # helper functions
   parentDir <- function(path, times) {
     newPath <- path
@@ -27,17 +27,17 @@ generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoisotopicFil
 
 
   concStr <- c("<h4>MALDIassay object</h4>",
-              paste("Including", length(unique(conc)), "concentrations,\n"),
-              paste("ranging from", min(conc), "to", max(conc), "."),
-              "\n")
+               paste("Including", length(unique(conc)), "concentrations,\n"),
+               paste("ranging from", min(conc), "to", max(conc), "."),
+               "\n")
 
   # Compose processing steps
-  if(any(sqrtTrans, smooth, rmBl, monoisotopicFilter)) {
+  if(any(sqrtTrans, smooth, rmBl, monoFil)) {
     preprocessStr <- paste0("<ul>",
                             ifelse(sqrtTrans, "<li>Square-root transformation</li>", ""),
                             ifelse(smooth, "<li>Savitzky Golay smoothing (half-window size = 3)</li>", ""),
                             ifelse(rmBl, "<li>Baseline removal (TopHat, half-window size = 3)</li>", ""),
-                            ifelse(monoisotopicFilter, "<li>Monoisotopic peak filter</li>", ""),
+                            ifelse(monoFil, "<li>Monoisotopic peak filter</li>", ""),
                             "</ul>"
     )
   } else (
@@ -82,6 +82,11 @@ generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoisotopicFil
     return(outputStr)
   }
 
-  outputStr <- c(concStr, preprocessStr, normStr, numPeaksStr, instrumentSettingStr)
+  outputStr <-
+    markdown(
+      paste0(
+        c(concStr, preprocessStr, normStr, numPeaksStr, instrumentSettingStr),
+        collapse = "<br>"))
+
   return(outputStr)
 }

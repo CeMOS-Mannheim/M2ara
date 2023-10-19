@@ -1,19 +1,11 @@
 #### Sever ####
 server <- function(input, output) {
-
   #### load functions ####
-  source("functions/preprocessFunction.R")
-  source("functions/plotFunctions.R")
-  source("functions/generatePCA.R")
-  source("functions/fitGLM.R")
-  source("functions/getVolumes.R")
-  source("functions/hclust.R")
-  source("functions/getVolumes.R")
-  source("functions/generateSummaryText.R")
-  source("functions/helpers.R")
-  source("functions/doFitCurve.R")
-  source("functions/infoStateMassageHandler.R")
-  source("functions/fitCurveErrorHandler.R")
+  source("functions/loadAllFunctions.R")
+  loadAllFunctions()
+
+  #### set ggplot theme ####
+  theme_set(theme_light(base_size = 14))
 
   #### variables ####
   observe_helpers(withMathJax = TRUE)
@@ -22,20 +14,8 @@ server <- function(input, output) {
   show_plot <- reactiveVal("FALSE")
 
   #### main #####
-  appData <<- reactiveValues(selected_dir = NULL,
-                             res = NULL, # MALDIcellassay object
-                             spec_all = NULL, # all spectra
-                             spec_idx = NULL, # indices of non-empty spectra
-                             preprocessing = NULL, # preprocessing
-                             stats_original = NULL, # original stats
-                             stats = NULL,
-                             pca = NULL,
-                             model = NULL,
-                             hc = NULL,
-                             opt = NULL)
-
-  vol <- tolower(getVolumes())
-  names(vol) <- str_remove(vol, ":")
+  appData <<- emptyAppDataObject()
+  vol <- getVolumes()
 
   defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf")
 
@@ -105,9 +85,9 @@ server <- function(input, output) {
       conc <- as.numeric(names(spec_raw))
       spec_raw <- spec_raw[order(conc)]
 
-      cat("check for empty spectra...\n")
-      conc <- names(spec_raw)
       appData$spec_all <- spec_raw
+
+      cat(MALDIcellassay:::timeNow(),  "check for empty spectra...\n")
 
       # MAD would be faster but may fail in some circumstances...
       peaks <- detectPeaks(appData$spec_all,
@@ -118,7 +98,8 @@ server <- function(input, output) {
                                    ifelse(length(mz(x)) > 0, TRUE, FALSE)
                                  },
                                  FUN.VALUE = TRUE)
-      cat(sum(appData$spec_idx), "/", length(appData$spec_all),
+      cat(MALDIcellassay:::timeNow(),
+          sum(appData$spec_idx), "/", length(appData$spec_all),
           "spectra retained.\n")
 
       hide_spinner()
@@ -130,7 +111,7 @@ server <- function(input, output) {
     if (!info_state() %in% c("intial", "dir_set")) {
       show_spinner()
 
-      cat("start processing...\n")
+      cat(MALDIcellassay:::timeNow(), "start processing...\n")
       spec_prc <- preprocess(spectra = appData$spec_all[appData$spec_idx],
                              sqrtTransform = input$sqrtTrans,
                              smooth = input$smooth,
@@ -146,30 +127,12 @@ server <- function(input, output) {
         return()
       }
 
-      cat("processing done\n")
-
-      stats <-   getPeakStatistics(res, FALSE) %>%
-        mutate(mz = as.numeric(mz)) %>%
-        group_by(mz, mzIdx) %>%
-        summarise(
-          pIC50 = first(pIC50),
-          R2 = first(R2),
-          min = min(mean),
-          max = max(mean),
-          log2FC = log2(first(fc_window)),
-          `abs. log2FC` = abs(log2FC)
-        ) %>%
-        ungroup()
+      cat(MALDIcellassay:::timeNow(),  "processing done\n")
 
       # write everything needed into appData
-      appData$res <- res
-      appData$preprocessing <- data.frame(
-        smooth = input$smooth,
-        rmBl = input$rmBl,
-        sqrtTrans = input$sqrtTrans,
-        monoisotopicFilter = input$monoisotopicFilter)
-      appData$stats_original <- stats # copy of original stats for updates
-      appData$stats <- stats
+      appData <- storeResults(appData,
+                              res = res,
+                              input, stats = getStatistics(res))
 
       info_state("processed")
       show_plot("TRUE")
@@ -180,59 +143,12 @@ server <- function(input, output) {
 
   #### Peak table ####
   # first initialization
-  output$mzTable <- DT::renderDataTable({
-    # check if data is already prepared and if not show dummy table
-    if (show_plot() == "TRUE") {
-      tableData <- appData$stats %>%
-        mutate_if(is.numeric, function(x) {
-          round(x, 3)
-        })
-
-    } else {
-      tableData <- tibble(mz = c("load", rep("", 9)),
-                          mzIdx = c("data", rep("", 9)),
-                          pIC50 = c("to display", rep("", 9)),
-                          R2 = c("peak", rep("", 9)),
-                          log2FC = c("table", rep("", 9)))
-    }
-
-    tableData
-
-  },
-  server = TRUE,
-  filter = "bottom",
-  options = list(searching = TRUE,
-                 lengthChange = FALSE,
-                 paging = TRUE,
-                 pageLength = 20,
-                 autoWidth = TRUE,
-                 rownames = FALSE),
-  selection = list(mode = "single",
-                   selected = 1)
-  )
+  output$mzTable <- createDataTable(appData$stats, plot_ready = show_plot())
 
   # on reprocess
   # not sure if this duplicate is needed
   observeEvent(input$process, {
-    output$mzTable <- DT::renderDataTable({
-      if (show_plot() == "TRUE") {
-        appData$stats %>%
-          mutate_if(is.numeric, function(x) {
-            round(x, 2)
-          })
-      }
-    },
-    server = TRUE,
-    filter = "bottom",
-    options = list(searching = TRUE,
-                   lengthChange = FALSE,
-                   paging = TRUE,
-                   pageLength = 20,
-                   autoWidth = TRUE,
-                   rownames = FALSE),
-    selection = list(mode = "single",
-                     selected = 1)
-    )
+    output$mzTable <- createDataTable(appData$stats, plot_ready = show_plot())
   })
 
   #### curve and peak plots ####
@@ -250,12 +166,7 @@ server <- function(input, output) {
       ggplotly(p_curve)
     } else {
       # dummy plot
-      p_curve <- ggplot(tibble(label = "Load data\nto display plot",
-                               x = 1,
-                               y = 1),
-                        aes(x = x, y = y, label = label)) +
-        geom_text(size = 5) +
-        theme_light(base_size = 14)
+      p_curve <- dummyPlot()
 
       ggplotly(p_curve)
     }
@@ -271,12 +182,7 @@ server <- function(input, output) {
       ggplotly(p_peak)
     } else {
       # dummy plot
-      p_peak <- ggplot(tibble(label = "Load data\nto display plot",
-                              x = 1,
-                              y = 1),
-                       aes(x = x, y = y, label = label)) +
-        geom_text(size = 5) +
-        theme_light(base_size = 14)
+      p_peak <- dummyPlot()
       ggplotly(p_peak)
     }
 
@@ -290,12 +196,7 @@ server <- function(input, output) {
                               idx = seq_along(getAvgSpectra(appData$res)))
       ggplotly(p)
     } else {
-      p <- ggplot(tibble(label = "Load data\nto display plot",
-                         x = 1,
-                         y = 1),
-                  aes(x = x, y = y, label = label)) +
-        geom_text(size = 5) +
-        theme_light(base_size = 14)
+      p <- dummyPlot()
       ggplotly(p)
     }
 
@@ -317,20 +218,12 @@ server <- function(input, output) {
   observeEvent(input$process, {
     output$summaryText <- renderUI({
       if (info_state() == "processed") {
-        smooth <-  appData$preprocessing$smooth
-        rmBl <- appData$preprocessing$rmBl
-        sqrtTrans <- appData$preprocessing$sqrtTrans
-        monoisotopicFilter <- appData$preprocessing$monoisotopicFilter
-
-        text <- markdown(
-          paste0(
-            generateSummaryText(appData$res,
-                                smooth = smooth,
-                                rmBl = rmBl,
-                                sqrtTrans = sqrtTrans,
-                                monoisotopicFilter = monoisotopicFilter),
-            collapse = "<br>"))
-
+        text <-
+          generateSummaryText(appData$res,
+                              smooth = appData$preprocessing$smooth,
+                              rmBl = appData$preprocessing$rmBl,
+                              sqrtTrans = appData$preprocessing$sqrtTrans,
+                              monoFil = appData$preprocessing$monoisotopicFilter)
         text
       }
     })
@@ -339,27 +232,18 @@ server <- function(input, output) {
   #### PCA tab ####
   # default plot for PCA
   output$pca <- renderPlotly({
-    p <- ggplot(tibble(label = "Load data\nto display plot",
-                       x = 1,
-                       y = 1),
-                aes(x = x, y = y, label = label)) +
-      geom_text(size = 5) +
-      theme_light(base_size = 14)
-
+    p <- dummyPlot()
     ggplotly(p)
   })
 
   observeEvent(input$doPca, {
     if (!is.null(appData$res)) {
-      cat("pcaAlpha =", 10^input$pcaAlpha, "\n")
-      cat("pcaBeta =", 10^input$pcaBeta, "\n")
       appData$pca <- generatePCA(appData$res,
                                  num_PC = 5,
                                  alpha = 10^input$pcaAlpha,
                                  beta = 10^input$pcaBeta,
                                  verbose = FALSE)
     }
-
   })
 
   observeEvent(input$doPca, {
@@ -373,12 +257,7 @@ server <- function(input, output) {
                      spots = getSpots(appData$res))
 
       } else {
-        p <- ggplot(tibble(label = "Load data\nto display plot",
-                           x = 1,
-                           y = 1),
-                    aes(x = x, y = y, label = label)) +
-          geom_text(size = 5) +
-          theme_light(base_size = 14)
+        p <- dummyPlot()
       }
       ggplotly(p)
     })
@@ -398,12 +277,7 @@ server <- function(input, output) {
       ggplotly(p)
 
     } else {
-      p <- ggplot(tibble(label = "Load data\nto display plot",
-                         x = 1,
-                         y = 1),
-                  aes(x = x, y = y, label = label)) +
-        geom_text(size = 5) +
-        theme_light(base_size = 14)
+      p <- dummyPlot()
       ggplotly(p)
     }
   })
@@ -421,12 +295,7 @@ server <- function(input, output) {
       ggplotly(p)
 
     } else {
-      p <- ggplot(tibble(label = "Load data\nto display plot",
-                         x = 1,
-                         y = 1),
-                  aes(x = x, y = y, label = label)) +
-        geom_text(size = 5) +
-        theme_light(base_size = 14)
+      p <- dummyPlot()
       ggplotly(p)
     }
   })
@@ -434,6 +303,7 @@ server <- function(input, output) {
   observeEvent(input$pca2peaksTable, {
     if (show_plot() == "TRUE" & !is.null(appData$pca)) {
       loadings <- extractLoadings(appData$pca,
+                                  appData$res,
                                   input$pcaX,
                                   input$pcaY)
 
@@ -449,31 +319,14 @@ server <- function(input, output) {
   })
   output$glmTruePred <- renderPlotly({
     # dummy plot
-    p <- tibble(label = "Fit model\nto display plot",
-                .pred = 1,
-                truth = 1) %>%
-      ggplot(aes(x = .pred, y = truth, label = label)) +
-      geom_text() +
-      coord_obs_pred() +
-      labs(x = "Log-predicted conc.",
-           y = "Log-true conc.") +
-      theme_minimal(base_size = 14)
+    p <- dummyPlot("Fit model\nto display plot")
 
     return(ggplotly(p))
   })
 
   output$glmVi <- renderPlotly({
     # dummy plot
-    p <- tibble(label = "Fit model\nto display plot",
-                Variable = 1,
-                imp = 1) %>%
-      ggplot(aes(x = Variable, y = imp, label = label)) +
-      coord_flip() +
-      geom_text() +
-      theme_minimal(base_size = 14) +
-      theme(legend.position = "none") +
-      labs(x = "m/z",
-           y = "Variable importance")
+    p <- dummyPlot("Fit model\nto display plot")
     return(ggplotly(p))
   })
 
@@ -531,22 +384,11 @@ server <- function(input, output) {
     if (!is.null(appData$model)) {
 
       vi <- getVi(appData$model, penalty = input$penalty) %>%
-        mutate(Variable = readr::parse_number(Variable)) %>%
-        mutate(`Lasso importance` = ifelse(Sign == "POS",
-                                           Importance,
-                                           -Importance)) %>%
-        mutate(mz = as.numeric(Variable),
-               `Lasso importance` = round(`Lasso importance`, digits = 4)) %>%
-        select(mz, `Lasso importance`) %>%
-        mutate(mzIdx = match.closest(x = mz,
-                                     table = getAllMz(appData$res),
-                                     tolerance = 0.1)) %>%
-        filter(!`Lasso importance` == 0) %>%
-        select(-mz)
+        perpareVi()
 
       appData$stats <- appData$stats_original %>%
-
         left_join(vi, by = join_by(mzIdx))
+
       cat("Updated peak table with lasso data.\n")
     }
   })
@@ -603,74 +445,19 @@ server <- function(input, output) {
 
   #### save settings ####
   observeEvent(input$saveSettings, {
+    saveSettings(input, filename = "settings.conf", info_state = info_state())
 
-    inputList <- reactiveValuesToList(input)
-
-    # filter inputs
-    classes <- vapply(inputList, function(x) class(x)[1], character(1))
-    sel_class <- "mzTable|shiny"
-    sel_name <-  "mzTable|shiny|plotly|dir"
-
-    fil_inputList <- inputList[!grepl(sel_class, classes)]
-    fil_inputList <- fil_inputList[!grepl(sel_name, names(fil_inputList))]
-
-    dir <- as.character(parseDirPath(vol, input$dir))
-
-    # add dir value
-    if (info_state() == "dir_set" & length(dir) > 0) {
-
-      fil_inputList$dir <- as.character(parseDirPath(vol, input$dir))
-    }
-
-
-    write.csv(fil_inputList, file = "settings.conf", row.names = FALSE)
-    cat("Inputs written.\n")
   })
 
   #### download handler ####
-  output$downloadPlot <- downloadHandler(
-    filename = function()  {
-      if (show_plot() == "TRUE") {
-        paste0(basename(getDirectory(appData$res)),
-               "_mz", round(getMzFromMzIdx(appData$res,
-                                           input$mzTable_rows_selected[1]), 2),
-               ".png")
-      }
-    },
-    content = function(file) {
-      if (show_plot() == "TRUE") {
-        device <- function(..., width, height) {
-          grDevices::png(..., width = width, height = height,
-                         res = 300, units = "in")
-        }
-        p_main <- ggarrange(p_curve, p_peak)
-        ggsave(file,
-               plot = p_main,
-               device = device,
-               scale = 1.8,
-               bg = "white",
-               dpi = 600,
-               width = 183,
-               height = 122,
-               units = "mm")
-      } else {
-        warning("Nothing to download. Load and process data.")
-      }
-    })
+  output$downloadPlot <- downloadHandlerPlots(res = appData$res,
+                                              selected_row = input$mzTable_rows_selected[1],
+                                              p_curve = p_curve,
+                                              p_peak = p_peak,
+                                              plot_ready = show_plot())
 
-  output$downloadTable <- downloadHandler(
-    filename = function()  {
-      if (show_plot() == "TRUE") {
-        paste0(basename(getDirectory(appData$res)),
-               "_peakTable",
-               ".csv")
-      }
-    },
-    content = function(file) {
-      if (show_plot() == "TRUE") {
-        write_excel_csv(file = file, x = appData$stats)
-      } else {
-        warning("Nothing to download. Load and process data.")
-      }
-    })
+  output$downloadTable <- downloadHandlerTable(res = appData$res,
+                                               stats = appData$stats,
+                                               plot_ready = show_plot())
+
 }

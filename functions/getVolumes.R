@@ -44,5 +44,8 @@ getVolumes <- function(exclude = NULL) {
   if (!is.null(exclude)) {
     volumes <- volumes[!names(volumes) %in% exclude]
   }
-  volumes
+  volumes <- tolower(volumes)
+  names(volumes) <- str_remove(volumes, ":")
+
+  return(volumes)
 }

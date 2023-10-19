@@ -13,7 +13,5 @@ knit("manual.Rmd", quiet = TRUE)
 source("components/ui.R")
 source("components/server.R")
 
-
-
 # Run the application
 shinyApp(ui = ui, server = server)

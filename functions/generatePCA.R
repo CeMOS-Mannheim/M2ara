@@ -33,7 +33,7 @@ generatePCA <- function(res, num_PC, alpha = 1e-3, beta = 1e-3, verbose = FALSE,
               explaindVar = percExp))
 }
 
-extractLoadings <- function(pca, sel1, sel2) {
+extractLoadings <- function(pca, res, sel1, sel2) {
   sel <- c(sel1, sel2)
 
   res <- pca$loadings %>%
