@@ -62,14 +62,46 @@ fitGLM <- function(res, sigmoid = FALSE, elasticNet = FALSE, corFilter = TRUE) {
 
   best <- select_by_one_std_err(tune_rs, desc(penalty), metric = "rsq")
   penalty <- pull(best, penalty)
-  mixture <- pull(best, mixture)
+
+  if(elasticNet) {
+    mixture <- pull(best, mixture)
+  }
 
   cat("mixture =", mixture, "\n")
 
   return(list(model = glm,
+              tune_rs = tune_rs,
               prepData = df_rdy,
               penalty = penalty,
               mixture = mixture))
+}
+
+getModelFit <- function(model, penalty) {
+  fit <-
+  model$model %>%
+    finalize_model(tibble(penalty = 10^penalty)) %>%
+    fit(data = model$prepData, formula = conc ~.)
+  return(fit)
+}
+
+getInformationCirteria <- function(fit) {
+    #tLL <- fit$null.deviance - deviance(fit)
+    tLL <- -deviance(fit) # 2*log-likelihood
+    k <- fit$df
+    n <- nobs(fit)
+    AICc <- -tLL+2*k+2*k*(k+1)/(n-k-1)
+    AIC_ <- -tLL+2*k
+    r2 <- fit$dev.ratio
+
+    BIC<-log(n)*k - tLL
+    res <- data.frame(penalty = fit$lambda,
+                      nonZeroVar = fit$df,
+                      r2 = r2,
+                      AIC = AIC_,
+                      AICc = AICc,
+                      BIC = BIC)
+
+    return(res)
 }
 
 getVi <- function(model, penalty, mixture, elesticNet = FALSE) {
