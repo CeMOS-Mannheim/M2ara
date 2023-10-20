@@ -21,7 +21,7 @@ appMainPanel <- function(defaults) {
                                   column(4),
                                   column(2,
                                          sliderInput(inputId = "zoom",
-                                                     label = "zoom",
+                                                     label = "m/z range",
                                                      min = 0.1,
                                                      max = 25,
                                                      value = defaults$zoom,

@@ -145,9 +145,10 @@ server <- function(input, output) {
   # first initialization
   output$mzTable <- createDataTable(appData$stats, plot_ready = show_plot())
 
-  # on reprocess
-  # not sure if this duplicate is needed
-  observeEvent(input$process, {
+
+
+  # on reprocess or if data is send from PCA, LASSO, HC
+  observeEvent(appData$stats, {
     output$mzTable <- createDataTable(appData$stats, plot_ready = show_plot())
   })
 
@@ -218,13 +219,11 @@ server <- function(input, output) {
   observeEvent(input$process, {
     output$summaryText <- renderUI({
       if (info_state() == "processed") {
-        text <-
           generateSummaryText(appData$res,
                               smooth = appData$preprocessing$smooth,
                               rmBl = appData$preprocessing$rmBl,
                               sqrtTrans = appData$preprocessing$sqrtTrans,
                               monoFil = appData$preprocessing$monoisotopicFilter)
-        text
       }
     })
   })

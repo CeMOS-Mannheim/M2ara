@@ -8,9 +8,17 @@ getStatistics <- function(res) {
       min = min(mean),
       max = max(mean),
       log2FC = log2(first(fc_window)),
-      `abs. log2FC` = abs(log2FC)
-    ) %>%
-    ungroup()
+      `abs. log2FC` = abs(log2FC)) %>%
+    ungroup() %>%
+    mutate(
+      mz = round(mz, 3),
+      pIC50 = round(pIC50, 2),
+      R2 = round(R2, 2),
+      min = round(min, 3),
+      max = round(max, 3),
+      log2FC = round(R2, 2),
+      log2FC = round(R2, 2),
+      `abs. log2FC` = round(R2, 2))
 
   return(stats)
 }

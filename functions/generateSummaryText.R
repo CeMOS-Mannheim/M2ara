@@ -78,7 +78,10 @@ generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil) {
   instrumentSettingStr <- c(head, instrument, laser, method, path)
 
   if(object@settings$SinglePointRecal) {
-    outputStr <- c(concStr, preprocessStr, normStr, singlePointRecalStr, numPeaksStr, instrumentSettingStr)
+    outputStr <-
+      markdown(
+        paste0(c(concStr, preprocessStr, normStr, singlePointRecalStr, numPeaksStr, instrumentSettingStr),
+               collapse = "<br>"))
     return(outputStr)
   }
 
