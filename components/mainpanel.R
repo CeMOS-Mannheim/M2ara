@@ -1,7 +1,6 @@
 appMainPanel <- function(defaults) {
   m <- mainPanel(
     shiny::tabsetPanel(type = "tabs",
-
                        #### Main tab ####
                        tabPanel("Main",
                                 fluidRow(
@@ -15,7 +14,7 @@ appMainPanel <- function(defaults) {
                                   column(1,
                                          downloadButton(outputId = "downloadPlot",
                                                         label = "Save plot",
-                                                        style='padding:6px; font-size:80%',
+                                                        style='padding:6px; font-size:80%; margin-top:6px',
                                                         icon = icon("download"))
                                   ),
                                   column(4),
@@ -43,7 +42,8 @@ appMainPanel <- function(defaults) {
                                          fluidRow(
                                            downloadButton(outputId = "downloadTable",
                                                           label = "Save as CSV",
-                                                          icon = icon("download"))
+                                                          icon = icon("download"),
+                                                          style = 'padding:6px; font-size:80%')
                                          )
                                   )
                                 ),
@@ -86,9 +86,9 @@ appMainPanel <- function(defaults) {
                                   withSpinner(color="#0dc5c1"),
                                 fluidRow(
                                   column(2,
-                                         actionButton(inputId = "doPca",
-                                                      label = "Perform PCA",
-                                                      icon = icon("chart-line"))
+                                         createActionButton(inputId = "doPca",
+                                                            label = "Perform PCA",
+                                                            icon = "chart-line")
                                   ),
                                   column(2,
                                          sliderInput(inputId = "pcaAlpha",
@@ -132,9 +132,9 @@ appMainPanel <- function(defaults) {
                                            status = "primary")
                                   ),
                                   column(2,
-                                         actionButton(inputId = "pca2peaksTable",
-                                                      label = "Send to Peak Table",
-                                                      icon = icon("share-from-square")))
+                                         createActionButton(inputId = "pca2peaksTable",
+                                                            label = "Send to Peak Table",
+                                                            icon = "share-from-square"))
                                 ),
                                 fluidRow(
                                   column(6,
@@ -159,9 +159,9 @@ appMainPanel <- function(defaults) {
                                 ),
                                 fluidRow(
                                   column(2,
-                                         actionButton(inputId = "doGLM",
-                                                      label = "Fit model",
-                                                      icon = icon("chart-line"))
+                                         createActionButton(inputId = "doGLM",
+                                                            label = "Fit model",
+                                                            icon = "chart-line")
                                   ),
                                   column(2,
                                          checkboxInput(inputId = "sigmoidModel",
@@ -199,14 +199,14 @@ appMainPanel <- function(defaults) {
                                 ),
                                 fluidRow(
                                   column(2,
-                                         actionButton(inputId = "resetPenalty",
-                                                      label = "Reset penalty",
-                                                      icon = icon("chart-line"))
+                                         createActionButton(inputId = "resetPenalty",
+                                                            label = "Reset penalty",
+                                                            icon = "chart-line")
                                   ),
                                   column(2,
-                                         actionButton(inputId = "lasso2peaksTable",
-                                                      label = "Send to Peak Table",
-                                                      icon = icon("share-from-square"))
+                                         createActionButton(inputId = "lasso2peaksTable",
+                                                            label = "Send to Peak Table",
+                                                            icon = "share-from-square")
                                   )
                                 )
                        ),
@@ -221,9 +221,9 @@ appMainPanel <- function(defaults) {
                                 ),
                                 fluidRow(
                                   column(2,
-                                         actionButton(inputId = "doHC",
-                                                      label = "Perform HC",
-                                                      icon = icon("circle-nodes"))),
+                                         createActionButton(inputId = "doHC",
+                                                            label = "Perform HC",
+                                                            icon = "circle-nodes")),
                                   column(2,
                                          sliderInput(inputId = "num_cluster",
                                                      label = "Number of cluster",
@@ -248,9 +248,10 @@ appMainPanel <- function(defaults) {
                                                      selected = defaults$hcMethod,
                                                      label = "Cluster method",
                                                      multiple = FALSE)),
-                                  column(2, actionButton(inputId = "hc2peaksTable",
-                                                         label = "Send to Peak Table",
-                                                         icon = icon("share-from-square")))
+                                  column(2,
+                                         createActionButton(inputId = "hc2peaksTable",
+                                                            label = "Send to Peak Table",
+                                                            icon = "share-from-square"))
                                 ),
                                 fluidRow(
                                   column(6,
@@ -261,10 +262,9 @@ appMainPanel <- function(defaults) {
                        tabPanel("Settings",
                                 fluidRow(
                                   column(2,
-                                         actionButton("saveSettings",
-                                                      style='padding:6px; font-size:80%',
-                                                      label = "Save settings",
-                                                      icon = icon("floppy-disk"))
+                                         createActionButton(inputId = "saveSettings",
+                                                            label = "Save settings",
+                                                            icon = "floppy-disk")
                                   )
                                 )
                        ),

@@ -1,14 +1,16 @@
-fitCurveErrorHandler <- function(res, input, info_state) {
-  if (is.null(res)) {
+fitCurveErrorHandler <- function(appData, input) {
+  if (is.null(appData$res)) {
     cat("Error: ")
     if (input$SinglePointRecal) {
-      info_state("fitErrorRecal")
+      appData$info_state <- "fitErrorRecal"
       cat("Wrong lock-mass?\n")
+
     } else if (input$normMeth == "mz") {
-      info_state("fitErrorNorm")
+      appData$info_state <- "fitErrorNorm"
       cat("Wrong normalization mass?\n")
+
     } else {
-      info_state("fitErrorOther")
+      appData$info_state <- "fitErrorOther"
       cat("Unkown error on fitting the curves.\n")
     }
 

@@ -9,5 +9,7 @@ emptyAppDataObject <- function(){
                  pca = NULL,
                  model = NULL,
                  hc = NULL,
-                 opt = NULL)
+                 opt = NULL,
+                 info_state = "inital",
+                 show_plot = FALSE)
 }

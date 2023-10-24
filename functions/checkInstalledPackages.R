@@ -17,7 +17,16 @@ checkInstalledPackages <- function() {
   package.check <- lapply(
     packages,
     FUN = function(x) {
-      if (!require(x, character.only = TRUE)) {
+      if (
+        suppressWarnings(
+          suppressPackageStartupMessages(
+            !require(x,
+                     character.only = TRUE,
+                     quietly = TRUE,
+                     warn.conflicts = FALSE)
+          )
+        )
+      ) {
         install.packages(x, dependencies = TRUE)
         library(x, character.only = TRUE)
       }

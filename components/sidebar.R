@@ -10,8 +10,9 @@ appSidebar <- function(defaults) {
                      icon = icon("search"),
                      style='padding:6px; font-size:80%',
                      class = "btn-default"),
-      actionButton("load", "  Load spectra ",
-                   icon = icon("upload"), style='padding:6px; font-size:80%'),
+      createActionButton(inputId = "load",
+                         label = "  Load spectra ",
+                         icon = "upload"),
       use_busy_spinner(spin = "half-circle",
                        position = "top-left",
                        height = "100px", width = "100px",
@@ -49,15 +50,15 @@ appSidebar <- function(defaults) {
     #### normalization/var. filter
     fluidRow(
       column(6,
-             radioButtons(inputId = "normMeth",
-                          label = "Normalization method",
-                          selected = defaults$normMeth,
-                          choices = c("mz", "TIC", "PQN", "median", "none")) %>%
+             selectInput(inputId = "normMeth",
+                         label = "Normalization method",
+                         selected = defaults$normMeth,
+                         choices = c("mz", "TIC", "PQN", "median", "none")) %>%
                helper(type = "markdown", content = "normalization")),
       column(6,
-             radioButtons("VarFilterMethod", label = "Variance filtering",
-                          selected = defaults$VarFilterMethod,
-                          choices = c("mean", "q75","median", "q25", "none")) %>%
+             selectInput("VarFilterMethod", label = "Variance filtering",
+                         selected = defaults$VarFilterMethod,
+                         choices = c("mean", "q75","median", "q25", "none")) %>%
                helper(type = "markdown", content = "filtering"))),
     #### recal./norm. method ####
     fluidRow(
@@ -86,8 +87,9 @@ appSidebar <- function(defaults) {
                           step = 5))
     ),
     #### process button/info text
-    actionButton("process", "Process spectra",
-                 icon = icon("redo"), style='padding:6px; font-size:80%'),
+    createActionButton(inputId = "process",
+                       label = "Process spectra",
+                       icon = "redo"),
     textOutput("info1", inline = FALSE),
     textOutput("info2", inline = FALSE),
     textOutput("info3", inline = FALSE),

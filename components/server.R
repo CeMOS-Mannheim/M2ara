@@ -9,9 +9,9 @@ server <- function(input, output) {
 
   #### variables ####
   observe_helpers(withMathJax = TRUE)
-  info_state <- reactiveVal("inital")
+  #info_state <- reactiveVal("inital")
 
-  show_plot <- reactiveVal("FALSE")
+  #show_plot <- reactiveVal("FALSE")
 
   #### main #####
   appData <<- emptyAppDataObject()
@@ -23,7 +23,8 @@ server <- function(input, output) {
   if (!is.null(defaults$dir)) {
     appData$selected_dir <- defaults$dir
     cat("Dir set from loaded default value.\n")
-    info_state("dir_set")
+    #info_state("dir_set")
+    appData$info_state <- "dir_set"
   }
 
   #### choose dir ####
@@ -38,13 +39,14 @@ server <- function(input, output) {
     # prepare info massage
     appData$selected_dir <- parseDirPath(vol, input$dir)
     if (length(appData$selected_dir) > 0) {
-      info_state("dir_set")
+      #info_state("dir_set")
+      appData$info_state <- "dir_set"
     }
   })
 
   #### Text massage logic ####
-  observeEvent(info_state(), {
-    output <- infoStateMassageHandler(info_state = info_state(),
+  observeEvent(appData$info_state, {
+    output <- infoStateMassageHandler(info_state = appData$info_state,
                                       output = output)
   })
 
@@ -55,17 +57,17 @@ server <- function(input, output) {
   disable("process")
 
   # enable buttons when state is reached
-  observeEvent(info_state(), {
-    if (info_state() == "dir_set") {
+  observeEvent(appData$info_state, {
+    if (appData$info_state == "dir_set") {
       enable("load")
     }
-    if (info_state() == "loaded") {
+    if (appData$info_state == "loaded") {
       enable("process")
     }
   })
 
   observeEvent(input$load, {
-    if (info_state() == "dir_set") {
+    if (appData$info_state == "dir_set") {
       show_spinner()
 
       # check if all spectra names are numeric/concentrations
@@ -73,7 +75,7 @@ server <- function(input, output) {
       # checkSpecNames needs to return indices of the numeric folders
       if (!checkSpecNames(appData$selected_dir)) {
         spec_raw <- loadSpectra(appData$selected_dir)
-        info_state("loaded")
+        appData$info_state <- "loaded"
       } else {
         warning("Found folder names that could not be converted to numeric.
                 All folders/spectra need to have concentrations as names.\n")
@@ -108,7 +110,7 @@ server <- function(input, output) {
 
   #### process spectra ####
   observeEvent(input$process, {
-    if (!info_state() %in% c("intial", "dir_set")) {
+    if (!appData$info_state %in% c("intial", "dir_set")) {
       show_spinner()
 
       cat(MALDIcellassay:::timeNow(), "start processing...\n")
@@ -117,13 +119,12 @@ server <- function(input, output) {
                              smooth = input$smooth,
                              rmBaseline = input$rmBl)
 
-      res <- doFitCurve(appData = appData,
-                        spec = spec_prc,
-                        input = input)
+      appData$res <- doFitCurve(appData = appData,
+                                spec = spec_prc,
+                                input = input)
 
-      if(!fitCurveErrorHandler(res = res,
-                               input = input,
-                               info_state = info_state)) {
+      if(!fitCurveErrorHandler(appData = appData,
+                               input = input)) {
         return()
       }
 
@@ -134,8 +135,8 @@ server <- function(input, output) {
                               res = res,
                               input, stats = getStatistics(res))
 
-      info_state("processed")
-      show_plot("TRUE")
+      appData$info_state <- "processed"
+      appData$show_plot <- TRUE
       updateActionButton(inputId = "process", label = "Re-process")
       hide_spinner()
     }
@@ -143,18 +144,20 @@ server <- function(input, output) {
 
   #### Peak table ####
   # first initialization
-  output$mzTable <- createDataTable(appData$stats, plot_ready = show_plot())
+  output$mzTable <- createDataTable(appData$stats,
+                                    plot_ready = appData$show_plot)
 
 
 
   # on reprocess or if data is send from PCA, LASSO, HC
   observeEvent(appData$stats, {
-    output$mzTable <- createDataTable(appData$stats, plot_ready = show_plot())
+    output$mzTable <- createDataTable(appData$stats,
+                                      plot_ready = appData$show_plot)
   })
 
   #### curve and peak plots ####
   output$curve <- renderPlotly({
-    if (show_plot() == "TRUE") {
+    if (appData$show_plot) {
       p_curve <<- plotCurves(appData$res,
                              mzIdx = input$mzTable_rows_selected[1],
                              errorbars = input$errorbars) +
@@ -175,7 +178,7 @@ server <- function(input, output) {
   })
 
   output$peak <- renderPlotly({
-    if (show_plot() == "TRUE") {
+    if (appData$show_plot) {
       p_peak <<- plotPeak(appData$res,
                           mzIdx = input$mzTable_rows_selected[1],
                           tol = input$zoom) +
@@ -192,7 +195,7 @@ server <- function(input, output) {
   #### QC tab ####
   #  recal check
   output$checkRecal <- renderPlotly({
-    if (show_plot() == "TRUE") {
+    if (appData$show_plot) {
       p <- checkRecalibration(appData$res,
                               idx = seq_along(getAvgSpectra(appData$res)))
       ggplotly(p)
@@ -205,7 +208,7 @@ server <- function(input, output) {
 
   # platemap
   output$platemap <- renderPlot({
-    if (show_plot() == "TRUE") {
+    if (appData$show_plot) {
       plateMapPlot(appData,
                    stat = input$plateStat,
                    PCs = c(input$pcaX, input$pcaY),
@@ -218,12 +221,12 @@ server <- function(input, output) {
   # summary
   observeEvent(input$process, {
     output$summaryText <- renderUI({
-      if (info_state() == "processed") {
-          generateSummaryText(appData$res,
-                              smooth = appData$preprocessing$smooth,
-                              rmBl = appData$preprocessing$rmBl,
-                              sqrtTrans = appData$preprocessing$sqrtTrans,
-                              monoFil = appData$preprocessing$monoisotopicFilter)
+      if (appData$info_state == "processed") {
+        generateSummaryText(appData$res,
+                            smooth = appData$preprocessing$smooth,
+                            rmBl = appData$preprocessing$rmBl,
+                            sqrtTrans = appData$preprocessing$sqrtTrans,
+                            monoFil = appData$preprocessing$monoisotopicFilter)
       }
     })
   })
@@ -263,7 +266,7 @@ server <- function(input, output) {
   })
 
   output$pcaLoading1 <- renderPlotly({
-    if (show_plot() == "TRUE" & !is.null(appData$pca)) {
+    if (appData$show_plot & !is.null(appData$pca)) {
       p <- loadingsPlot(appData$pca,
                         pc = input$pcaX,
                         simple = input$simpleLoadings) +
@@ -282,7 +285,7 @@ server <- function(input, output) {
   })
 
   output$pcaLoading2 <- renderPlotly({
-    if (show_plot() == "TRUE" & !is.null(appData$pca)) {
+    if (appData$show_plot & !is.null(appData$pca)) {
       p <- loadingsPlot(appData$pca,
                         pc = input$pcaY,
                         simple = input$simpleLoadings) +
@@ -300,7 +303,7 @@ server <- function(input, output) {
   })
 
   observeEvent(input$pca2peaksTable, {
-    if (show_plot() == "TRUE" & !is.null(appData$pca)) {
+    if (appData$show_plot & !is.null(appData$pca)) {
       loadings <- extractLoadings(appData$pca,
                                   appData$res,
                                   input$pcaX,
@@ -330,7 +333,7 @@ server <- function(input, output) {
   })
 
   observeEvent(input$doGLM, {
-    if (info_state() == "processed") {
+    if (appData$info_state == "processed") {
 
       cat("starting model fit...\n")
       show_spinner()
@@ -395,7 +398,7 @@ server <- function(input, output) {
   #### HClust tab #####
   observeEvent(input$doHC, {
     output$hclustPlot <- renderPlotly({
-      if (show_plot() == "TRUE") {
+      if (appData$show_plot) {
         show_spinner()
         appData$hc <- doHClust(appData$res,
                                cut = input$num_cluster,
@@ -408,7 +411,7 @@ server <- function(input, output) {
     })
 
     output$clustCurvesPlot <- renderPlotly({
-      if (show_plot() == "TRUE" & !is.null(appData$hc)) {
+      if (appData$show_plot & !is.null(appData$hc)) {
         show_spinner()
         p <- plotClusterCurves(dend = appData$hc$dend,
                                tintmat = appData$hc$tintmat)
@@ -418,7 +421,7 @@ server <- function(input, output) {
     })
 
     output$optNumClust <- renderPlotly({
-      if (show_plot() == "TRUE" & !is.null(appData$hc)) {
+      if (appData$show_plot & !is.null(appData$hc)) {
         show_spinner()
         p <- optimalNumClustersPlot(appData$hc$opt,
                                     sel_k = input$num_cluster)
@@ -429,7 +432,7 @@ server <- function(input, output) {
   })
 
   observeEvent(input$hc2peaksTable, {
-    if (show_plot() == "TRUE" & !is.null(appData$hc)) {
+    if (appData$show_plot & !is.null(appData$hc)) {
       clusters <- extractClusters(appData$hc$dend) %>%
         mutate(mzIdx = match.closest(x = mz,
                                      table = getAllMz(appData$res),
@@ -444,7 +447,7 @@ server <- function(input, output) {
 
   #### save settings ####
   observeEvent(input$saveSettings, {
-    saveSettings(input, filename = "settings.conf", info_state = info_state())
+    saveSettings(input, filename = "settings.conf", info_state = appData$info_state)
 
   })
 
@@ -453,10 +456,10 @@ server <- function(input, output) {
                                               selected_row = input$mzTable_rows_selected[1],
                                               p_curve = p_curve,
                                               p_peak = p_peak,
-                                              plot_ready = show_plot())
+                                              plot_ready = appData$show_plot)
 
   output$downloadTable <- downloadHandlerTable(res = appData$res,
                                                stats = appData$stats,
-                                               plot_ready = show_plot())
+                                               plot_ready = appData$show_plot)
 
 }
