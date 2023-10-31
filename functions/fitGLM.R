@@ -1,6 +1,6 @@
 fitGLM <- function(res, sigmoid = FALSE, elasticNet = FALSE, corFilter = TRUE) {
 
-  intmat <- getIntensityMatrix(res)
+  intmat <- getIntensityMatrix(res, avg = FALSE, excludeNormMz = TRUE)
   cat("Number of features before preprocessing:", dim(intmat)[2], "\n")
 
   df <-intmat %>%

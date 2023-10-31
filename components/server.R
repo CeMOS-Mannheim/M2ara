@@ -83,8 +83,24 @@ server <- function(input, output) {
         return()
       }
 
-      # make sure that the concentrations are in acending order
+      if(!input$concUnits == "M") {
+        cat("Changing concentrations to", input$concUnits, ".\n")
+      }
+
+      unitFactor <- switch (input$concUnits,
+                            "M" = 1,
+                            "mM" = 1e-3,
+                            "µM" = 1e-6,
+                            "nM" = 1e-9,
+                            "pM" = 1e-12,
+                            "fM" = 1e-15)
+
+      # change concentrations according to unit
       conc <- as.numeric(names(spec_raw))
+      conc <- conc * unitFactor
+
+
+      # make sure that the concentrations are in acending order
       spec_raw <- spec_raw[order(conc)]
 
       appData$spec_all <- spec_raw
@@ -112,16 +128,82 @@ server <- function(input, output) {
   observeEvent(input$process, {
     if (!appData$info_state %in% c("intial", "dir_set")) {
       show_spinner()
-
       cat(MALDIcellassay:::timeNow(), "start processing...\n")
-      spec_prc <- preprocess(spectra = appData$spec_all[appData$spec_idx],
-                             sqrtTransform = input$sqrtTrans,
-                             smooth = input$smooth,
-                             rmBaseline = input$rmBl)
+      appData$spec_all <- MALDIcellassay:::.repairMetaData(appData$spec_all)
 
-      appData$res <- doFitCurve(appData = appData,
-                                spec = spec_prc,
-                                input = input)
+      prc <- preprocess(spectra = appData$spec_all[appData$spec_idx],
+                        sqrtTransform = input$sqrtTrans,
+                        smooth = input$smooth,
+                        rmBaseline = input$rmBl,
+                        SNR = input$SNR,
+                        singlePointRecal = input$SinglePointRecal,
+                        normMz = input$normMz,
+                        normTol = input$normTol,
+                        normMeth = input$normMeth,
+                        alignTol = input$alignTol
+                        )
+
+      #### put outlier detection here! ####
+
+
+      #### average spectra ####
+      cat(MALDIcellassay:::timeNow(), "calculating", input$avgMethod, "spectra... \n")
+      avg <- MALDIcellassay:::.aggregateSpectra(spec = prc$spec,
+                                                averageMethod = input$avgMethod,
+                                                SNR = input$SNR,
+                                                monoisotopicFilter = input$monoisotopicFilter,
+                                                binTol = input$binTol * 1e-6)
+      ### single spectra data
+      # this is the single spectra data but based on the same signals as in the
+      # avg spectra
+      # doing it like this gives us greater sensitivity (signal detection on
+      # avg spectra) while still enabling statistics on single spectra
+      singlePeaks <- extractIntensity(mz = as.numeric(colnames(avg$intmat)),
+                                      peaks = prc$singlePeaks,
+                                      spec = prc$spec,
+                                      tol = input$normTol)
+
+      # fit curves
+      cat(MALDIcellassay:::timeNow(), "fitting curves... \n")
+      fits <- calculateCurveFit(intmat = avg$intmat,
+                                    idx = filterVariance(apply(avg$intmat, 2, var),
+                                                         method = input$VarFilterMethod))
+
+      # peak statistics
+      stat_df <- calculatePeakStatistics(curveFits = fits,
+                                         singlePeaks = singlePeaks,
+                                         spec = prc$spec)
+
+      appData$res <- new("MALDIassay",
+                         avgSpectra = avg$avgSpec,
+                         avgPeaks = avg$avgPeaksBinned,
+                         singlePeaks = singlePeaks,
+                         singleSpecSpots = extractSpots(prc$spec),
+                         normFactors = prc$normFac,
+                         mzShifts = prc$mzShift,
+                         fits = fits,
+                         stats = stat_df,
+                         included_specIdx = prc$idx,
+                         settings = list(
+                           Conc = as.numeric(names(singlePeaks)),
+                           normMz = input$normMz,
+                           normTol = input$normTol,
+                           varFilterMethod = input$VarFilterMethod,
+                           monoisotopicFilter = input$monoisotopicFilter,
+                           alignTol = input$alignTol,
+                           SNR = input$SNR,
+                           normMeth = input$normMeth,
+                           binTol = input$binTol * 1e-6,
+                           SinglePointRecal = input$SinglePointRecal
+                         )
+      )
+
+      cat(MALDIcellassay:::timeNow(), "Done!", "\n")
+
+
+      # appData$res <- doFitCurve(appData = appData,
+      #                           spec = spec,
+      #                           input = input)
 
       if(!fitCurveErrorHandler(appData = appData,
                                input = input)) {
@@ -132,8 +214,9 @@ server <- function(input, output) {
 
       # write everything needed into appData
       appData <- storeResults(appData,
-                              res = res,
-                              input, stats = getStatistics(res))
+                              res = appData$res,
+                              input,
+                              stats = getStatistics(appData$res))
 
       appData$info_state <- "processed"
       appData$show_plot <- TRUE

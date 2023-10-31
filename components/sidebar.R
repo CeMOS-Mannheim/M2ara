@@ -41,17 +41,25 @@ appSidebar <- function(defaults) {
     ),
     #### peak detection ####
     fluidRow(
-      h5("Peak detection:") %>%
-        helper(type = "markdown", content = "peakdetection"),
       column(6,
-             numericInput("SNR", label = "S/N-ratio", min = 1, step = 1, value = defaults$SNR)),
-      column(6)
+             selectInput(inputId = "avgMethod",
+                         label = "Aggregation",
+                         selected = defaults$avgMethod,
+                         choices = c("mean", "median", "sum"))
+             ),
+      column(6,
+             numericInput("SNR",
+                          label = "S/N-ratio",
+                          min = 1,
+                          step = 1,
+                          value = defaults$SNR) %>%
+               helper(type = "markdown", content = "peakdetection"))
     ),
     #### normalization/var. filter
     fluidRow(
       column(6,
              selectInput(inputId = "normMeth",
-                         label = "Normalization method",
+                         label = "Normalization",
                          selected = defaults$normMeth,
                          choices = c("mz", "TIC", "PQN", "median", "none")) %>%
                helper(type = "markdown", content = "normalization")),

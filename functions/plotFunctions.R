@@ -169,7 +169,27 @@ plateMapPlot <- function(appData,
 
            normMz <- getNormMz(appData$res)
            normTol <- getNormMzTol(appData$res)
-           stat <- paste0("Norm. factor\n","mz=", normMz, "+/-", normTol)
+           normMeth <- getNormMethod(appData$res)
+
+           switch (normMeth,
+             "TIC" = {
+               stat <- paste0("Total ion current")
+             },
+             "mz" = {
+               stat <- paste0("Norm. factor\n","mz=", normMz, "+/-", normTol)
+             },
+             "median" = {
+               stat <- paste0("Median intensity")
+             },
+             "PQN" = {
+               stat <- paste0("PQN")
+             },
+             "none" = {
+               stat <- paste0("No normalization applied")
+             }
+           )
+
+
            df <- tibble(spot = spots,
                         val = getAppliedNormFactors(res))
          },

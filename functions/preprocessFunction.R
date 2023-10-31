@@ -4,7 +4,14 @@ preprocess <- function(spectra,
                        sqrtTransform = FALSE,
                        smoothHalfWindowSize = 3,
                        smoothMethod = "SavitzkyGolay",
-                       rmBlMethod = "TopHat") {
+                       rmBlMethod = "TopHat",
+                       SNR,
+                       singlePointRecal,
+                       normMz,
+                       normTol,
+                       normMeth,
+                       alignTol
+                       ) {
   nm <- names(spectra)
   if(!smooth & !rmBaseline & !sqrtTransform) {
     cat("No preprocessing selected. Returning unprocessed spectra.\n")
@@ -38,6 +45,17 @@ preprocess <- function(spectra,
   }
 
   names(spectra) <- nm
+  cat("Detecting peaks...\n")
+  peaks <- MALDIcellassay:::.detectPeaks(spectra, SNR = SNR, method = "SuperSmoother")
+
+  prc <- MALDIcellassay:::.preprocess(peaks_single = peaks,
+                                      spec = spectra,
+                                      SinglePointRecal = singlePointRecal,
+                                      normMz = normMz,
+                                      normTol = normTol,
+                                      normMeth = normMeth,
+                                      alignTol = alignTol,
+                                      allowNoMatches = TRUE)
   cat("Preprocessing done.\n")
-  return(spectra)
+  return(prc)
 }
