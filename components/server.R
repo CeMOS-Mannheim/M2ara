@@ -130,7 +130,6 @@ server <- function(input, output) {
       show_spinner()
       cat(MALDIcellassay:::timeNow(), "start processing...\n")
       appData$spec_all <- MALDIcellassay:::.repairMetaData(appData$spec_all)
-
       prc <- preprocess(spectra = appData$spec_all[appData$spec_idx],
                         sqrtTransform = input$sqrtTrans,
                         smooth = input$smooth,
@@ -152,7 +151,9 @@ server <- function(input, output) {
                                                 averageMethod = input$avgMethod,
                                                 SNR = input$SNR,
                                                 monoisotopicFilter = input$monoisotopicFilter,
-                                                binTol = input$binTol * 1e-6)
+                                                binTol = input$binTol * 1e-6,
+                                                normMz = input$normMz,
+                                                normTol = input$normTol)
       ### single spectra data
       # this is the single spectra data but based on the same signals as in the
       # avg spectra

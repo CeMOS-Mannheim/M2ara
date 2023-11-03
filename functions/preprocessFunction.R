@@ -47,7 +47,6 @@ preprocess <- function(spectra,
   names(spectra) <- nm
   cat("Detecting peaks...\n")
   peaks <- MALDIcellassay:::.detectPeaks(spectra, SNR = SNR, method = "SuperSmoother")
-
   prc <- MALDIcellassay:::.preprocess(peaks_single = peaks,
                                       spec = spectra,
                                       SinglePointRecal = singlePointRecal,

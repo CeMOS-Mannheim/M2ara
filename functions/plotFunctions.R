@@ -1,3 +1,7 @@
+# set default theme
+theme_set(theme_light(base_size = 16) +
+            theme(panel.grid = element_blank()))
+
 generateSpecPlots <- function(res) {
   allPeaks <- getAvgPeaks(res)
   avgSpec <- mergeMassPeaks(allPeaks)
@@ -14,7 +18,6 @@ generateSpecPlots <- function(res) {
                  int = intensity(l[[i]]))
     pspec <- ggplot(df, aes(x = mz, ymin = 0, ymax = int)) +
       geom_linerange() +
-      theme_light(base_size = 14) +
       scale_x_continuous(limits = mzRange) +
       labs(x = "m/z",
            y = "Intensity",
@@ -27,13 +30,14 @@ generateSpecPlots <- function(res) {
 pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
   xnum <- parse_number(x)
   ynum <- parse_number(y)
+  conc <- as.numeric(as.character(conc))
 
   exp <- round(pca[[3]], 1)
 
   df <- tibble(
     xax = pca[[1]] %>% pull(xnum),
     yax = pca[[1]] %>% pull(ynum),
-    c = conc,
+    c = scales::scientific(conc),
     spot = spots
   )
 
@@ -45,7 +49,6 @@ pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
     geom_point() +
     stat_ellipse(aes(group = c), level = ellipseLevel) +
     scale_color_viridis_d(end = 0.75, option = "C") +
-    theme_light(base_size = 14) +
     labs(col = "Conc. [M]",
          x = paste0(x, " (", exp[xnum], "% expl. var.)"),
          y = paste0(y, " (", exp[ynum], "% expl. var.)"))
@@ -71,7 +74,6 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
                  fill = sign)) +
       geom_col(show.legend = FALSE) +
       geom_hline(yintercept = 0, alpha = 0.75, linetype = "dashed") +
-      theme_light(base_size = 14) +
       coord_flip() +
       labs(x = "m/z [Da]",
            y = paste0(pc, " Loading")) +
@@ -84,7 +86,6 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
                  y = val,
                  col = sign)) +
       geom_linerange(aes(ymin = 0, ymax = val), show.legend = FALSE) +
-      theme_light(base_size = 14) +
       labs(x = "m/z [Da]",
            y = paste0(pc, " Loading")) +
       theme(legend.position = "none")
@@ -102,8 +103,7 @@ glmRegPlot <- function(model, penalty) {
     ggpubr::stat_regline_equation(aes(label = paste0("R2adj.=", ..adj.rr..))) +
     coord_obs_pred() +
     labs(x = "Log-predicted conc.",
-         y = "Log-true conc.") +
-    theme_minimal(base_size = 14)
+         y = "Log-true conc.")
 
   return(p)
 }
@@ -124,7 +124,6 @@ viPlot <- function(vi) {
     geom_col() +
     geom_text(aes(x = 1, y = 0, label = paste0("#-features =", NumNonZeoroCoef))) +
     coord_flip() +
-    theme_minimal(base_size = 14) +
     theme(legend.position = "none") +
     labs(x = "m/z",
          y = "Variable importance")
@@ -140,7 +139,9 @@ plateMapPlot <- function(appData,
                                   "Selected-mz",
                                   "PC-x",
                                   "PC-y",
-                                  "LASSO-error"),
+                                  "LASSO-error",
+                                  "Outlier-mz",
+                                  "Outlier-all"),
                          PCs,
                          penalty,
                          mz_idx = NULL,
@@ -153,12 +154,13 @@ plateMapPlot <- function(appData,
 
   switch(stat,
          "Concentration" = {
-           stat <- "Conc."
+           lab <- "Conc."
+           conc <- as.numeric(names(spots))
            df <- tibble(spot = spots,
-                        val = as.numeric(names(spots)))
+                        val = fct_reorder(scales::scientific(conc), conc))
          },
          "Total Peak Intensity" = {
-           stat <- "Total peak int."
+           lab <- "Total peak int."
            df <- tibble(spot = spots,
                         val = vapply(getSinglePeaks(res),
                                      function(x) {
@@ -172,21 +174,21 @@ plateMapPlot <- function(appData,
            normMeth <- getNormMethod(appData$res)
 
            switch (normMeth,
-             "TIC" = {
-               stat <- paste0("Total ion current")
-             },
-             "mz" = {
-               stat <- paste0("Norm. factor\n","mz=", normMz, "+/-", normTol)
-             },
-             "median" = {
-               stat <- paste0("Median intensity")
-             },
-             "PQN" = {
-               stat <- paste0("PQN")
-             },
-             "none" = {
-               stat <- paste0("No normalization applied")
-             }
+                   "TIC" = {
+                     lab <- paste0("Total ion current")
+                   },
+                   "mz" = {
+                     lab <- paste0("Norm. factor\n","mz=", normMz, "+/-", normTol)
+                   },
+                   "median" = {
+                     stat <- paste0("Median intensity")
+                   },
+                   "PQN" = {
+                     lab <- paste0("PQN")
+                   },
+                   "none" = {
+                     lab <- paste0("No normalization applied")
+                   }
            )
 
 
@@ -194,18 +196,19 @@ plateMapPlot <- function(appData,
                         val = getAppliedNormFactors(res))
          },
          "Recal-shift" = {
+           lab <- "Recal-shift"
            df <- tibble(spot = spots,
                         val = getAppliedMzShift(res))
            if(log10) {
              # log will lead to NA for negative values, display abs. shift
-             stat <- "Abs. Recal-shift"
+             lab <- "Abs. Recal-shift"
              df <- df %>%
                mutate(val = abs(val))
            }
          },
          "Selected-mz" = {
            if(!is.null(mz_idx)) {
-             stat <- paste0("m/z=", round(getMzFromMzIdx(res, mzIdx = mz_idx), digits = 2))
+             lab <- paste0("m/z=", round(getMzFromMzIdx(res, mzIdx = mz_idx), digits = 2))
              int <- getSingleSpecIntensity(res, mz_idx = mz_idx)
            } else {
              int <- rep(NA_integer_, length(spots))
@@ -218,19 +221,19 @@ plateMapPlot <- function(appData,
            if(!is.null(appData$pca)) {
              xnum <- parse_number(PCs[1])
              if(log10) {
-               stat <- paste("Abs.", PCs[1])
+               lab <- paste("Abs.", PCs[1])
                df <- tibble(
                  val = appData$pca[[1]] %>% pull(xnum),
                  spot = spots) %>%
                  mutate(val = (val-min(val))/(max(val)-min(val))*100)
              } else {
-             stat <- PCs[1]
+               lab <- PCs[1]
                df <- tibble(
                  val = appData$pca[[1]] %>% pull(xnum),
                  spot = spots)
              }
            } else {
-             stat <- "No PCA data"
+             lab <- "No PCA data"
              df <- tibble(
                val = rep(NA_integer_, length(spots)),
                spot = spots)
@@ -240,19 +243,19 @@ plateMapPlot <- function(appData,
            if(!is.null(appData$pca)) {
              ynum <- parse_number(PCs[2])
              if(log10) {
-               stat <- paste("Abs.", PCs[2])
+               lab <- paste("Abs.", PCs[2])
                df <- tibble(
                  val = appData$pca[[1]] %>% pull(ynum),
                  spot = spots) %>%
                  mutate(val = (val-min(val))/(max(val)-min(val))*100)
              } else {
-               stat <- PCs[2]
+               lab <- PCs[2]
                df <- tibble(
                  val = appData$pca[[1]] %>% pull(ynum),
                  spot = spots)
              }
            } else {
-             stat <- "No PCA data"
+             lab <- "No PCA data"
              df <- tibble(
                val = rep(NA_integer_, length(spots)),
                spot = spots)
@@ -269,34 +272,72 @@ plateMapPlot <- function(appData,
                       spot = spots)
 
              if(log10) {
-               stat <- "log10(Abs. error)"
+               lab <- "log10(Abs. error)"
              } else {
-               stat <- "Abs. error"
+               lab <- "Abs. error"
              }
            } else {
-             stat <- "No LASSO data"
+             lab <- "No LASSO data"
              df <- tibble(
                val = rep(NA_integer_, length(spots)),
                spot = spots)
            }
+         },
+         "Outlier-mz" = {
+           lab <- paste0("Chauvenet\nCriterion\n",
+                         "m/z=", round(getMzFromMzIdx(res, mzIdx = mz_idx), digits = 2))
+           if(!is.null(mz_idx)) {
+             df <- tibble(tibble(conc = getConc(res),
+                                 spot = getSpots(res),
+                                 intensity = getSingleSpecIntensity(res,
+                                                                    mz_idx = mz_idx))) %>%
+               group_by(conc) %>%
+               mutate(val = calculateChauvenetCriterion(intensity))
+           }
+         },
+         "Outlier-all" = {
+           lab <- paste0("Chauvenet\nCriterion\n",
+                         "n(m/z)")
+           if(!is.null(mz_idx)) {
+             df <- getIntensityMatrix(res) %>%
+               as_tibble() %>%
+               mutate(conc = getConc(res),
+                      spot = getSpots(res)) %>%
+               pivot_longer(-c(conc, spot),
+                            names_to = "mz",
+                            values_to = "intensity") %>%
+               group_by(conc, mz) %>%
+               mutate(cheuv = calculateChauvenetCriterion(intensity)) %>%
+               group_by(spot) %>%
+               count(cheuv) %>%
+               pivot_wider(names_from = cheuv, values_from = n) %>%
+               mutate(val = `TRUE`)
+           }
          })
-
-
 
   p <- suppressWarnings(
     platetools::raw_map(data = df$val, well = df$spot, plate = format) +
-    labs(fill = stat) +
-    theme_minimal(base_size = 16)
-    )
+      labs(fill = lab)
+  )
 
-  if(log10) {
+  if(stat == "Concentration") {
     p <- p  +
-      scale_fill_viridis_c(trans = "log10")
-  } else {
-    p <- p +
-      scale_fill_viridis_c()
+      scale_fill_viridis_d()
+    return(p)
   }
 
-  return(p)
+  if(log10 & !stat == "Outlier-mz") {
+    p <- p  +
+      scale_fill_viridis_c(trans = "log10")
+    return(p)
+  }
+
+  if(!stat == "Outlier-mz") {
+    p <- p +
+      scale_fill_viridis_c()
+    return(p)
+  }
+
+
 }
 
