@@ -43,12 +43,15 @@ Briefly: Each spectrum has to reside in a folder which is named according to the
 
 #### Step-by-step
 
+<div class="figure">
 <img src="interface.png" alt="Interface of the app" width="100%" />
+<p class="caption">Interface of the app</p>
+</div>
 
 1. Click on the **Select folder**-button (1, see figure above) and select a folder containing your experiment (see chapter **Requirements to the raw data**).
     - In the bottom of the sidebar on the left the text will change to *Selected: /your/path/ Press load button.*
 2. Click on the **Load spectra**-button (1) to upload your spectra. The following dialog is displayed:  
-![](selectFolder.png)  
+<img src="selectFolder.png" width="431" />  
 This may take some time. If your experiment is really big it can take up to 3 minutes. Usually it should be finished within 30 seconds.
     - The text in the sidebar will change again once the spectra are loaded: *Loaded: /your/path/ Press process button.*
 3. You may now change any of the settings in the sidebar (2). Once your are satisfied click the **Process spectra**-button (3).
@@ -82,5 +85,8 @@ The analysis pipeline consits of the following steps (see figure for a graphical
 13. The peaks can be selected in the ``Table of peaks``.
 14. The respective dose-response curve as well as the peak profile is visualized and might be saved.
 
+<div class="figure">
 <img src="pipeline.png" alt="Schematic outline of the analysis workflow" width="80%" />
+<p class="caption">Schematic outline of the analysis workflow</p>
+</div>
 

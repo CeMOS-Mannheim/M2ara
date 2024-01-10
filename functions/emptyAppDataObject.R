@@ -3,7 +3,10 @@ emptyAppDataObject <- function(){
                  res = NULL, # MALDIcellassay object
                  spec_all = NULL, # all spectra
                  spec_idx = NULL, # indices of non-empty spectra
-                 preprocessing = NULL, # preprocessing
+                 preprocessing = list(smooth = NULL,
+                                      rmBl = NULL,
+                                      sqrtTrans = NULL,
+                                      monoisotopicFilter = NULL), # preprocessing
                  stats_original = NULL, # original stats
                  stats = NULL,
                  pca = NULL,

@@ -1,33 +1,31 @@
-#### Sever ####
+# Sever ####
 server <- function(input, output) {
-  #### load functions ####
+
+  ## load ext. functions ####
   source("functions/loadAllFunctions.R")
   loadAllFunctions()
 
-  #### set ggplot theme ####
+  ## set ggplot theme ####
   theme_set(theme_light(base_size = 14))
 
-  #### variables ####
+  ## variables ####
   observe_helpers(withMathJax = TRUE)
-  #info_state <- reactiveVal("inital")
 
-  #show_plot <- reactiveVal("FALSE")
-
-  #### main #####
+  ## main ####
   appData <<- emptyAppDataObject()
   vol <- getVolumes()
 
-  defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf")
+  defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
 
   # check if "dir" is set in defaults
   if (!is.null(defaults$dir)) {
     appData$selected_dir <- defaults$dir
-    cat("Dir set from loaded default value.\n")
+    message("Dir set from loaded default value.\n")
     #info_state("dir_set")
     appData$info_state <- "dir_set"
   }
 
-  #### choose dir ####
+  ### choose dir ####
   shinyDirChoose(input,
                  "dir",
                  roots = vol,
@@ -44,13 +42,31 @@ server <- function(input, output) {
     }
   })
 
-  #### Text massage logic ####
+  observeEvent(input$preproc_settings, {
+    appData$preprocessing$smooth <-
+      handlePreprocSettings(input$preproc_settings,
+                            "smooth")
+
+    appData$preprocessing$rmBl <-
+      handlePreprocSettings(input$preproc_settings,
+                            "rmBl")
+
+    appData$preprocessing$sqrtTrans <-
+      handlePreprocSettings(input$preproc_settings,
+                            "sqrtTrans")
+
+    appData$preprocessing$monoisotopicFilter <-
+      handlePreprocSettings(input$preproc_settings,
+                            "monoisotopicFilter")
+  })
+
+  ### Text massage logic ####
   observeEvent(appData$info_state, {
     output <- infoStateMassageHandler(info_state = appData$info_state,
                                       output = output)
   })
 
-  #### load spectra ####
+  ### load spectra ####
   # disable load button if no dir is set
   disable("load")
   # disable process button if no spectra are loaded
@@ -83,29 +99,14 @@ server <- function(input, output) {
         return()
       }
 
-      if(!input$concUnits == "M") {
-        cat("Changing concentrations to", input$concUnits, ".\n")
-      }
-
-      unitFactor <- switch (input$concUnits,
-                            "M" = 1,
-                            "mM" = 1e-3,
-                            "µM" = 1e-6,
-                            "nM" = 1e-9,
-                            "pM" = 1e-12,
-                            "fM" = 1e-15)
-
-      # change concentrations according to unit
-      conc <- as.numeric(names(spec_raw))
-      conc <- conc * unitFactor
-
-
       # make sure that the concentrations are in acending order
-      spec_raw <- spec_raw[order(conc)]
+      spec_raw <- spec_raw[order(as.numeric(names(spec_raw)))]
+
+      appData$org_conc <- as.numeric(names(spec_raw))
 
       appData$spec_all <- spec_raw
 
-      cat(MALDIcellassay:::timeNow(),  "check for empty spectra...\n")
+      message(MALDIcellassay:::timeNow(),  " check for empty spectra...\n")
 
       # MAD would be faster but may fail in some circumstances...
       peaks <- detectPeaks(appData$spec_all,
@@ -116,41 +117,54 @@ server <- function(input, output) {
                                    ifelse(length(mz(x)) > 0, TRUE, FALSE)
                                  },
                                  FUN.VALUE = TRUE)
-      cat(MALDIcellassay:::timeNow(),
-          sum(appData$spec_idx), "/", length(appData$spec_all),
-          "spectra retained.\n")
+      message(MALDIcellassay:::timeNow(), " ",
+              sum(appData$spec_idx), "/", length(appData$spec_all),
+              " spectra retained.\n")
 
       hide_spinner()
     }
   })
 
-  #### process spectra ####
+  ### process spectra ####
   observeEvent(input$process, {
+    if(!input$concUnits == "M") {
+      message("Changing concentrations to ", input$concUnits, ".\n")
+    }
+
+      unitFactor <- switch (input$concUnits,
+                            "M" = 1,
+                            "mM" = 1e-3,
+                            "µM" = 1e-6,
+                            "nM" = 1e-9,
+                            "pM" = 1e-12,
+                            "fM" = 1e-15)
+
+      # change concentrations according to unit
+      names(appData$spec_all) <- appData$org_conc * unitFactor
+
     if (!appData$info_state %in% c("intial", "dir_set")) {
       show_spinner()
-      cat(MALDIcellassay:::timeNow(), "start processing...\n")
+      message(MALDIcellassay:::timeNow(), " start processing...\n")
       appData$spec_all <- MALDIcellassay:::.repairMetaData(appData$spec_all)
       prc <- preprocess(spectra = appData$spec_all[appData$spec_idx],
-                        sqrtTransform = input$sqrtTrans,
-                        smooth = input$smooth,
-                        rmBaseline = input$rmBl,
+                        sqrtTransform = appData$preprocessing$sqrtTrans,
+                        smooth = appData$preprocessing$smooth,
+                        rmBaseline = appData$preprocessing$rmBl,
                         SNR = input$SNR,
                         singlePointRecal = input$SinglePointRecal,
                         normMz = input$normMz,
                         normTol = input$normTol,
                         normMeth = input$normMeth,
-                        alignTol = input$alignTol
-                        )
-
-      #### put outlier detection here! ####
+                        alignTol = input$alignTol * 1e-3
+      )
 
 
       #### average spectra ####
-      cat(MALDIcellassay:::timeNow(), "calculating", input$avgMethod, "spectra... \n")
+      message(MALDIcellassay:::timeNow(), " calculating ", input$avgMethod, " spectra... \n")
       avg <- MALDIcellassay:::.aggregateSpectra(spec = prc$spec,
                                                 averageMethod = input$avgMethod,
                                                 SNR = input$SNR,
-                                                monoisotopicFilter = input$monoisotopicFilter,
+                                                monoisotopicFilter = appData$preprocessing$monoisotopicFilter,
                                                 binTol = input$binTol * 1e-6,
                                                 normMz = input$normMz,
                                                 normTol = input$normTol)
@@ -165,10 +179,10 @@ server <- function(input, output) {
                                       tol = input$normTol)
 
       # fit curves
-      cat(MALDIcellassay:::timeNow(), "fitting curves... \n")
+      message(MALDIcellassay:::timeNow(), " fitting curves... \n")
       fits <- calculateCurveFit(intmat = avg$intmat,
-                                    idx = filterVariance(apply(avg$intmat, 2, var),
-                                                         method = input$VarFilterMethod))
+                                idx = filterVariance(apply(avg$intmat, 2, var),
+                                                     method = input$VarFilterMethod))
 
       # peak statistics
       stat_df <- calculatePeakStatistics(curveFits = fits,
@@ -190,28 +204,23 @@ server <- function(input, output) {
                            normMz = input$normMz,
                            normTol = input$normTol,
                            varFilterMethod = input$VarFilterMethod,
-                           monoisotopicFilter = input$monoisotopicFilter,
-                           alignTol = input$alignTol,
+                           monoisotopicFilter = handlePreprocSettings(input$preproc_settings,
+                                                                      "monoisotopicFilter"),
+                           alignTol = input$alignTol * 1e-3,
                            SNR = input$SNR,
                            normMeth = input$normMeth,
                            binTol = input$binTol * 1e-6,
-                           SinglePointRecal = input$SinglePointRecal
+                           SinglePointRecal = input$SinglePointRecal,
+                           dir = appData$selected_dir
                          )
       )
-
-      cat(MALDIcellassay:::timeNow(), "Done!", "\n")
-
-
-      # appData$res <- doFitCurve(appData = appData,
-      #                           spec = spec,
-      #                           input = input)
 
       if(!fitCurveErrorHandler(appData = appData,
                                input = input)) {
         return()
       }
 
-      cat(MALDIcellassay:::timeNow(),  "processing done\n")
+      message(MALDIcellassay:::timeNow(),  " processing done\n")
 
       # write everything needed into appData
       appData <- storeResults(appData,
@@ -226,7 +235,7 @@ server <- function(input, output) {
     }
   })
 
-  #### Peak table ####
+  ### Peak table ####
   # first initialization
   output$mzTable <- createDataTable(appData$stats,
                                     plot_ready = appData$show_plot)
@@ -239,7 +248,7 @@ server <- function(input, output) {
                                       plot_ready = appData$show_plot)
   })
 
-  #### curve and peak plots ####
+  ### curve and peak plots ####
   output$curve <- renderPlotly({
     if (appData$show_plot) {
       p_curve <<- plotCurves(appData$res,
@@ -274,6 +283,23 @@ server <- function(input, output) {
       ggplotly(p_peak)
     }
 
+  })
+
+  ### score plot ####
+  output$scorePlot <- renderPlotly({
+    if (appData$show_plot) {
+      p_score <- appData$stats %>%
+        mutate(direction = if_else(log2FC < 0, "negative", "positive")) %>%
+        ggplot(aes(x = mz, ymin = 0, ymax = score, col = direction)) +
+        geom_linerange() +
+        labs(x = "m/z",
+             y = "Score (%)")
+      ggplotly(p_score)
+    } else {
+      # dummy plot
+      p_score <- dummyPlot()
+      ggplotly(p_score)
+    }
   })
 
   #### QC tab ####
@@ -419,7 +445,7 @@ server <- function(input, output) {
   observeEvent(input$doGLM, {
     if (appData$info_state == "processed") {
 
-      cat("starting model fit...\n")
+      message("starting model fit...\n")
       show_spinner()
       appData$model <- fitGLM(appData$res,
                               sigmoid = input$sigmoidModel,
@@ -437,7 +463,7 @@ server <- function(input, output) {
         })
       }
 
-      cat("model fitted.\n")
+      message("model fitted.\n")
       hide_spinner()
 
       output$glmTruePred <- renderPlotly({
@@ -462,7 +488,7 @@ server <- function(input, output) {
       updateSliderInput(inputId = "penalty",
                         value = log10(appData$model$penalty))
     } else {
-      cat("appData$model was NULL\n")
+      message("appData$model was NULL\n")
     }
   })
 
@@ -475,7 +501,7 @@ server <- function(input, output) {
       appData$stats <- appData$stats_original %>%
         left_join(vi, by = join_by(mzIdx))
 
-      cat("Updated peak table with lasso data.\n")
+      message("Updated peak table with lasso data.\n")
     }
   })
 
@@ -487,7 +513,8 @@ server <- function(input, output) {
         appData$hc <- doHClust(appData$res,
                                cut = input$num_cluster,
                                dist = input$hcDist,
-                               clustMethod = input$hcMethod)
+                               clustMethod = input$hcMethod,
+                               useFittedCurves = input$hcUseFitted)
         p <- plotDendro(appData$hc$dend)
         hide_spinner()
         return(ggplotly(p))
@@ -498,7 +525,8 @@ server <- function(input, output) {
       if (appData$show_plot & !is.null(appData$hc)) {
         show_spinner()
         p <- plotClusterCurves(dend = appData$hc$dend,
-                               tintmat = appData$hc$tintmat)
+                               tintmat = appData$hc$tintmat,
+                               useFittedCurves = input$hcUseFitted)
         hide_spinner()
         return(ggplotly(p))
       }
@@ -525,13 +553,13 @@ server <- function(input, output) {
 
       appData$stats <- appData$stats_original %>%
         left_join(clusters, by = join_by(mzIdx))
-      cat("Updated peak table with HC data.\n")
+      message("Updated peak table with HC data.\n")
     }
   })
 
   #### save settings ####
   observeEvent(input$saveSettings, {
-    saveSettings(input, filename = "settings.conf", info_state = appData$info_state)
+    saveSettings(input, filename = "settings.csv", info_state = appData$info_state)
 
   })
 

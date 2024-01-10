@@ -1,4 +1,5 @@
 loadAllFunctions <- function() {
+
   source("functions/preprocessFunction.R")
   source("functions/plotFunctions.R")
   source("functions/generatePCA.R")
@@ -14,11 +15,14 @@ loadAllFunctions <- function() {
   source("functions/getStatistics.R")
   source("functions/dummyPlot.R")
   source("functions/downloadHandlers.R")
+  #source("functions/handlePreprocSettings.R")
   source("functions/saveSettings.R")
   source("functions/createDataTable.R")
   source("functions/storeResults.R")
   source("functions/emptyAppDataObject.R")
   source("functions/prepareVi.R")
+  source("functions/detectOutliers.R")
+
 }
 
 

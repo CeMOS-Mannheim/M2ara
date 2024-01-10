@@ -1,7 +1,7 @@
-#### tidy up ####
-# clear work space
-rm(list = ls())
-gc()
+# #### tidy up ####
+# # clear work space
+# rm(list = ls())
+# gc()
 
 # check if all required packages are installed
 # install missing packages

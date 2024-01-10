@@ -5,7 +5,7 @@ source("components/mainpanel.R")
 # load defaults
 source("functions/defaultSettingsHandler.R")
 source("functions/createActionButton.R")
-defaults <- defaultsSettingsHandler(userSavedSettings = "settings.conf")
+defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
 
 #### UI ####
 ui <- fluidPage(

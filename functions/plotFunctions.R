@@ -298,7 +298,6 @@ plateMapPlot <- function(appData,
          "Outlier-all" = {
            lab <- paste0("Chauvenet\nCriterion\n",
                          "n(m/z)")
-           if(!is.null(mz_idx)) {
              df <- getIntensityMatrix(res) %>%
                as_tibble() %>%
                mutate(conc = getConc(res),
@@ -312,7 +311,6 @@ plateMapPlot <- function(appData,
                count(cheuv) %>%
                pivot_wider(names_from = cheuv, values_from = n) %>%
                mutate(val = `TRUE`)
-           }
          })
 
   p <- suppressWarnings(
@@ -335,9 +333,7 @@ plateMapPlot <- function(appData,
   if(!stat == "Outlier-mz") {
     p <- p +
       scale_fill_viridis_c()
-    return(p)
   }
-
-
+  return(p)
 }
 

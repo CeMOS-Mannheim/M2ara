@@ -20,76 +20,72 @@ appSidebar <- function(defaults) {
     #### concentration unit ####
     fluidRow(
       column(6,
-             selectInput(inputId = "concUnits", label = "Conc. unit",
+             selectInput(inputId = "concUnits",
+                         label = "Conc. unit",
                          choices = c("M", "mM", "µM", "nM", "pM"),
                          selected = defaults$concUnits, multiple = FALSE, width = "80%"))
     ),
     #### preprocessing ####
-    fluidRow(
-      h5("Preprocessing:") %>%
-        helper(type = "markdown", content = "preprocessing"),
-      column(6,
-             checkboxInput("smooth", "Smooth", value = defaults$smooth)),
-      column(6,
-             checkboxInput("rmBl", "Remove baseline", value = defaults$rmBl))
-    ),
-    fluidRow(
-      column(6,
-             checkboxInput("sqrtTrans", "Sqrt-transform", value = defaults$sqrtTrans)),
-      column(6,
-             checkboxInput("monoisotopicFilter", "Monoisotopic", value = defaults$monoisotopicFilter))
-    ),
+    checkboxGroupInput(inputId = "preproc_settings",
+                       label = "Preprocess",
+                       choices = c("Smooth" = "smooth",
+                                   "Remove baseline" = "rmBl",
+                                   "Sqrt-trans." = "sqrtTrans",
+                                   "Monoisotopic" = "monoisotopicFilter"),
+                       selected = unlist(defaults$preproc_settings)),
+
     #### peak detection ####
     fluidRow(
       column(6,
              selectInput(inputId = "avgMethod",
-                         label = "Aggregation",
+                         label = "Aggregate",
                          selected = defaults$avgMethod,
                          choices = c("mean", "median", "sum"))
-             ),
+      ),
       column(6,
              numericInput("SNR",
-                          label = "S/N-ratio",
+                          label = "SNR",
                           min = 1,
                           step = 1,
                           value = defaults$SNR) %>%
-               helper(type = "markdown", content = "peakdetection"))
+               helper(type = "markdown", content = "peakdetection")
+      )
     ),
     #### normalization/var. filter
     fluidRow(
       column(6,
              selectInput(inputId = "normMeth",
-                         label = "Normalization",
+                         label = "Normalize",
                          selected = defaults$normMeth,
                          choices = c("mz", "TIC", "PQN", "median", "none")) %>%
                helper(type = "markdown", content = "normalization")),
       column(6,
-             selectInput("VarFilterMethod", label = "Variance filtering",
+             selectInput("VarFilterMethod", label = "Var. filter",
                          selected = defaults$VarFilterMethod,
                          choices = c("mean", "q75","median", "q25", "none")) %>%
                helper(type = "markdown", content = "filtering"))),
     #### recal./norm. method ####
     fluidRow(
       h5("m/z for recal. and mz-norm.:"),
-      checkboxInput("SinglePointRecal", "Single point recal.", value = defaults$SinglePointRecal) %>%
+      checkboxInput("SinglePointRecal", "Recalibrate", value = defaults$SinglePointRecal) %>%
         helper(type = "markdown", content = "recalibration"),
-      column(5,
-             numericInput("normTol", label = "tol. [Da]", min = 0, value = defaults$normTol, step = 0.05)),
       column(7,
-             numericInput("normMz", label = "m/z [Da]", min = 0, value = defaults$normMz, step = 0.05))),
+             numericInput("normMz", label = "m/z [Da]", min = 0, value = defaults$normMz, step = 0.05)),
+      column(5,
+             numericInput("normTol", label = "tol. [Da]", min = 0, value = defaults$normTol, step = 0.05))),
     #### alignment/binning ####
     fluidRow(
-      h5("Aligment / binning:")  %>%
+      h5("Align/bin:")  %>%
         helper(type = "markdown", content = "alignment"),
       column(6,
              numericInput("alignTol",
-                          label = "align tol. [Da]",
+                          label = HTML("align tol.<br>[mDa]"),
                           min = 0,
                           value = defaults$alignTol,
-                          step = 0.05) ),
+                          step = 1) ),
       column(6,
              numericInput("binTol",
-                          label = "bin tol. [ppm]",
+                          label = HTML("bin tol.<br>[ppm]"),
                           min = 0,
                           value = defaults$binTol,
                           step = 5))

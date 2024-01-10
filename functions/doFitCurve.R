@@ -4,7 +4,6 @@ doFitCurve <- function(appData, spec, input) {
 
   #res <- NULL
   tryCatch({
-    #browser()
     res <<- fitCurve(spec = spec,
                      conc = NA,
                      unit = input$concUnits,
