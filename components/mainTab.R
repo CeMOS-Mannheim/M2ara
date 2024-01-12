@@ -47,6 +47,23 @@ mainTab <- function() {
                                   withSpinner(color="#0dc5c1")),
                 ),
                 tabPanel("Score",
+                         fluidRow(
+                           column(2,
+                                  div(
+                                    selectInput(inputId = "metric",
+                                                label = "Metric",
+                                                choices = c("Score",
+                                                            "Z'",
+                                                            "V'",
+                                                            "SSMD",
+                                                            "log2FC",
+                                                            "pIC50"),
+                                                selected = defaults$errorbars,
+                                                multiple = FALSE),
+                                    style = "width:70%"
+                                  )
+                           )
+                         ),
                          column(12,
                                 plotlyOutput("scorePlot") %>%
                                   withSpinner(color="#0dc5c1"))

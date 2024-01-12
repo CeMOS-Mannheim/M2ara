@@ -288,12 +288,7 @@ server <- function(input, output) {
   ### score plot ####
   output$scorePlot <- renderPlotly({
     if (appData$show_plot) {
-      p_score <- appData$stats %>%
-        mutate(direction = if_else(log2FC < 0, "negative", "positive")) %>%
-        ggplot(aes(x = mz, ymin = 0, ymax = score, col = direction)) +
-        geom_linerange() +
-        labs(x = "m/z",
-             y = "Score (%)")
+      p_score <- scorePlot(appData$stats, metric = input$metric)
       ggplotly(p_score)
     } else {
       # dummy plot

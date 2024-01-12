@@ -298,19 +298,19 @@ plateMapPlot <- function(appData,
          "Outlier-all" = {
            lab <- paste0("Chauvenet\nCriterion\n",
                          "n(m/z)")
-             df <- getIntensityMatrix(res) %>%
-               as_tibble() %>%
-               mutate(conc = getConc(res),
-                      spot = getSpots(res)) %>%
-               pivot_longer(-c(conc, spot),
-                            names_to = "mz",
-                            values_to = "intensity") %>%
-               group_by(conc, mz) %>%
-               mutate(cheuv = calculateChauvenetCriterion(intensity)) %>%
-               group_by(spot) %>%
-               count(cheuv) %>%
-               pivot_wider(names_from = cheuv, values_from = n) %>%
-               mutate(val = `TRUE`)
+           df <- getIntensityMatrix(res) %>%
+             as_tibble() %>%
+             mutate(conc = getConc(res),
+                    spot = getSpots(res)) %>%
+             pivot_longer(-c(conc, spot),
+                          names_to = "mz",
+                          values_to = "intensity") %>%
+             group_by(conc, mz) %>%
+             mutate(cheuv = calculateChauvenetCriterion(intensity)) %>%
+             group_by(spot) %>%
+             count(cheuv) %>%
+             pivot_wider(names_from = cheuv, values_from = n) %>%
+             mutate(val = `TRUE`)
          })
 
   p <- suppressWarnings(
@@ -334,6 +334,64 @@ plateMapPlot <- function(appData,
     p <- p +
       scale_fill_viridis_c()
   }
+  return(p)
+}
+
+scorePlot <- function(stats, metric = c("Score", "V'", "Z'", "log2FC", "pIC50", "SSMD")) {
+  metric <- match.arg(metric)
+
+  df <- stats %>%
+    mutate(direction = if_else(log2FC < 0, "down", "up")) %>%
+    select(c("mz", "direction")) %>%
+    mutate(value = pull(stats, metric))
+
+  if(metric %in% c("V'", "Z'")) {
+    # cut V' and Z' at zero as lower values then zero just indicate bad models
+    # and its prettier for visualization
+    df <- df %>%
+      mutate(value = if_else(value < 0, 0, value))
+
+    limits <- c(-1, 1)
+  }
+
+  if(!metric %in% c("Score", "pIC50", "log2FC")) {
+    df <- df %>%
+      mutate(value = if_else(direction == "down", -value, value))
+  }
+
+  minY <- if_else(metric == "pIC50", min(df$value, na.rm = TRUE), 0)
+
+  ylab <- if_else(metric == "Score", "Score (%)", metric)
+
+  p <-  df %>%
+    ggplot(aes(x = mz, ymin = minY, ymax = value, col = direction)) +
+    geom_linerange() +
+    labs(x = "m/z",
+         y = ylab,
+         col = NULL)
+
+  if(metric %in% c("V'", "Z'")) {
+    p <- p +
+      scale_y_continuous(limits = limits,
+                         breaks = c(-1, -0.5, 0, 0.5, 1),
+                         labels = c(1, 0.5, 0, 0.5 , 1))
+  }
+
+  if(metric %in% c("log2FC", "SSMD")) {
+    absVal <- abs(df$value)
+    absVal <- absVal[!is.infinite(absVal)]
+    absMax <- max(absVal, na.rm = TRUE)
+    p <- p +
+      scale_y_continuous(limits = c(-absMax, absMax))
+  }
+
+  if(metric %in% c("Score")) {
+    p <- p +
+      scale_y_continuous(limits = c(-100, 100),
+                         breaks = c(-100, -50, 0, 50, 100),
+                         labels = c(100, 50, 0, 50 , 100))
+  }
+
   return(p)
 }
 
