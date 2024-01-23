@@ -11,7 +11,7 @@ appMainPanel <- function(defaults) {
                        qcTab(),
                        pcaTab(),
                        lassoTab(),
-                       hcTab(),
+                       clustTab(),
                        #### Settings ####
                        tabPanel("Settings",
                                 fluidRow(

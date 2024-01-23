@@ -131,16 +131,16 @@ server <- function(input, output) {
       message("Changing concentrations to ", input$concUnits, ".\n")
     }
 
-      unitFactor <- switch (input$concUnits,
-                            "M" = 1,
-                            "mM" = 1e-3,
-                            "µM" = 1e-6,
-                            "nM" = 1e-9,
-                            "pM" = 1e-12,
-                            "fM" = 1e-15)
+    unitFactor <- switch (input$concUnits,
+                          "M" = 1,
+                          "mM" = 1e-3,
+                          "µM" = 1e-6,
+                          "nM" = 1e-9,
+                          "pM" = 1e-12,
+                          "fM" = 1e-15)
 
-      # change concentrations according to unit
-      names(appData$spec_all) <- appData$org_conc * unitFactor
+    # change concentrations according to unit
+    names(appData$spec_all) <- appData$org_conc * unitFactor
 
     if (!appData$info_state %in% c("intial", "dir_set")) {
       show_spinner()
@@ -157,6 +157,13 @@ server <- function(input, output) {
                         normMeth = input$normMeth,
                         alignTol = input$alignTol * 1e-3
       )
+
+      if(is.null(prc)) {
+        # on error stop here
+        appData$info_state <- "RefMzError"
+        hide_spinner()
+        return()
+      }
 
 
       #### average spectra ####
@@ -502,50 +509,73 @@ server <- function(input, output) {
 
   #### HClust tab #####
   observeEvent(input$doHC, {
-    output$hclustPlot <- renderPlotly({
-      if (appData$show_plot) {
-        show_spinner()
-        appData$hc <- doHClust(appData$res,
-                               cut = input$num_cluster,
-                               dist = input$hcDist,
-                               clustMethod = input$hcMethod,
-                               useFittedCurves = input$hcUseFitted)
-        p <- plotDendro(appData$hc$dend)
-        hide_spinner()
-        return(ggplotly(p))
-      }
-    })
+    if (appData$show_plot) {
+      show_spinner()
+      # appData$hc <- doHClust(appData$res,
+      #                        cut = input$num_cluster,
+      #                        dist = input$hcDist,
+      #                        clustMethod = input$hcMethod,
+      #                        useFittedCurves = input$hcUseFitted)
+      # p <- plotDendro(appData$hc$dend)
 
-    output$clustCurvesPlot <- renderPlotly({
-      if (appData$show_plot & !is.null(appData$hc)) {
-        show_spinner()
-        p <- plotClusterCurves(dend = appData$hc$dend,
-                               tintmat = appData$hc$tintmat,
-                               useFittedCurves = input$hcUseFitted)
-        hide_spinner()
-        return(ggplotly(p))
-      }
-    })
-
-    output$optNumClust <- renderPlotly({
-      if (appData$show_plot & !is.null(appData$hc)) {
-        show_spinner()
-        p <- optimalNumClustersPlot(appData$hc$opt,
-                                    sel_k = input$num_cluster)
-        hide_spinner()
-        return(ggplotly(p))
-      }
-    })
+      appData$hc <- clusterCurves(appData$res, nClusters = 15)
+      hide_spinner()
+    }
   })
+  output$hclustPlot <- renderPlotly({
+    if (appData$show_plot & !is.null(appData$hc)) {
+      p <- plotClusters(appData$hc, k = input$num_cluster) +
+        theme_default() +
+        labs(y = "rel. Intensity [arb. u.]",
+             x = "Log10 Concentration",
+             title = NULL)
+
+      return(ggplotly(p))
+    }
+  })
+
+
+
+
+  output$clustCurvesPlot <- renderPlotly({
+    if (appData$show_plot & !is.null(appData$hc)) {
+      show_spinner()
+      # p <- plotClusterCurves(dend = appData$hc$dend,
+      #                        tintmat = appData$hc$tintmat,
+      #                        useFittedCurves = input$hcUseFitted)
+      p <- plotTraj(appData$hc, k = input$num_cluster) +
+        theme_default() +
+        labs(y = "rel. Intensity [arb. u.]",
+             x = "Log10 Concentration",
+             title = "Average Trajectories")
+
+      hide_spinner()
+      return(ggplotly(p))
+    }
+  })
+
+  output$optNumClust <- renderPlotly({
+    if (appData$show_plot & !is.null(appData$hc)) {
+      show_spinner()
+      # p <- optimalNumClustersPlot(appData$hc$opt,
+      #                             sel_k = input$num_cluster)
+      p <- plotClusterMetrics(appData$hc) +
+        theme_default()
+      hide_spinner()
+      return(ggplotly(p))
+    }
+  })
+
 
   observeEvent(input$hc2peaksTable, {
     if (appData$show_plot & !is.null(appData$hc)) {
-      clusters <- extractClusters(appData$hc$dend) %>%
-        mutate(mzIdx = match.closest(x = mz,
-                                     table = getAllMz(appData$res),
-                                     tolerance = 0.1)) %>%
-        select(-mz)
+      # clusters <- extractClusters(appData$hc$dend) %>%
+      #   mutate(mzIdx = match.closest(x = mz,
+      #                                table = getAllMz(appData$res),
+      #                                tolerance = 0.1)) %>%
+      #   select(-mz)
 
+      clusters <- extractLaClusters(appData$hc, k = input$num_cluster)
       appData$stats <- appData$stats_original %>%
         left_join(clusters, by = join_by(mzIdx))
       message("Updated peak table with HC data.\n")

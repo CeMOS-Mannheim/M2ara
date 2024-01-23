@@ -46,18 +46,18 @@ mainTab <- function() {
                                 plotlyOutput('peak') %>%
                                   withSpinner(color="#0dc5c1")),
                 ),
-                tabPanel("Score",
+                tabPanel("Metrics",
                          fluidRow(
                            column(2,
                                   div(
                                     selectInput(inputId = "metric",
                                                 label = "Metric",
-                                                choices = c("Score",
+                                                choices = c("CRS",
                                                             "Z'",
                                                             "V'",
                                                             "SSMD",
                                                             "log2FC",
-                                                            "pIC50"),
+                                                            "pEC50"),
                                                 selected = defaults$errorbars,
                                                 multiple = FALSE),
                                     style = "width:70%"

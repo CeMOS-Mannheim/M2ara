@@ -80,7 +80,7 @@ getModelFit <- function(model, penalty) {
   fit <-
   model$model %>%
     finalize_model(tibble(penalty = 10^penalty)) %>%
-    fit(data = model$prepData, formula = conc ~.)
+    parsnip::fit(data = model$prepData, formula = conc ~.)
   return(fit)
 }
 
@@ -109,12 +109,12 @@ getVi <- function(model, penalty, mixture, elesticNet = FALSE) {
     vi <- model$model %>%
       finalize_model(tibble(penalty = 10^penalty,
                             mixture = mixture)) %>%
-      fit(data = model$prepData, formula = conc ~.) %>%
+      parsnip::fit(data = model$prepData, formula = conc ~.) %>%
       vip::vi_model(lambda = 10^penalty)
   } else  {
     vi <- model$model %>%
       finalize_model(tibble(penalty = 10^penalty)) %>%
-      fit(data = model$prepData, formula = conc ~.) %>%
+      parsnip::fit(data = model$prepData, formula = conc ~.) %>%
       vip::vi_model(lambda = 10^penalty)
   }
 

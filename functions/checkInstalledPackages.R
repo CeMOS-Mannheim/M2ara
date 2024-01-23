@@ -33,6 +33,9 @@ checkInstalledPackages <- function() {
     }
   )
 
+  # options
+  options(dplyr.summarise.inform = FALSE)
+
   # special case for packages not on CRAN
   if (!require("MALDIcellassay", character.only = TRUE)) {
     devtools::install_github("CeMOS-Mannheim/MALDIcellassay", dependencies = TRUE)

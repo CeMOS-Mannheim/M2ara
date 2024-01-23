@@ -1,6 +1,10 @@
 # set default theme
-theme_set(theme_light(base_size = 16) +
-            theme(panel.grid = element_blank()))
+theme_default <- function() {theme_light(base_size = 16) +
+    theme(panel.grid = element_blank(),
+          strip.text.x = element_text(margin = margin(2,1,2,1, "mm"),
+                                      size = 10))}
+
+theme_set(theme_default)
 
 generateSpecPlots <- function(res) {
   allPeaks <- getAvgPeaks(res)
@@ -337,7 +341,7 @@ plateMapPlot <- function(appData,
   return(p)
 }
 
-scorePlot <- function(stats, metric = c("Score", "V'", "Z'", "log2FC", "pIC50", "SSMD")) {
+scorePlot <- function(stats, metric = c("CRS", "V'", "Z'", "log2FC", "pEC50", "SSMD")) {
   metric <- match.arg(metric)
 
   df <- stats %>%
@@ -354,14 +358,14 @@ scorePlot <- function(stats, metric = c("Score", "V'", "Z'", "log2FC", "pIC50", 
     limits <- c(-1, 1)
   }
 
-  if(!metric %in% c("Score", "pIC50", "log2FC")) {
+  if(metric %in% c("CRS", "V'", "Z'", "SSMD")) {
     df <- df %>%
       mutate(value = if_else(direction == "down", -value, value))
   }
 
-  minY <- if_else(metric == "pIC50", min(df$value, na.rm = TRUE), 0)
+  minY <- if_else(metric == "pEC50", min(df$value, na.rm = TRUE), 0)
 
-  ylab <- if_else(metric == "Score", "Score (%)", metric)
+  ylab <- if_else(metric == "CRS", "Curve response score (%)", metric)
 
   p <-  df %>%
     ggplot(aes(x = mz, ymin = minY, ymax = value, col = direction)) +
@@ -385,7 +389,7 @@ scorePlot <- function(stats, metric = c("Score", "V'", "Z'", "log2FC", "pIC50", 
       scale_y_continuous(limits = c(-absMax, absMax))
   }
 
-  if(metric %in% c("Score")) {
+  if(metric %in% c("CRS")) {
     p <- p +
       scale_y_continuous(limits = c(-100, 100),
                          breaks = c(-100, -50, 0, 50, 100),

@@ -33,10 +33,10 @@ collect_metrics(tune_rs)
 best_penalty <- select_by_one_std_err(tune_rs, desc(penalty), metric = "rsq")
 
 model <- finalize_model(glm, best_penalty) %>%
-  fit(data =df_rdy, formula = conc ~.)
+  parsnip::fit(data = df_rdy, formula = conc ~.)
 
 model %>%
-  predict(df_rdy) %>%
+  parsnip::predict(df_rdy) %>%
   mutate(truth = df_rdy %>%
            pull(conc)) %>%
   ggplot(aes(x = .pred, y = truth)) +

@@ -5,7 +5,7 @@ createDataTable <- function(stats, plot_ready) {
       #dummy data
       return(tibble(mz = c("load", rep("", 9)),
                     mzIdx = c("data", rep("", 9)),
-                    pIC50 = c("to display", rep("", 9)),
+                    pEC50 = c("to display", rep("", 9)),
                     R2 = c("peak", rep("", 9)),
                     log2FC = c("table", rep("", 9))))
     }

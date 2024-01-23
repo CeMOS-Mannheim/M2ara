@@ -29,6 +29,11 @@ infoStateMassageHandler <- function(info_state, output) {
     output$info2 <- renderText(appData$selected_dir)
     output$info3 <- renderText("Could not be processed. Wrong normalization-mass?")
   }
+  if (info_state == "RefMzError") {
+    output$info1 <- renderText(("Dataset:"))
+    output$info2 <- renderText(appData$selected_dir)
+    output$info3 <- renderText("Could not be processed. Increase tolerance?")
+  }
   if (info_state == "fitErrorOther") {
     output$info1 <- renderText(("Dataset:"))
     output$info2 <- renderText(appData$selected_dir)
