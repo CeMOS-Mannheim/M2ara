@@ -46,7 +46,11 @@ preprocess <- function(spectra,
 
   names(spectra) <- nm
   cat("Detecting peaks...\n")
-  peaks <- MALDIcellassay:::.detectPeaks(spectra, SNR = SNR, method = "SuperSmoother")
+
+  peaks <- MALDIcellassay:::.detectPeaks(spectra,
+                                         SNR = SNR,
+                                         method = "SuperSmoother",
+                                         halfWindowSize = 3)
   prc <- tryCatch({
     prc <- MALDIcellassay:::.preprocess(peaks_single = peaks,
                                         spec = spectra,

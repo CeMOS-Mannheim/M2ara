@@ -1,5 +1,5 @@
 # Sever ####
-server <- function(input, output) {
+server <- function(input, output, session) {
 
   ## load ext. functions ####
   source("functions/loadAllFunctions.R")
@@ -598,5 +598,9 @@ server <- function(input, output) {
   output$downloadTable <- downloadHandlerTable(res = appData$res,
                                                stats = appData$stats,
                                                plot_ready = appData$show_plot)
+
+  session$onSessionEnded(function() {
+    stopApp()
+  })
 
 }
