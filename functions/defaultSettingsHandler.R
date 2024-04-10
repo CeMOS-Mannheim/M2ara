@@ -29,7 +29,8 @@ generateDefaults <- function() {
                      penalty = -5,
                      num_cluster = 4,
                      hcDist = "Euclidean",
-                     hcMethod = "average")
+                     hcMethod = "average",
+                     fileFomat = "bruker")
   return(defaults)
 }
 

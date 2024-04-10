@@ -90,7 +90,14 @@ server <- function(input, output, session) {
       # for later: if pos and neg ctrls are included
       # checkSpecNames needs to return indices of the numeric folders
       if (!checkSpecNames(appData$selected_dir)) {
-        spec_raw <- loadSpectra(appData$selected_dir)
+        switch(input$fileFormat,
+               "bruker" = {
+                 spec_raw <- loadSpectra(appData$selected_dir)
+               },
+               "mzml" = {
+                 spec_raw <- loadSpectraMzML(appData$selected_dir)
+               })
+
         appData$info_state <- "loaded"
       } else {
         warning("Found folder names that could not be converted to numeric.

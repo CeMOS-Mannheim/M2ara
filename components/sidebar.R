@@ -19,11 +19,16 @@ appSidebar <- function(defaults) {
                        margins = c(100, 100))),
     #### concentration unit ####
     fluidRow(
-      column(6,
              selectInput(inputId = "concUnits",
                          label = "Conc. unit",
                          choices = c("M", "mM", "µM", "nM", "pM"),
-                         selected = defaults$concUnits, multiple = FALSE, width = "80%"))
+                         selected = defaults$concUnits, multiple = FALSE, width = "80%")
+    ),
+    fluidRow(
+      selectInput(inputId = "fileFormat",
+                  label = "File format",
+                  choices = c("Bruker flex (.fid)" = "bruker", "mzML" = "mzml"),
+                  selected = defaults$fileFormat, multiple = FALSE, width = "80%")
     ),
     #### preprocessing ####
     checkboxGroupInput(inputId = "preproc_settings",
