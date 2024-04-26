@@ -3,19 +3,18 @@ generatePCA <- function(res, num_PC, alpha = 1e-3, beta = 1e-3, verbose = FALSE,
   intmat <- getIntensityMatrix(res)
 
   cat("Performing PCA...\n")
-  scaled <- scale(intmat)
 
   pca <- spca(X = intmat,
        k = num_PC,
        alpha = alpha,
        beta = beta,
-       center = FALSE,
+       center = TRUE,
        scale = FALSE,
        max_iter = max_iter,
        tol = 5e-5,
        verbose = verbose)
 
-  scores <- as_tibble(pca$scores)
+  scores <- as_tibble(pca$scores, .name_repair = "minimal")
   colnames(scores) <- paste0("PC", 1:num_PC)
 
   loadings <- as_tibble(pca$loadings, rownames = NA)

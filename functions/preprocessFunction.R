@@ -10,7 +10,8 @@ preprocess <- function(spectra,
                        normMz,
                        normTol,
                        normMeth,
-                       alignTol
+                       alignTol,
+                       halfWindowSize
 ) {
   nm <- names(spectra)
   if(!smooth & !rmBaseline & !sqrtTransform) {
@@ -50,7 +51,7 @@ preprocess <- function(spectra,
   peaks <- MALDIcellassay:::.detectPeaks(spectra,
                                          SNR = SNR,
                                          method = "SuperSmoother",
-                                         halfWindowSize = 3)
+                                         halfWindowSize = halfWindowSize)
   prc <- tryCatch({
     prc <- MALDIcellassay:::.preprocess(peaks_single = peaks,
                                         spec = spectra,

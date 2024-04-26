@@ -26,7 +26,7 @@ saveSettings <- function(input, filename = "settings.csv", info_state) {
                           "monoisotopicFilter")
 
   # add dir value
-  if (info_state == "dir_set" & !is.null(dir)) {
+  if (!is.null(input$dir)) {
     dir <- as.character(parseDirPath(getVolumes(), input$dir))
     if(length(dir) > 0) {
       fil_inputList$dir <- as.character(parseDirPath(getVolumes(), input$dir))
@@ -34,5 +34,5 @@ saveSettings <- function(input, filename = "settings.csv", info_state) {
   }
 
   write.csv(fil_inputList, file = filename, row.names = FALSE)
-  cat("Inputs written to", file.path(getwd(), filename))
+  message("Inputs written to", file.path(getwd(), filename))
 }

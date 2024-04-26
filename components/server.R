@@ -37,7 +37,6 @@ server <- function(input, output, session) {
     # prepare info massage
     appData$selected_dir <- parseDirPath(vol, input$dir)
     if (length(appData$selected_dir) > 0) {
-      #info_state("dir_set")
       appData$info_state <- "dir_set"
     }
   })
@@ -90,7 +89,14 @@ server <- function(input, output, session) {
       # for later: if pos and neg ctrls are included
       # checkSpecNames needs to return indices of the numeric folders
       if (!checkSpecNames(appData$selected_dir)) {
-        spec_raw <- loadSpectra(appData$selected_dir)
+        switch(input$fileFormat,
+               "bruker" = {
+                 spec_raw <- loadSpectra(appData$selected_dir)
+               },
+               "mzml" = {
+                 spec_raw <- loadSpectraMzML(appData$selected_dir)
+               })
+
         appData$info_state <- "loaded"
       } else {
         warning("Found folder names that could not be converted to numeric.
@@ -105,21 +111,25 @@ server <- function(input, output, session) {
       appData$org_conc <- as.numeric(names(spec_raw))
 
       appData$spec_all <- spec_raw
+      if(input$checkEmpty) {
+        message(MALDIcellassay:::timeNow(),  " check for empty spectra...\n")
 
-      message(MALDIcellassay:::timeNow(),  " check for empty spectra...\n")
+        # MAD would be faster but may fail in some circumstances...
+        peaks <- detectPeaks(appData$spec_all,
+                             SNR = input$SNR,
+                             method = "SuperSmoother")
+        appData$spec_idx <- vapply(peaks,
+                                   function(x) {
+                                     ifelse(length(mz(x)) > 0, TRUE, FALSE)
+                                   },
+                                   FUN.VALUE = TRUE)
+        message(MALDIcellassay:::timeNow(), " ",
+                sum(appData$spec_idx), "/", length(appData$spec_all),
+                " spectra retained.\n")
+      } else {
+        appData$spec_idx <- rep(TRUE, length(appData$spec_all))
+      }
 
-      # MAD would be faster but may fail in some circumstances...
-      peaks <- detectPeaks(appData$spec_all,
-                           SNR = input$SNR,
-                           method = "SuperSmoother")
-      appData$spec_idx <- vapply(peaks,
-                                 function(x) {
-                                   ifelse(length(mz(x)) > 0, TRUE, FALSE)
-                                 },
-                                 FUN.VALUE = TRUE)
-      message(MALDIcellassay:::timeNow(), " ",
-              sum(appData$spec_idx), "/", length(appData$spec_all),
-              " spectra retained.\n")
 
       hide_spinner()
     }
@@ -146,6 +156,7 @@ server <- function(input, output, session) {
       show_spinner()
       message(MALDIcellassay:::timeNow(), " start processing...\n")
       appData$spec_all <- MALDIcellassay:::.repairMetaData(appData$spec_all)
+
       prc <- preprocess(spectra = appData$spec_all[appData$spec_idx],
                         sqrtTransform = appData$preprocessing$sqrtTrans,
                         smooth = appData$preprocessing$smooth,
@@ -155,8 +166,8 @@ server <- function(input, output, session) {
                         normMz = input$normMz,
                         normTol = input$normTol,
                         normMeth = input$normMeth,
-                        alignTol = input$alignTol * 1e-3
-      )
+                        alignTol = input$alignTol * 1e-3,
+                        halfWindowSize = input$halfWindowSize)
 
       if(is.null(prc)) {
         # on error stop here

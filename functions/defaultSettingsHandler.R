@@ -2,16 +2,16 @@ generateDefaults <- function() {
   defaults <- tibble(concUnits = "M",
                      smooth = TRUE,
                      rmBl = TRUE,
-                     sqrtTrans = TRUE,
-                     monoisotopicFilter = TRUE,
-                     avgMethod = "median",
+                     sqrtTrans = FALSE,
+                     monoisotopicFilter = FALSE,
+                     avgMethod = "mean",
                      SNR = 3,
                      normMeth = "mz",
                      VarFilterMethod = "none",
                      SinglePointRecal = TRUE,
                      normTol = 0.1,
-                     normMz = 523.021,
-                     alignTol = 2,
+                     normMz = 349.1,
+                     alignTol = 0,
                      binTol = 100,
                      errorbars = "none",
                      zoom = 4,
@@ -29,7 +29,10 @@ generateDefaults <- function() {
                      penalty = -5,
                      num_cluster = 4,
                      hcDist = "Euclidean",
-                     hcMethod = "average")
+                     hcMethod = "average",
+                     fileFomat = "bruker",
+                     halfWindowSize = 3,
+                     checkEmpty = TRUE)
   return(defaults)
 }
 

@@ -10,3 +10,23 @@ checkSpecNames <- function(dir) {
 
   return(any(is.na(numDirs)))
 }
+
+checkMetaData <- function(object) {
+  metaData <- MALDIquant:::.mergeMetaData(
+    lapply(getAvgSpectra(object),
+           function(x) {
+             x@metaData
+           })
+  )
+
+  terms <- c(metaData$instrument, metaData$spectrometerType,
+             metaData$tofMode, metaData$acquisitionMethod,
+             metaData$laserAttenuation, metaData$laserShots,
+             metaData$laserShots, metaData$path)
+
+  if(any(is.null(terms))) {
+    return(FALSE)
+  }
+
+ return(TRUE)
+}
