@@ -16,20 +16,18 @@ appSidebar <- function(defaults) {
       use_busy_spinner(spin = "half-circle",
                        position = "top-left",
                        height = "100px", width = "100px",
-                       margins = c(100, 100))),
+                       margins = c(100, 100))
+      ),
     #### concentration unit ####
     fluidRow(
+      column(6,
              selectInput(inputId = "concUnits",
                          label = "Conc. unit",
                          choices = c("M", "mM", "µM", "nM", "pM"),
                          selected = defaults$concUnits, multiple = FALSE, width = "80%")
+      )
     ),
-    fluidRow(
-      selectInput(inputId = "fileFormat",
-                  label = "File format",
-                  choices = c("Bruker flex (.fid)" = "bruker", "mzML" = "mzml"),
-                  selected = defaults$fileFormat, multiple = FALSE, width = "80%")
-    ),
+
     #### preprocessing ####
     checkboxGroupInput(inputId = "preproc_settings",
                        label = "Preprocess",
