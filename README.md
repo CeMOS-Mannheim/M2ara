@@ -8,6 +8,8 @@ This application simplifies the analysis of Molecular High Content Screening (MH
 
 This app is specifically designed for use with Bruker flex series raw data but also features support for mzML.
 
+For more detailed information please take a look at the [Manual](manual.md) that is also available inside the app.
+
 ## How to install 
 
 Either clone the GitHub repository to your local machine and start the app by sourcing the `app.R` file or use the stand-alone installer (Windows only, no R installation needed).
@@ -16,3 +18,4 @@ The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/r
 ## Example data
 
 To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541) following the provided information regarding settings. 
+
