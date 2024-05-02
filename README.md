@@ -15,4 +15,4 @@ The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/r
 
 ## Example data
 
-To test the app please use the example data on [FigShare](dx.doi.org/10.6084/m9.figshare.25736541) following the provided information regarding settings. 
+To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541) following the provided information regarding settings. 
