@@ -1,6 +1,6 @@
 # M²ara - MALDI MS Bioassays Evaluation and Classification App
 
-M²ara is a novel software tool to facilitate the exploration of metabolomic responses in complex matrix-assisted laser desorption/ionization mass spectrometry (MALDI MS) bioassays. This app intented for the evaluation of metabolomic drug actions by using the mass-to-charge ratios of hundreds of metabolites and it is particularly useful in defining novel pharmacodynamic biomarkers for high-throughput applications.
+M²ara is a software tool to facilitate the exploration of metabolomic responses in complex matrix-assisted laser desorption/ionization mass spectrometry (MALDI MS) bioassays. This app intented for the evaluation of metabolomic drug actions by using the mass-to-charge ratios of hundreds of metabolites and it is particularly useful in defining novel pharmacodynamic biomarkers for high-throughput applications.
 
 M²ara is based on the R package [MALDIcellassay](https://github.com/CeMOS-Mannheim/MALDIcellassay) and extends its capabilities with a GUI and adds helpful features like clustering of curves, PCA analysis as well as the Curve Response Score (CRS) which enables fast screening for molecules regulated by drug treatment. MALDIcellassay was originally published in [Unger et. al. 2021](https://www.nature.com/articles/s41596-021-00624-z) (Nature Protocols).
 
