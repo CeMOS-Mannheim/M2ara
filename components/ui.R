@@ -9,7 +9,7 @@ defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
 
 #### UI ####
 ui <- fluidPage(
-  title = "Peak Explorer",
+  title = "M²ara",
   lang = "en",
   theme = shinytheme("flatly"),
   # shiny sidebar layout
