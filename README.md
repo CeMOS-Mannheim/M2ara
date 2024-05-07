@@ -40,5 +40,42 @@ Use the stand-alone installer (Windows only, no R installation needed).
 The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.0/MALDIcellassay_1.0.exe).
 
 ## Example data
-To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541) following the provided information regarding settings. 
+To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541). 
+
+File Unger2020_OATP2B1_inhibition_mzML.rar contains mzML data (converted from Bruker Flex using MSConvert) originally published in Unger, et. al., 2020.
+
+
+To replicate the results shown use the following parameters:
+
+- under Settings set File Format to mzML
+- set Concentration unit to nM
+- set Normalization/re-calibration m/z to 354.1418 (D4-E3S, [M-H]-)
+- set recalibration tolerance to 0.1 Da
+- set normalization to m/z
+- activate smoothing and baseline removal
+- set Aggregation method to mean
+- set SNR to 3
+- set alignment to 0 mDa (no alignment)
+- set binning tolerance to 100 ppm
+- select the folder `mzML` (parent folder of the mzML files) from the .rar file, please make sure that no other files are in this folder.
+
+The target m/z is 349.11 (E3S, [M-H]-) the pIC50 value should be 6.1.
+
+The file Weigt2018_BCR-ABL_inhibition_Dasatinib_BrukerFlex.rar contains data in the Bruker Flex format originally published in Weigt, et. al., 2018.
+
+To replicate the results shown use the following parameters:
+
+- under Settings set File Format to Bruker Flex
+- set Concentration unit to µM
+- set Normalization/re-calibration m/z to 760.5851 (PC(34:1) [M+H]+)
+- set recalibration tolerance to 0.1 Da
+- set normalization to TIC
+- activate smoothing and baseline removal
+- set Aggregation method to mean
+- set SNR to 3
+- set alignment to 0 mDa (no alignment)
+- set binning tolerance to 100 ppm
+- select the the folder `curve` from the .rar file, make sure no other files/folders are present.
+
+The target m/z is m/z 826.5722 (PC(36:1) [M+K]+) and m/z 616.1767 (Heme B [M+H]+) the pIC50 values should be 9.5 and 9.7.
 
