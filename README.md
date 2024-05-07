@@ -14,12 +14,31 @@ For more detailed information please take a look at the [Manual](manual.md) that
 
 ## How to install 
 
-Either clone the GitHub repository to your local machine (please make sure to have R installed) and start the app by sourcing the `app.R` file 
-**or** 
-use the stand-alone installer (Windows only, no R installation needed).
+### R
+
+Clone the GitHub repository to your local machine (please make sure to have R installed) and start the app by sourcing the `app.R` file.
+
+```bash
+git clone https://github.com/CeMOS-Mannheim/M2ara.git
+```
+
+```R
+source("app.R")
+```
+
+### Docker
+Install the docker container, run it and access `localhost:3838` to interact with the app.
+Don't forget to mount your data when running the container!
+
+```bash
+docker pull thomasenzlein/m2ara:lastest
+docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara:lastest
+```
+
+### Stand-alone installer for Windows
+Use the stand-alone installer (Windows only, no R installation needed).
 The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.0/MALDIcellassay_1.0.exe).
 
 ## Example data
-
 To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541) following the provided information regarding settings. 
 
