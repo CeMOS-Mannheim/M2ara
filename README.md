@@ -32,7 +32,7 @@ Don't forget to mount your data when running the container!
 
 ```bash
 docker pull thomasenzlein/m2ara:lastest
-docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara:lastest
+docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara:main
 ```
 
 ### Stand-alone installer for Windows
