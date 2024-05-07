@@ -11,7 +11,7 @@ checkInstalledPackages <- function() {
                "shinycssloaders", "shinyhelper", "knitr", "shinybusy",
                "shinythemes", "shinyWidgets", "devtools", "ggpubr", "dendextend",
                "glmnet", "proxy", "sparsepca", "platetools", "ggdendro", "zoo",
-               "fs", "cluster", "shinyjs")
+               "fs", "cluster", "shinyjs", "latrend", "dtwclust")
 
   ## Now load or install&load all
   package.check <- lapply(
