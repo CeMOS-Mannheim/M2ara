@@ -31,7 +31,10 @@ Install the docker container, run it and access `localhost:3838` to interact wit
 Don't forget to mount your data when running the container!
 
 ```bash
-docker pull thomasenzlein/m2ara:lastest
+docker pull thomasenzlein/m2ara:main
+```
+
+```bash
 docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara:main
 ```
 
