@@ -533,7 +533,6 @@ server <- function(input, output, session) {
   output$hclustPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$hc)) {
       p <- plotClusters(appData$hc, k = input$num_cluster) +
-        theme_default() +
         labs(y = "rel. Intensity [arb. u.]",
              x = "Log10 Concentration",
              title = NULL)
@@ -552,7 +551,6 @@ server <- function(input, output, session) {
       #                        tintmat = appData$hc$tintmat,
       #                        useFittedCurves = input$hcUseFitted)
       p <- plotTraj(appData$hc, k = input$num_cluster) +
-        theme_default() +
         labs(y = "rel. Intensity [arb. u.]",
              x = "Log10 Concentration",
              title = "Average Trajectories")
@@ -568,7 +566,6 @@ server <- function(input, output, session) {
       # p <- optimalNumClustersPlot(appData$hc$opt,
       #                             sel_k = input$num_cluster)
       p <- plotClusterMetrics(appData$hc) +
-        theme_default()
       hide_spinner()
       return(ggplotly(p))
     }
