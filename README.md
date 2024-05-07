@@ -14,7 +14,9 @@ For more detailed information please take a look at the [Manual](manual.md) that
 
 ## How to install 
 
-Either clone the GitHub repository to your local machine and start the app by sourcing the `app.R` file or use the stand-alone installer (Windows only, no R installation needed).
+Either clone the GitHub repository to your local machine (please make sure to have R installed) and start the app by sourcing the `app.R` file 
+**or** 
+use the stand-alone installer (Windows only, no R installation needed).
 The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.0/MALDIcellassay_1.0.exe).
 
 ## Example data
