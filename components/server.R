@@ -5,9 +5,6 @@ server <- function(input, output, session) {
   source("functions/loadAllFunctions.R")
   loadAllFunctions()
 
-  ## set ggplot theme ####
-  theme_set(theme_light(base_size = 14))
-
   ## variables ####
   observe_helpers(withMathJax = TRUE)
 

@@ -1,10 +1,8 @@
 # set default theme
-theme_default <- function() {theme_light(base_size = 16) +
-    theme(panel.grid = element_blank(),
-          strip.text.x = element_text(margin = margin(2,1,2,1, "mm"),
-                                      size = 10))}
-
-theme_set(theme_default)
+theme_set(theme_light(base_size = 16) +
+            theme(panel.grid = element_blank(),
+                  strip.text.x = element_text(margin = margin(2,1,2,1, "mm"),
+                                              size = 10)))
 
 generateSpecPlots <- function(res) {
   allPeaks <- getAvgPeaks(res)

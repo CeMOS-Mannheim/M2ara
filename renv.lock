@@ -53,6 +53,14 @@
         "lhs"
       ]
     },
+    "KernSmooth": {
+      "Package": "KernSmooth",
+      "Version": "2.23-22",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2fecebc3047322fa5930f74fae5de70f",
+      "Requirements": []
+    },
     "MALDIquant": {
       "Package": "MALDIquant",
       "Version": "1.22.1",
@@ -272,6 +280,14 @@
         "vctrs"
       ]
     },
+    "boot": {
+      "Package": "boot",
+      "Version": "1.3-28.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9a052fbcbe97a98ceb18dbfd30ebd96e",
+      "Requirements": []
+    },
     "brew": {
       "Package": "brew",
       "Version": "1.0-10",
@@ -362,6 +378,7 @@
         "lme4",
         "mgcv",
         "nlme",
+        "nnet",
         "pbkrtest",
         "quantreg",
         "scales"
@@ -999,7 +1016,8 @@
         "Rcpp",
         "RcppEigen",
         "foreach",
-        "shape"
+        "shape",
+        "survival"
       ]
     },
     "globals": {
@@ -1279,7 +1297,10 @@
       "Requirements": [
         "MASS",
         "class",
-        "prodlim"
+        "nnet",
+        "prodlim",
+        "rpart",
+        "survival"
       ]
     },
     "isoband": {
@@ -1384,7 +1405,8 @@
         "SQUAREM",
         "future.apply",
         "numDeriv",
-        "progressr"
+        "progressr",
+        "survival"
       ]
     },
     "lazyeval": {
@@ -1436,6 +1458,7 @@
         "Matrix",
         "Rcpp",
         "RcppEigen",
+        "boot",
         "lattice",
         "minqa",
         "nlme",
@@ -1593,6 +1616,14 @@
       "Requirements": [
         "testthat"
       ]
+    },
+    "nnet": {
+      "Package": "nnet",
+      "Version": "7.3-19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2c797b46eea7fb58ede195bc0b1f1138",
+      "Requirements": []
     },
     "nplr": {
       "Package": "nplr",
@@ -1820,10 +1851,12 @@
       "Repository": "CRAN",
       "Hash": "c73e09a2039a0f75ac0a1e5454b39993",
       "Requirements": [
+        "KernSmooth",
         "Rcpp",
         "data.table",
         "diagram",
-        "lava"
+        "lava",
+        "survival"
       ]
     },
     "profvis": {
@@ -1910,7 +1943,8 @@
         "MASS",
         "Matrix",
         "MatrixModels",
-        "SparseM"
+        "SparseM",
+        "survival"
       ]
     },
     "ragg": {
@@ -2149,6 +2183,14 @@
         "xml2"
       ]
     },
+    "rpart": {
+      "Package": "rpart",
+      "Version": "4.1.21",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d5bc1a16e01e50e08581f0c362d3955d",
+      "Requirements": []
+    },
     "rprojroot": {
       "Package": "rprojroot",
       "Version": "2.0.4",
@@ -2372,6 +2414,16 @@
         "rlang",
         "stringi",
         "vctrs"
+      ]
+    },
+    "survival": {
+      "Package": "survival",
+      "Version": "3.5-7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b8e943d262c3da0b0febd3e04517c197",
+      "Requirements": [
+        "Matrix"
       ]
     },
     "sys": {
