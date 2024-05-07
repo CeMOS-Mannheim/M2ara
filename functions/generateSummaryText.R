@@ -68,14 +68,22 @@ generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil) {
              x@metaData
            })
   )
-  # format meta data
-  head <- c("<h4>Measurement method</h4>")
-  instrument <- paste("<strong>Instrument:</strong>", metaData$instrument, metaData$spectrometerType, metaData$tofMode, "\n")
-  method <- paste("<strong>Method:</strong>", metaData$acquisitionMethod, "\n")
-  laser <- paste0("<strong>Laser:</strong> ", metaData$laserAttenuation, "%, ", metaData$laserShots, " shots @", metaData$laserShots/1e3, " kHz\n")
-  path <- paste("<strong>Path:</strong>", parentDir(metaData$path[1], 4), "\n")
 
-  instrumentSettingStr <- c(head, instrument, laser, method, path)
+  if(checkMetaData(object)) {
+    # format meta data
+    head <- c("<h4>Measurement method</h4>")
+    instrument <- paste("<strong>Instrument:</strong>", metaData$instrument, metaData$spectrometerType, metaData$tofMode, "\n")
+    method <- paste("<strong>Method:</strong>", metaData$acquisitionMethod, "\n")
+    laser <- paste0("<strong>Laser:</strong> ", metaData$laserAttenuation, "%, ", metaData$laserShots, " shots @", metaData$laserShots/1e3, " kHz\n")
+    path <- paste("<strong>Path:</strong>", parentDir(metaData$path[1], 4), "\n")
+
+    instrumentSettingStr <- c(head, instrument, laser, method, path)
+  } else {
+    head <- c("<h4>Measurement method</h4>")
+
+    instrumentSettingStr <- c(head,
+                              "Meta data extraction supported for Bruker format only.")
+  }
 
   if(object@settings$SinglePointRecal) {
     outputStr <-

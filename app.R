@@ -5,6 +5,7 @@
     warning("req.txt was not found. No packages installed or checked.")
     return()
   }
+
   req <- scan(req_file, character(), quiet = T)
 
   # Update packages

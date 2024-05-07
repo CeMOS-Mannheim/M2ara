@@ -320,6 +320,14 @@ plateMapPlot <- function(appData,
       labs(fill = lab)
   )
 
+  if(all(getSpots(res) == "")) {
+   p <- p + geom_text(aes(x = 12, y = 8,
+                          label = "No spot coordinates found."),
+                      col = "darkred",
+                      size = 10,
+                      inherit.aes = FALSE)
+  }
+
   if(stat == "Concentration") {
     p <- p  +
       scale_fill_viridis_d()
