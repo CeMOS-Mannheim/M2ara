@@ -23,6 +23,10 @@ git clone https://github.com/CeMOS-Mannheim/M2ara.git
 ```
 
 ```R
+# install all packages needed
+source("install_packages.R")
+
+# run app
 source("app.R")
 ```
 
