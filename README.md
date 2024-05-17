@@ -1,8 +1,12 @@
+<img src="M2ara_Logo.png" width="100" height="100">
+
 # M²ara - MALDI MS Bioassays Evaluation and Classification App
 
 M²ara is a software tool to facilitate the exploration of metabolomic responses in complex matrix-assisted laser desorption/ionization mass spectrometry (MALDI MS) bioassays. The app is intented for the evaluation of metabolomic drug actions by using the mass-to-charge ratios of hundreds of metabolites and it is particularly useful in defining novel pharmacodynamic biomarkers for high-throughput applications.
 
 M²ara is based on the R package [MALDIcellassay](https://github.com/CeMOS-Mannheim/MALDIcellassay) (published in [Unger et. al. 2021](https://www.nature.com/articles/s41596-021-00624-z), Nature Protocols) and extends its capabilities with a GUI and adds helpful features like clustering of curves, PCA analysis as well as the Curve Response Score (CRS) which enables fast screening for molecules regulated by drug treatment.
+
+<img src="figures/Workflow_figure.png" width="100%">
 
 ## How to use
 
@@ -31,8 +35,8 @@ source("app.R")
 ```
 
 ### Docker
-Install the docker container, run it and access `localhost:3838` to interact with the app.
-Don't forget to mount your data when running the container!
+Install the [docker container](https://hub.docker.com/repository/docker/thomasenzlein/m2ara), run it and access `localhost:3838` to interact with the app.
+Don't forget to change the path `c:/path/to/massSpecData` to your data so that it can be mounted when running the container.
 
 ```bash
 docker pull thomasenzlein/m2ara:main
