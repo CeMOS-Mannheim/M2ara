@@ -1,4 +1,4 @@
-<img src="M2ara_Logo.png" width="100" height="100">
+<img src="M2ara_Logo.png" alt="M²ara overview" width="100" height="100">
 
 # M²ara - MALDI MS Bioassays Evaluation and Classification App
 
@@ -6,15 +6,19 @@ M²ara is a software tool to facilitate the exploration of metabolomic responses
 
 M²ara is based on the R package [MALDIcellassay](https://github.com/CeMOS-Mannheim/MALDIcellassay) (published in [Unger et. al. 2021](https://www.nature.com/articles/s41596-021-00624-z), Nature Protocols) and extends its capabilities with a GUI and adds helpful features like clustering of curves, PCA analysis as well as the Curve Response Score (CRS) which enables fast screening for molecules regulated by drug treatment.
 
-<img src="figures/Workflow_figure.png" width="100%">
+<img src="figures/Workflow_figure.png" alt="M²ara workflow overview" width="100%">
 
 ## How to use
+
+
 
 This application simplifies the analysis of Molecular High Content Screening (MHCS) MALDI-TOF MS assay data and the evaluation of complex drug actions. After your data has been loaded, you can adjust settings as needed and start the processing. From here, you can analyze your data by selecting entries in the data table, visually inspect and rank mass features using the Curve Response Score (CRS) fingerprints, and save the curve fit and peak profile of your chosen *m/z* value. 
 
 This app is specifically designed for use with Bruker flex series raw data but also features support for mzML.
 
 For more detailed information please take a look at the [Manual](manual.md) that is also available inside the app.
+
+<img src="figures/gui_example.png" alt="M²ara GUI overview" width="100%">
 
 ## How to install 
 
