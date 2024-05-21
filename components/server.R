@@ -12,7 +12,7 @@ server <- function(input, output, session) {
   appData <<- emptyAppDataObject()
   vol <- getVolumes()
 
-  defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
+  #defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
 
   # check if "dir" is set in defaults
   if (!is.null(defaults$dir)) {

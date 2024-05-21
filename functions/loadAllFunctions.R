@@ -15,7 +15,6 @@ loadAllFunctions <- function() {
   source("functions/getStatistics.R")
   source("functions/dummyPlot.R")
   source("functions/downloadHandlers.R")
-  #source("functions/handlePreprocSettings.R")
   source("functions/saveSettings.R")
   source("functions/createDataTable.R")
   source("functions/storeResults.R")

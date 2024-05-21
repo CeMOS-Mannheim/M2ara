@@ -8,11 +8,11 @@ This means you can change the settings here after loading your data and apply th
 
 Currently smoothing (*Savitzky-Golay*) and baseline subtraction (*Top-Hat*), mono-isotopic peak filtering (*Breen et al 2000*) as well as square root transformation (*Sqrt-Transform*) are implemented.
 
-The square root transformation of the data stabilizes the variance to overcome the potential dependency of the variance from the mean.
-
-Smoothing is removes small fluctuations in the data leading to a better peak-shape which makes baseline subtraction and peak picking easier.
+Smoothing removes small fluctuations in the data leading to a better peak-shape which makes baseline subtraction and peak picking easier.
 
 Baseline subtraction estimates the baseline and then removes it from the spectra. This leads to a better comparability between individual spectra.
+
+The square root transformation of the data stabilizes the variance to overcome the potential dependency of the variance from the mean.
 
 Mono isotopic peak filter removes all peaks which are not part of an isotopic envelop and are not the M+0 peak.
 

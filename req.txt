@@ -28,4 +28,3 @@ cluster
 shinyjs
 latrend
 dtwclust
-knitr

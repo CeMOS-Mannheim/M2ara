@@ -30,9 +30,10 @@ generateDefaults <- function() {
                      num_cluster = 4,
                      hcDist = "Euclidean",
                      hcMethod = "average",
-                     fileFomat = "bruker",
-                     halfWindowSize = 3,
-                     checkEmpty = TRUE)
+                     fileFormat = "bruker",
+                     halfWindowSize = 20,
+                     checkEmpty = TRUE,
+                     dir = NA)
   return(defaults)
 }
 
@@ -48,7 +49,7 @@ defaultsSettingsHandler <- function(userSavedSettings = "settings.csv") {
     cat(userSavedSettings, "loaded.\n")
   } else {
     defaults <- generateDefaults()
-    cat("defaults loaded")
+    cat("defaults loaded\n")
   }
   defaults$preproc_settings <-  handleDefaultPreprocSetting(
     smooth_lgl = defaults$smooth,

@@ -35,7 +35,8 @@ appSidebar <- function(defaults) {
                                    "Remove baseline" = "rmBl",
                                    "Sqrt-trans." = "sqrtTrans",
                                    "Monoisotopic" = "monoisotopicFilter"),
-                       selected = unlist(defaults$preproc_settings)),
+                       selected = unlist(defaults$preproc_settings)) %>%
+      helper(type = "markdown", content = "preprocessing"),
 
     #### peak detection ####
     fluidRow(
