@@ -1,20 +1,15 @@
 # Base image https://hub.docker.com/u/rocker/
 FROM rocker/shiny-verse:latest
 
-# copy necessary files
-## renv.lock file
-#COPY ./renv.lock ./renv.lock
-## app folder
+RUN apt-get update && apt-get install -y \
+    sudo \
+    libudunits2-dev \
+    librsvg2-dev \
+    tk
+
+
+## copy app folder into container
 COPY ./ ./app
-
-# install renv
-#RUN Rscript -e 'install.packages("renv")'
-
-# set renv library path
-#ENV RENV_PATHS_LIBRARY renv/library
-
-# restore packages
-#RUN Rscript -e 'renv::restore()'
 
 # install main package
 RUN Rscript -e 'install.packages("devtools")'
