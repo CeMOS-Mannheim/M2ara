@@ -5,7 +5,7 @@ checkInstalledPackages <- function(req_file = "req.txt") {
   # from CRAN and then loaded.
 
   ## First specify the packages of interest
-  packages = read.csv(req_file)
+  packages = read.csv(req_file)[[1]]
 
   ## Now load or install&load all
   package.check <- lapply(
