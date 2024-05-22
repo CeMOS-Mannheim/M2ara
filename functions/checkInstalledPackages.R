@@ -1,5 +1,4 @@
 checkInstalledPackages <- function() {
-
   #### package check on start up ####
   # If a package is installed, it will be loaded. If any
   # are not, the missing package(s) will be installed
