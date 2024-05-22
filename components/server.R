@@ -12,8 +12,6 @@ server <- function(input, output, session) {
   appData <<- emptyAppDataObject()
   vol <- getVolumes()
 
-  #defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
-
   # check if "dir" is set in defaults
   if (!is.null(defaults$dir)) {
     appData$selected_dir <- defaults$dir
@@ -434,97 +432,10 @@ server <- function(input, output, session) {
     }
   })
 
-  #### LASSO tab #####
-  # inital dummy text output
-  output$mixture <- renderText({
-    paste("Mixture = 1")
-  })
-  output$glmTruePred <- renderPlotly({
-    # dummy plot
-    p <- dummyPlot("Fit model\nto display plot")
-
-    return(ggplotly(p))
-  })
-
-  output$glmVi <- renderPlotly({
-    # dummy plot
-    p <- dummyPlot("Fit model\nto display plot")
-    return(ggplotly(p))
-  })
-
-  observeEvent(input$doGLM, {
-    if (appData$info_state == "processed") {
-
-      message("starting model fit...\n")
-      show_spinner()
-      appData$model <- fitGLM(appData$res,
-                              sigmoid = input$sigmoidModel,
-                              elasticNet = input$elasticNet,
-                              corFilter = input$corFilter)
-      updateSliderInput(inputId = "penalty",
-                        value = log10(appData$model$penalty))
-      if (input$elasticNet) {
-        output$mixture <- renderText({
-          paste("Mixture =", round(appData$model$mixture, 2))
-        })
-      } else {
-        output$mixture <- renderText({
-          paste("Mixture = 1")
-        })
-      }
-
-      message("model fitted.\n")
-      hide_spinner()
-
-      output$glmTruePred <- renderPlotly({
-        p <- glmRegPlot(model = appData$model, penalty = input$penalty)
-
-        return(ggplotly(p))
-      })
-
-      observeEvent(input$penalty, {
-        output$glmVi <- renderPlotly({
-
-          p <- viPlot(getVi(appData$model, input$penalty))
-
-          return(ggplotly(p))
-        })
-      })
-    }
-  })
-
-  observeEvent(input$resetPenalty, {
-    if (!is.null(appData$model)) {
-      updateSliderInput(inputId = "penalty",
-                        value = log10(appData$model$penalty))
-    } else {
-      message("appData$model was NULL\n")
-    }
-  })
-
-  observeEvent(input$lasso2peaksTable, {
-    if (!is.null(appData$model)) {
-
-      vi <- getVi(appData$model, penalty = input$penalty) %>%
-        perpareVi()
-
-      appData$stats <- appData$stats_original %>%
-        left_join(vi, by = join_by(mzIdx))
-
-      message("Updated peak table with lasso data.\n")
-    }
-  })
-
   #### HClust tab #####
   observeEvent(input$doHC, {
     if (appData$show_plot) {
       show_spinner()
-      # appData$hc <- doHClust(appData$res,
-      #                        cut = input$num_cluster,
-      #                        dist = input$hcDist,
-      #                        clustMethod = input$hcMethod,
-      #                        useFittedCurves = input$hcUseFitted)
-      # p <- plotDendro(appData$hc$dend)
 
       appData$hc <- clusterCurves(appData$res, nClusters = 15)
       hide_spinner()
@@ -541,15 +452,10 @@ server <- function(input, output, session) {
     }
   })
 
-
-
-
   output$clustCurvesPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$hc)) {
       show_spinner()
-      # p <- plotClusterCurves(dend = appData$hc$dend,
-      #                        tintmat = appData$hc$tintmat,
-      #                        useFittedCurves = input$hcUseFitted)
+
       p <- plotTraj(appData$hc, k = input$num_cluster) +
         labs(y = "rel. Intensity [arb. u.]",
              x = "Log10 Concentration",
@@ -563,8 +469,6 @@ server <- function(input, output, session) {
   output$optNumClust <- renderPlotly({
     if (appData$show_plot & !is.null(appData$hc)) {
       show_spinner()
-      # p <- optimalNumClustersPlot(appData$hc$opt,
-      #                             sel_k = input$num_cluster)
       p <- plotClusterMetrics(appData$hc) +
       hide_spinner()
       return(ggplotly(p))
@@ -574,11 +478,6 @@ server <- function(input, output, session) {
 
   observeEvent(input$hc2peaksTable, {
     if (appData$show_plot & !is.null(appData$hc)) {
-      # clusters <- extractClusters(appData$hc$dend) %>%
-      #   mutate(mzIdx = match.closest(x = mz,
-      #                                table = getAllMz(appData$res),
-      #                                tolerance = 0.1)) %>%
-      #   select(-mz)
 
       clusters <- extractLaClusters(appData$hc, k = input$num_cluster)
       appData$stats <- appData$stats_original %>%

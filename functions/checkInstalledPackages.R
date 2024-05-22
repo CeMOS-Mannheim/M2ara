@@ -1,16 +1,11 @@
-checkInstalledPackages <- function() {
+checkInstalledPackages <- function(req_file = "req.txt") {
   #### package check on start up ####
   # If a package is installed, it will be loaded. If any
   # are not, the missing package(s) will be installed
   # from CRAN and then loaded.
 
   ## First specify the packages of interest
-  packages = c("tidyverse", "shiny", "shinyFiles",
-               "MALDIquant", "MALDIquantForeign", "DT", "plotly",
-               "shinycssloaders", "shinyhelper", "knitr", "shinybusy",
-               "shinythemes", "shinyWidgets", "devtools",
-               "proxy", "sparsepca", "platetools", "zoo",
-               "fs", "cluster", "shinyjs", "latrend", "dtwclust")
+  packages = read.csv(req_file)
 
   ## Now load or install&load all
   package.check <- lapply(

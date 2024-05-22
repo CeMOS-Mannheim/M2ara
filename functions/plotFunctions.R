@@ -141,7 +141,6 @@ plateMapPlot <- function(appData,
                                   "Selected-mz",
                                   "PC-x",
                                   "PC-y",
-                                  "LASSO-error",
                                   "Outlier-mz",
                                   "Outlier-all"),
                          PCs,
@@ -258,28 +257,6 @@ plateMapPlot <- function(appData,
              }
            } else {
              lab <- "No PCA data"
-             df <- tibble(
-               val = rep(NA_integer_, length(spots)),
-               spot = spots)
-           }
-         },
-         "LASSO-error" = {
-           if(!is.null(appData$model)) {
-             df <- appData$model$model %>%
-               finalize_model(tibble(penalty = 10^penalty)) %>%
-               fit(data = appData$model$prepData, formula = conc ~.) %>%
-               predict(appData$model$prepData) %>%
-               mutate(truth = pull(appData$model$prepData, conc)) %>%
-               mutate(val = abs(truth - .pred),
-                      spot = spots)
-
-             if(log10) {
-               lab <- "log10(Abs. error)"
-             } else {
-               lab <- "Abs. error"
-             }
-           } else {
-             lab <- "No LASSO data"
              df <- tibble(
                val = rep(NA_integer_, length(spots)),
                spot = spots)

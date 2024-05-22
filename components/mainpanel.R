@@ -1,7 +1,6 @@
 source("components/mainTab.R")
 source("components/qcTab.R")
 source("components/pcaTab.R")
-source("components/lassoTab.R")
 source("components/hcTab.R")
 
 appMainPanel <- function(defaults) {
