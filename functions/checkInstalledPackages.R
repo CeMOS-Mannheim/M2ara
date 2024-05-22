@@ -6,11 +6,11 @@ checkInstalledPackages <- function() {
   # from CRAN and then loaded.
 
   ## First specify the packages of interest
-  packages = c("tidyverse", "tidymodels", "shiny",  "vip", "shinyFiles",
+  packages = c("tidyverse", "shiny", "shinyFiles",
                "MALDIquant", "MALDIquantForeign", "DT", "plotly",
                "shinycssloaders", "shinyhelper", "knitr", "shinybusy",
-               "shinythemes", "shinyWidgets", "devtools", "ggpubr", "dendextend",
-               "glmnet", "proxy", "sparsepca", "platetools", "ggdendro", "zoo",
+               "shinythemes", "shinyWidgets", "devtools",
+               "proxy", "sparsepca", "platetools", "zoo",
                "fs", "cluster", "shinyjs", "latrend", "dtwclust")
 
   ## Now load or install&load all

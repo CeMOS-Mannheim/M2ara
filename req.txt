@@ -1,8 +1,6 @@
 nplr
 shiny
 tidyverse
-tidymodels
-vip
 shinyFiles
 MALDIquant
 MALDIquantForeign
@@ -15,13 +13,9 @@ shinybusy
 shinythemes
 shinyWidgets
 devtools
-ggpubr
-dendextend
-glmnet
 proxy
 sparsepca
 platetools
-ggdendro
 zoo
 fs
 cluster
