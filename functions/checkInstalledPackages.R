@@ -1,31 +1,28 @@
 checkInstalledPackages <- function(req_file = "req.txt") {
-  #### package check on start up ####
-  # If a package is installed, it will be loaded. If any
-  # are not, the missing package(s) will be installed
-  # from CRAN and then loaded.
 
-  ## First specify the packages of interest
-  packages = read.csv(req_file)[[1]]
+  # Read text file containing required packages
+  if(!file.exists(req_file)) {
+    warning(req_file, "was not found. No packages installed or checked.")
+    return()
+  }
 
-  ## Now load or install&load all
-  package.check <- lapply(
-    packages,
-    FUN = function(x) {
-      if (
-        suppressWarnings(
-          suppressPackageStartupMessages(
-            !require(x,
-                     character.only = TRUE,
-                     quietly = TRUE,
-                     warn.conflicts = FALSE)
-          )
-        )
-      ) {
-        install.packages(x, dependencies = TRUE)
-        library(x, character.only = TRUE)
-      }
+  req <- scan(req_file, character(), quiet = TRUE)
+
+  # Install missing packages
+  if (length(req) > 0) {
+    missing_packages <- req[!(req %in% installed.packages()[,"Package"])]
+    if (length(missing_packages) > 0) {
+      install.packages(
+        missing_packages,
+        repos = "https://cloud.r-project.org",
+        dependencies = TRUE,
+        clean = TRUE
+      )
     }
-  )
+  }
+
+  # Load packages
+  suppressPackageStartupMessages(invisible(lapply(req, library, character.only = TRUE)))
 
   # options
   options(dplyr.summarise.inform = FALSE)
