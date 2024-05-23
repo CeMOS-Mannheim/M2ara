@@ -43,7 +43,7 @@ pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
     spot = spots
   )
 
-  df %>%
+  p <- df %>%
     ggplot(aes(x = xax,
                y = yax,
                col = c,
@@ -54,6 +54,10 @@ pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
     labs(col = "Conc. [M]",
          x = paste0(x, " (", exp[xnum], "% expl. var.)"),
          y = paste0(y, " (", exp[ynum], "% expl. var.)"))
+
+  p <- ggplotly(p)
+
+  return(p)
 }
 
 loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
@@ -78,10 +82,10 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
       geom_hline(yintercept = 0, alpha = 0.75, linetype = "dashed") +
       coord_flip() +
       labs(x = "m/z [Da]",
-           y = paste0(pc, " Loading")) +
+           y = paste0(pc, " Loading"),
+           title = paste("Top-Features for", pc)) +
       theme(legend.position = "none")
 
-    return(p)
   } else {
     p <- df %>%
       ggplot(aes(x = mz,
@@ -89,10 +93,12 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
                  col = sign)) +
       geom_linerange(aes(ymin = 0, ymax = val), show.legend = FALSE) +
       labs(x = "m/z [Da]",
-           y = paste0(pc, " Loading")) +
+           y = paste0(pc, " Loading"),
+           title = paste("Feature importance for", pc)) +
       theme(legend.position = "none")
-    return(p)
   }
+  p <- ggplotly(p)
+  return(p)
 }
 
 glmRegPlot <- function(model, penalty) {
@@ -378,6 +384,8 @@ scorePlot <- function(stats, metric = c("CRS", "V'", "Z'", "log2FC", "pEC50", "S
                          breaks = c(-100, -50, 0, 50, 100),
                          labels = c(100, 50, 0, 50 , 100))
   }
+
+  p <- ggplotly(p)
 
   return(p)
 }

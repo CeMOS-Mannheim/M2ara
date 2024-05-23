@@ -16,7 +16,6 @@ server <- function(input, output, session) {
   if (!is.null(defaults$dir)) {
     appData$selected_dir <- defaults$dir
     message("Dir set from loaded default value.\n")
-    #info_state("dir_set")
     appData$info_state <- "dir_set"
   }
 
@@ -264,7 +263,7 @@ server <- function(input, output, session) {
   ### curve and peak plots ####
   output$curve <- renderPlotly({
     if (appData$show_plot) {
-      p_curve <<- plotCurves(appData$res,
+      p_curve <- plotCurves(appData$res,
                              mzIdx = input$mzTable_rows_selected[1],
                              errorbars = input$errorbars) +
         labs(title = paste0("m/z = ",
@@ -275,25 +274,20 @@ server <- function(input, output, session) {
 
       ggplotly(p_curve)
     } else {
-      # dummy plot
-      p_curve <- dummyPlot()
-
-      ggplotly(p_curve)
+      dummyPlot()
     }
 
   })
 
   output$peak <- renderPlotly({
     if (appData$show_plot) {
-      p_peak <<- plotPeak(appData$res,
+      p_peak <- plotPeak(appData$res,
                           mzIdx = input$mzTable_rows_selected[1],
                           tol = input$zoom) +
         labs(title = NULL)
       ggplotly(p_peak)
     } else {
-      # dummy plot
-      p_peak <- dummyPlot()
-      ggplotly(p_peak)
+      dummyPlot()
     }
 
   })
@@ -301,12 +295,9 @@ server <- function(input, output, session) {
   ### score plot ####
   output$scorePlot <- renderPlotly({
     if (appData$show_plot) {
-      p_score <- scorePlot(appData$stats, metric = input$metric)
-      ggplotly(p_score)
+      scorePlot(appData$stats, metric = input$metric)
     } else {
-      # dummy plot
-      p_score <- dummyPlot()
-      ggplotly(p_score)
+      dummyPlot()
     }
   })
 
@@ -318,8 +309,8 @@ server <- function(input, output, session) {
                               idx = seq_along(getAvgSpectra(appData$res)))
       ggplotly(p)
     } else {
-      p <- dummyPlot()
-      ggplotly(p)
+      dummyPlot()
+
     }
 
   })
@@ -352,8 +343,7 @@ server <- function(input, output, session) {
   #### PCA tab ####
   # default plot for PCA
   output$pca <- renderPlotly({
-    p <- dummyPlot()
-    ggplotly(p)
+    dummyPlot()
   })
 
   observeEvent(input$doPca, {
@@ -369,36 +359,30 @@ server <- function(input, output, session) {
   observeEvent(input$doPca, {
     output$pca <- renderPlotly({
       if (!is.null(appData$pca)) {
-        p <- pcaPlot(pca = appData$pca,
-                     conc = factor(getConc(appData$res)),
-                     x = input$pcaX,
-                     y = input$pcaY,
-                     ellipseLevel = as.numeric(input$pcaEllipse),
-                     spots = getSpots(appData$res))
-
+        pcaPlot(pca = appData$pca,
+                conc = factor(getConc(appData$res)),
+                x = input$pcaX,
+                y = input$pcaY,
+                ellipseLevel = as.numeric(input$pcaEllipse),
+                spots = getSpots(appData$res))
       } else {
-        p <- dummyPlot()
+        dummyPlot()
       }
-      ggplotly(p)
     })
   })
 
   output$pcaLoading1 <- renderPlotly({
     if (appData$show_plot & !is.null(appData$pca)) {
+      browser()
       p <- loadingsPlot(appData$pca,
                         pc = input$pcaX,
-                        simple = input$simpleLoadings) +
-        labs(title = paste("Feature importance for", input$pcaX))
-      if (input$simpleLoadings) {
-        p <- p +
-          labs(title = paste("Top-Features for", input$pcaX))
-      }
+                        simple = input$simpleLoadings)
 
-      ggplotly(p)
+      return(p)
 
     } else {
-      p <- dummyPlot()
-      ggplotly(p)
+      dummyPlot()
+
     }
   })
 
@@ -406,17 +390,12 @@ server <- function(input, output, session) {
     if (appData$show_plot & !is.null(appData$pca)) {
       p <- loadingsPlot(appData$pca,
                         pc = input$pcaY,
-                        simple = input$simpleLoadings) +
-        labs(title = paste("Feature importance for", input$pcaY))
-      if (input$simpleLoadings) {
-        p <- p + labs(title = paste("Top-Features for", input$pcaY))
-      }
+                        simple = input$simpleLoadings)
 
-      ggplotly(p)
+      return(p)
 
     } else {
-      p <- dummyPlot()
-      ggplotly(p)
+      dummyPlot()
     }
   })
 
@@ -443,12 +422,8 @@ server <- function(input, output, session) {
   })
   output$hclustPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$hc)) {
-      p <- plotClusters(appData$hc, k = input$num_cluster) +
-        labs(y = "rel. Intensity [arb. u.]",
-             x = "Log10 Concentration",
-             title = NULL)
+      plotClusters(appData$hc, k = input$num_cluster)
 
-      return(ggplotly(p))
     }
   })
 
@@ -456,22 +431,20 @@ server <- function(input, output, session) {
     if (appData$show_plot & !is.null(appData$hc)) {
       show_spinner()
 
-      p <- plotTraj(appData$hc, k = input$num_cluster) +
-        labs(y = "rel. Intensity [arb. u.]",
-             x = "Log10 Concentration",
-             title = "Average Trajectories")
+      p <- plotTraj(appData$hc, k = input$num_cluster)
 
       hide_spinner()
-      return(ggplotly(p))
+      return(p)
     }
   })
 
   output$optNumClust <- renderPlotly({
     if (appData$show_plot & !is.null(appData$hc)) {
       show_spinner()
-      p <- plotClusterMetrics(appData$hc) +
+      p <- plotClusterMetrics(appData$hc)
+
       hide_spinner()
-      return(ggplotly(p))
+      return(p)
     }
   })
 
