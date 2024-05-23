@@ -1,6 +1,13 @@
 nplr
 shiny
-tidyverse
+dplyr
+tibble
+tidyr
+ggplot2
+purrr
+readr
+stringr
+forcats
 shinyFiles
 MALDIquant
 MALDIquantForeign
@@ -13,12 +20,9 @@ shinybusy
 shinythemes
 shinyWidgets
 devtools
-proxy
 sparsepca
 platetools
-zoo
 fs
-cluster
 shinyjs
 latrend
 dtwclust
