@@ -8,6 +8,9 @@
 
 library(testthat)
 source("functions/loadAllFunctions.R")
+source("functions/checkInstalledPackages.R")
+checkInstalledPackages()
 loadAllFunctions()
+
 
 test_dir("tests/testthat", reporter = "progress")

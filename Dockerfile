@@ -14,6 +14,7 @@ COPY ./ ./app
 # install main package
 RUN Rscript -e 'install.packages("devtools")'
 RUN Rscript -e 'devtools::install_github("CeMOS-Mannheim/MALDIcellassay")'
+
 RUN Rscript -e 'source("/app/install_packages.R")'
 
 # expose port

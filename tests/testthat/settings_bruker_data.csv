@@ -1,0 +1,2 @@
+"concUnits","avgMethod","normMeth","VarFilterMethod","errorbars","metric","plateStat","pcaX","pcaY","pcaEllipse","fileFormat","zoom","pcaAlpha","pcaBeta","num_cluster","SinglePointRecal","plateScale","simpleLoadings","checkEmpty","SNR","normMz","normTol","alignTol","binTol","halfWindowSize","smooth","rmBl","sqrtTrans","monoisotopicFilter","dir"
+"µM","mean","TIC","none","none","CRS","Recal-shift","PC1","PC2",0.67,"bruker",4,-3,-3,4,TRUE,FALSE,FALSE,TRUE,3,760.5851,0.1,0,100,20,TRUE,TRUE,FALSE,FALSE,"Curve"

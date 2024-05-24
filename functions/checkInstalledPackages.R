@@ -12,7 +12,7 @@ checkInstalledPackages <- function(req_file = "req.txt") {
   if (length(req) > 0) {
     missing_packages <- req[!(req %in% installed.packages()[,"Package"])]
     if (length(missing_packages) > 0) {
-      cat("Number of packages to install: ", length(missing_packages))
+      cat("Number of packages to install: ", length(missing_packages), "\n")
       install.packages(
         missing_packages,
         repos = "https://cloud.r-project.org",

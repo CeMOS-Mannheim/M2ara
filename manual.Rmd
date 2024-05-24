@@ -60,11 +60,11 @@ etc.
 ### Step-by-step
 
 ```{r, echo=FALSE, out.width="100%", fig.cap="Interface of the app"}
-knitr::include_graphics("interface.png")
+knitr::include_graphics("figures/interface.png")
 ```
 
 1. Click on the **Select folder**-button (1, see figure above) and select a folder containing your experiment (see  [Requirements to the raw data](#requirements-to-the-raw-data)). The following dialog is displayed:  
-`r knitr::include_graphics("selectFolder.png")`  
+`r knitr::include_graphics("figures/selectFolder.png")`  
 
 2. Click on the **Load spectra**-button (1) to import your spectra. 
 Depending on the size of the experiment, loading takes 30s - 3 minutes.
@@ -96,6 +96,6 @@ Note, all steps after step 2 will use the data currently loaded. This means that
 
 
 ```{r, echo=FALSE, out.width="80%", fig.cap="Schematic outline of the analysis workflow"}
-knitr::include_graphics("pipeline.png")
+knitr::include_graphics("figures/pipeline.png")
 ```
 

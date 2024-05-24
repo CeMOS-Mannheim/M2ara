@@ -1,5 +1,4 @@
 nplr
-shiny
 dplyr
 tibble
 tidyr
@@ -13,12 +12,15 @@ MALDIquant
 MALDIquantForeign
 DT
 plotly
+shiny
 shinycssloaders
 shinyhelper
-knitr
 shinybusy
 shinythemes
 shinyWidgets
+shinytest2
+common
+knitr
 devtools
 sparsepca
 platetools

@@ -1,4 +1,4 @@
-<img src="M2ara_Logo.png" alt="M²ara overview" width="100" height="100">
+<img src="figures/M2ara_Logo.png" alt="M²ara overview" width="100" height="100">
 
 # M²ara - MALDI MS Bioassays Evaluation and Classification App
 
