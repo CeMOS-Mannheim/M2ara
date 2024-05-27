@@ -44,6 +44,7 @@ jobs:
       - name: Install R packages from req.txt
         run: |
           R -e "install.packages('devtools')"
+          R -e "devtools::install_github('CeMOS-Mannheim/MALDIcellassay')"
           R -e "packages <- readLines('req.txt'); install.packages(packages)"
 
       # Install testthat if it's not listed in req.txt
