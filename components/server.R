@@ -373,7 +373,6 @@ server <- function(input, output, session) {
 
   output$pcaLoading1 <- renderPlotly({
     if (appData$show_plot & !is.null(appData$pca)) {
-      browser()
       p <- loadingsPlot(appData$pca,
                         pc = input$pcaX,
                         simple = input$simpleLoadings)
