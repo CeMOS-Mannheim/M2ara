@@ -52,7 +52,7 @@ jobs:
 
       # Run tests
       - name: Run tests
-        run: R -e "testthat::test_dir('tests')"
+        run: R -e "source('tests/testthat.R')"
 
       # This step will be skipped if the tests fail
       # Set up Docker Buildx

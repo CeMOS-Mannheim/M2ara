@@ -7,10 +7,12 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-source("functions/loadAllFunctions.R")
-source("functions/checkInstalledPackages.R")
-checkInstalledPackages()
-loadAllFunctions()
-
+# load all functions
+lapply(list.files("../functions/",
+                  full.names = TRUE),
+       function(x) {
+         source(x)
+       })
+checkInstalledPackages(req_file = "../req.txt")
 
 test_dir("tests/testthat", reporter = "progress")
