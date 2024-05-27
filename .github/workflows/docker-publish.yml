@@ -56,13 +56,13 @@ jobs:
           password: ${{ secrets.dockeriopwd }}
 
       - name: Cache Docker layers
-      id: cache-docker-layers
-      uses: actions/cache@v2
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
+        id: cache-docker-layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+           ${{ runner.os }}-buildx-
 
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
