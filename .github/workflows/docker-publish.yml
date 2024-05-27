@@ -14,6 +14,7 @@ on:
 env:
   REGISTRY: docker.io
   IMAGE_NAME: thomasenzlein/m2ara
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build:
