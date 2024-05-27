@@ -7,15 +7,17 @@ RUN apt-get update && apt-get install -y \
     librsvg2-dev \
     tk
 
+# Copy the req.txt file to the Docker image
+COPY req.txt /req.txt
+
+# Install R packages from req.txt
+RUN R -e "packages <- readLines('/req.txt'); install.packages(packages)"
+
+# Install the MALDIcellassay from GitHub
+RUN R -e "devtools::install_github('CeMOS-Mannheim/MALDIcellassay')"
 
 ## copy app folder into container
 COPY ./ ./app
-
-# install main package
-RUN Rscript -e 'install.packages("devtools")'
-RUN Rscript -e 'devtools::install_github("CeMOS-Mannheim/MALDIcellassay")'
-
-RUN Rscript -e 'source("/app/install_packages.R")'
 
 # expose port
 EXPOSE 3838
