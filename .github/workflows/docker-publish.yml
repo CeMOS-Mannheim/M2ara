@@ -1,16 +1,10 @@
 name: Docker
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 on:
   push:
     branches:
       - main
       - dev
-    # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
     branches:
@@ -18,11 +12,8 @@ on:
       - dev
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
-  # github.repository as <account>/<repo>
   IMAGE_NAME: thomasenzlein/m2ara
-
 
 jobs:
   build:
@@ -31,22 +22,43 @@ jobs:
     permissions:
       contents: read
       packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Set up BuildKit Docker container builder to be able to build
-      # multi-platform images and export cache
-      # https://github.com/docker/setup-buildx-action
+      # Set up R environment
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.4.0'
+
+      # Install system dependencies for R packages
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libcurl4-openssl-dev libssl-dev libxml2-dev
+
+      # Install R package dependencies from req.txt
+      - name: Install R packages from req.txt
+        run: |
+          R -e "install.packages('devtools')"
+          R -e "packages <- readLines('req.txt'); install.packages(packages)"
+
+      # Install testthat if it's not listed in req.txt
+      - name: Install testthat
+        run: R -e "if (!require('testthat')) install.packages('testthat')"
+
+      # Run tests
+      - name: Run tests
+        run: R -e "testthat::test_dir('tests')"
+
+      # This step will be skipped if the tests fail
+      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.3.0
 
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3.1.0
@@ -67,16 +79,12 @@ jobs:
           restore-keys: |
            ${{ runner.os }}-buildx-
 
-      # Extract metadata (tags, labels) for Docker
-      # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5.5.1
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v5.3.0
