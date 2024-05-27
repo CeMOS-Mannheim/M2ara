@@ -38,7 +38,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install libssl-dev libxml2-dev build-essential libxml2-dev libgit2-dev libudunits2-dev librsvg2-dev tk
+          sudo apt-get -y install libssl-dev libxml2-dev build-essential libxml2-dev libgit2-dev libudunits2-dev librsvg2-dev tk libharfbuzz-dev libfribidi-dev
 
       # Install R package dependencies from req.txt
       - name: Install R packages from req.txt
