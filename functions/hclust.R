@@ -1,9 +1,3 @@
-library(MALDIquant)
-library(MALDIquantForeign)
-library(tidyverse)
-library(MALDIcellassay)
-library(nplr)
-
 clusterCurves <- function(res, nClusters = 15) {
   fits <- getCurveFits(res)
 
