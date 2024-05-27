@@ -3,7 +3,6 @@ loadAllFunctions <- function() {
   source("functions/preprocessFunction.R")
   source("functions/plotFunctions.R")
   source("functions/generatePCA.R")
-  source("functions/fitGLM.R")
   source("functions/getVolumes.R")
   source("functions/hclust.R")
   source("functions/getVolumes.R")

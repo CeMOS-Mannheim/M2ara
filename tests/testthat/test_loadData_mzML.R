@@ -5,12 +5,7 @@ test_that("data can be loaded and processed from mzML",
               format(Sys.time(), "%H:%M:%OS")
             }
 
-            cat("\n", timeNow(), "setting working directory...\n")
-            setwd("..")
-            setwd("..")
             cat("Working directory is ", getwd(), "\n")
-
-
 
             # download test data and unzip
             cat(timeNow(), "downloading mzML test data...\n")
