@@ -19,18 +19,11 @@ if(!length(reqpath) == 1) {
 
 setwd(reqpath)
 
-
-# load all functions
-pkg <- scan("req.txt", character(), quiet = TRUE)
-cat("loading packages:", pkg, sep = "\n")
-suppressPackageStartupMessages(
-  invisible(
-    lapply(pkg, library, character.only = TRUE)
-    )
-  )
-
 cat("loading MALDIcellassay\n")
 library(MALDIcellassay)
+source("functions/checkInstalledPackages.R")
+
+checkInstalledPackages()
 
 source("functions/loadAllFunctions.R")
 loadAllFunctions()
