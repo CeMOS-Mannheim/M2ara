@@ -4,7 +4,7 @@ test_that("data can be loaded and processed from mzML",
             timeNow <- function() {
               format(Sys.time(), "%H:%M:%OS")
             }
-
+            setwd(dirname(common::file.find(pattern = "req.txt")))
             cat("Working directory is ", getwd(), "\n")
 
             # download test data and unzip
