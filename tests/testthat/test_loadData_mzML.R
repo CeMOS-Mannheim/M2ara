@@ -33,12 +33,14 @@ test_that("data can be loaded and processed from mzML",
             app$click("load")
             cat(timeNow(), "processing...\n")
             app$click("process")
+            Sys.sleep(30)
             cat(timeNow(), "done!\n")
-            exp <-app$get_values(export = TRUE)
+            exp <- app$get_values(export = TRUE)
 
             cat(timeNow(), "running tests...\n")
             expect_equal(exp$export$isSpectrumList, TRUE)
             expect_equal(exp$export$numSpec, 144)
+            expect_equal(exp$export$infoState, "processed")
 
             cat(timeNow(), "Sucess! Cleaning up...\n")
             fs::file_delete("settings.csv")

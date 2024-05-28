@@ -476,7 +476,8 @@ server <- function(input, output, session) {
                                                plot_ready = appData$show_plot)
 
   exportTestValues(numSpec = length(appData$spec_all),
-                   isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all))
+                   isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),
+                   infoState =  appData$info_state)
 
   session$onSessionEnded(function() {
     stopApp()
