@@ -18,7 +18,6 @@ qcTab <- function() {
                                             "Selected-mz",
                                             "PC-x",
                                             "PC-y",
-                                            "LASSO-error",
                                             "Outlier-mz",
                                             "Outlier-all"),
                                 multiple = FALSE,

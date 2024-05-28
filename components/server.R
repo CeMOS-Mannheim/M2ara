@@ -12,13 +12,10 @@ server <- function(input, output, session) {
   appData <<- emptyAppDataObject()
   vol <- getVolumes()
 
-  #defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
-
   # check if "dir" is set in defaults
   if (!is.null(defaults$dir)) {
     appData$selected_dir <- defaults$dir
     message("Dir set from loaded default value.\n")
-    #info_state("dir_set")
     appData$info_state <- "dir_set"
   }
 
@@ -266,7 +263,7 @@ server <- function(input, output, session) {
   ### curve and peak plots ####
   output$curve <- renderPlotly({
     if (appData$show_plot) {
-      p_curve <<- plotCurves(appData$res,
+      p_curve <- plotCurves(appData$res,
                              mzIdx = input$mzTable_rows_selected[1],
                              errorbars = input$errorbars) +
         labs(title = paste0("m/z = ",
@@ -277,25 +274,20 @@ server <- function(input, output, session) {
 
       ggplotly(p_curve)
     } else {
-      # dummy plot
-      p_curve <- dummyPlot()
-
-      ggplotly(p_curve)
+      dummyPlot()
     }
 
   })
 
   output$peak <- renderPlotly({
     if (appData$show_plot) {
-      p_peak <<- plotPeak(appData$res,
+      p_peak <- plotPeak(appData$res,
                           mzIdx = input$mzTable_rows_selected[1],
                           tol = input$zoom) +
         labs(title = NULL)
       ggplotly(p_peak)
     } else {
-      # dummy plot
-      p_peak <- dummyPlot()
-      ggplotly(p_peak)
+      dummyPlot()
     }
 
   })
@@ -303,12 +295,9 @@ server <- function(input, output, session) {
   ### score plot ####
   output$scorePlot <- renderPlotly({
     if (appData$show_plot) {
-      p_score <- scorePlot(appData$stats, metric = input$metric)
-      ggplotly(p_score)
+      scorePlot(appData$stats, metric = input$metric)
     } else {
-      # dummy plot
-      p_score <- dummyPlot()
-      ggplotly(p_score)
+      dummyPlot()
     }
   })
 
@@ -320,8 +309,8 @@ server <- function(input, output, session) {
                               idx = seq_along(getAvgSpectra(appData$res)))
       ggplotly(p)
     } else {
-      p <- dummyPlot()
-      ggplotly(p)
+      dummyPlot()
+
     }
 
   })
@@ -354,8 +343,7 @@ server <- function(input, output, session) {
   #### PCA tab ####
   # default plot for PCA
   output$pca <- renderPlotly({
-    p <- dummyPlot()
-    ggplotly(p)
+    dummyPlot()
   })
 
   observeEvent(input$doPca, {
@@ -371,17 +359,15 @@ server <- function(input, output, session) {
   observeEvent(input$doPca, {
     output$pca <- renderPlotly({
       if (!is.null(appData$pca)) {
-        p <- pcaPlot(pca = appData$pca,
-                     conc = factor(getConc(appData$res)),
-                     x = input$pcaX,
-                     y = input$pcaY,
-                     ellipseLevel = as.numeric(input$pcaEllipse),
-                     spots = getSpots(appData$res))
-
+        pcaPlot(pca = appData$pca,
+                conc = factor(getConc(appData$res)),
+                x = input$pcaX,
+                y = input$pcaY,
+                ellipseLevel = as.numeric(input$pcaEllipse),
+                spots = getSpots(appData$res))
       } else {
-        p <- dummyPlot()
+        dummyPlot()
       }
-      ggplotly(p)
     })
   })
 
@@ -389,18 +375,13 @@ server <- function(input, output, session) {
     if (appData$show_plot & !is.null(appData$pca)) {
       p <- loadingsPlot(appData$pca,
                         pc = input$pcaX,
-                        simple = input$simpleLoadings) +
-        labs(title = paste("Feature importance for", input$pcaX))
-      if (input$simpleLoadings) {
-        p <- p +
-          labs(title = paste("Top-Features for", input$pcaX))
-      }
+                        simple = input$simpleLoadings)
 
-      ggplotly(p)
+      return(p)
 
     } else {
-      p <- dummyPlot()
-      ggplotly(p)
+      dummyPlot()
+
     }
   })
 
@@ -408,17 +389,12 @@ server <- function(input, output, session) {
     if (appData$show_plot & !is.null(appData$pca)) {
       p <- loadingsPlot(appData$pca,
                         pc = input$pcaY,
-                        simple = input$simpleLoadings) +
-        labs(title = paste("Feature importance for", input$pcaY))
-      if (input$simpleLoadings) {
-        p <- p + labs(title = paste("Top-Features for", input$pcaY))
-      }
+                        simple = input$simpleLoadings)
 
-      ggplotly(p)
+      return(p)
 
     } else {
-      p <- dummyPlot()
-      ggplotly(p)
+      dummyPlot()
     }
   })
 
@@ -434,97 +410,10 @@ server <- function(input, output, session) {
     }
   })
 
-  #### LASSO tab #####
-  # inital dummy text output
-  output$mixture <- renderText({
-    paste("Mixture = 1")
-  })
-  output$glmTruePred <- renderPlotly({
-    # dummy plot
-    p <- dummyPlot("Fit model\nto display plot")
-
-    return(ggplotly(p))
-  })
-
-  output$glmVi <- renderPlotly({
-    # dummy plot
-    p <- dummyPlot("Fit model\nto display plot")
-    return(ggplotly(p))
-  })
-
-  observeEvent(input$doGLM, {
-    if (appData$info_state == "processed") {
-
-      message("starting model fit...\n")
-      show_spinner()
-      appData$model <- fitGLM(appData$res,
-                              sigmoid = input$sigmoidModel,
-                              elasticNet = input$elasticNet,
-                              corFilter = input$corFilter)
-      updateSliderInput(inputId = "penalty",
-                        value = log10(appData$model$penalty))
-      if (input$elasticNet) {
-        output$mixture <- renderText({
-          paste("Mixture =", round(appData$model$mixture, 2))
-        })
-      } else {
-        output$mixture <- renderText({
-          paste("Mixture = 1")
-        })
-      }
-
-      message("model fitted.\n")
-      hide_spinner()
-
-      output$glmTruePred <- renderPlotly({
-        p <- glmRegPlot(model = appData$model, penalty = input$penalty)
-
-        return(ggplotly(p))
-      })
-
-      observeEvent(input$penalty, {
-        output$glmVi <- renderPlotly({
-
-          p <- viPlot(getVi(appData$model, input$penalty))
-
-          return(ggplotly(p))
-        })
-      })
-    }
-  })
-
-  observeEvent(input$resetPenalty, {
-    if (!is.null(appData$model)) {
-      updateSliderInput(inputId = "penalty",
-                        value = log10(appData$model$penalty))
-    } else {
-      message("appData$model was NULL\n")
-    }
-  })
-
-  observeEvent(input$lasso2peaksTable, {
-    if (!is.null(appData$model)) {
-
-      vi <- getVi(appData$model, penalty = input$penalty) %>%
-        perpareVi()
-
-      appData$stats <- appData$stats_original %>%
-        left_join(vi, by = join_by(mzIdx))
-
-      message("Updated peak table with lasso data.\n")
-    }
-  })
-
   #### HClust tab #####
   observeEvent(input$doHC, {
     if (appData$show_plot) {
       show_spinner()
-      # appData$hc <- doHClust(appData$res,
-      #                        cut = input$num_cluster,
-      #                        dist = input$hcDist,
-      #                        clustMethod = input$hcMethod,
-      #                        useFittedCurves = input$hcUseFitted)
-      # p <- plotDendro(appData$hc$dend)
 
       appData$hc <- clusterCurves(appData$res, nClusters = 15)
       hide_spinner()
@@ -532,53 +421,35 @@ server <- function(input, output, session) {
   })
   output$hclustPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$hc)) {
-      p <- plotClusters(appData$hc, k = input$num_cluster) +
-        labs(y = "rel. Intensity [arb. u.]",
-             x = "Log10 Concentration",
-             title = NULL)
+      plotClusters(appData$hc, k = input$num_cluster)
 
-      return(ggplotly(p))
     }
   })
-
-
-
 
   output$clustCurvesPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$hc)) {
       show_spinner()
-      # p <- plotClusterCurves(dend = appData$hc$dend,
-      #                        tintmat = appData$hc$tintmat,
-      #                        useFittedCurves = input$hcUseFitted)
-      p <- plotTraj(appData$hc, k = input$num_cluster) +
-        labs(y = "rel. Intensity [arb. u.]",
-             x = "Log10 Concentration",
-             title = "Average Trajectories")
+
+      p <- plotTraj(appData$hc, k = input$num_cluster)
 
       hide_spinner()
-      return(ggplotly(p))
+      return(p)
     }
   })
 
   output$optNumClust <- renderPlotly({
     if (appData$show_plot & !is.null(appData$hc)) {
       show_spinner()
-      # p <- optimalNumClustersPlot(appData$hc$opt,
-      #                             sel_k = input$num_cluster)
-      p <- plotClusterMetrics(appData$hc) +
+      p <- plotClusterMetrics(appData$hc)
+
       hide_spinner()
-      return(ggplotly(p))
+      return(p)
     }
   })
 
 
   observeEvent(input$hc2peaksTable, {
     if (appData$show_plot & !is.null(appData$hc)) {
-      # clusters <- extractClusters(appData$hc$dend) %>%
-      #   mutate(mzIdx = match.closest(x = mz,
-      #                                table = getAllMz(appData$res),
-      #                                tolerance = 0.1)) %>%
-      #   select(-mz)
 
       clusters <- extractLaClusters(appData$hc, k = input$num_cluster)
       appData$stats <- appData$stats_original %>%
@@ -604,8 +475,11 @@ server <- function(input, output, session) {
                                                stats = appData$stats,
                                                plot_ready = appData$show_plot)
 
+  exportTestValues(numSpec = length(appData$spec_all),
+                   isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),
+                   infoState =  appData$info_state)
+
   session$onSessionEnded(function() {
     stopApp()
   })
-
 }

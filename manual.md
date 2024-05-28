@@ -58,12 +58,12 @@ etc.
 ### Step-by-step
 
 <div class="figure">
-<img src="interface.png" alt="Interface of the app" width="100%" />
+<img src="figures/interface.png" alt="Interface of the app" width="100%" />
 <p class="caption">Interface of the app</p>
 </div>
 
 1. Click on the **Select folder**-button (1, see figure above) and select a folder containing your experiment (see  [Requirements to the raw data](#requirements-to-the-raw-data)). The following dialog is displayed:  
-<img src="selectFolder.png" width="431" />  
+<img src="figures/selectFolder.png" width="431" />  
 
 2. Click on the **Load spectra**-button (1) to import your spectra. 
 Depending on the size of the experiment, loading takes 30s - 3 minutes.
@@ -95,7 +95,7 @@ Note, all steps after step 2 will use the data currently loaded. This means that
 
 
 <div class="figure">
-<img src="pipeline.png" alt="Schematic outline of the analysis workflow" width="80%" />
+<img src="figures/pipeline.png" alt="Schematic outline of the analysis workflow" width="80%" />
 <p class="caption">Schematic outline of the analysis workflow</p>
 </div>
 

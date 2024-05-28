@@ -1,10 +1,3 @@
-library(MALDIquant)
-library(MALDIquantForeign)
-library(tidyverse)
-library(MALDIcellassay)
-library(zoo)
-library(nplr)
-
 clusterCurves <- function(res, nClusters = 15) {
   fits <- getCurveFits(res)
 
@@ -47,15 +40,22 @@ extractLaClusters <- function(models, k = 2) {
 plotClusters <- function(models, k) {
   model <- models[[k-1]]
 
-  p <- latrend::plot(model)
-
+  p <- latrend::plot(model) +
+    labs(y = "rel. Intensity [arb. u.]",
+         x = "Log10 Concentration",
+         title = NULL)
+  p <- ggplotly(p)
   return(p)
 }
 
 plotTraj <- function(models, k) {
   model <- models[[k-1]]
 
-  p <- latrend::plotClusterTrajectories(model)
+  p <- latrend::plotClusterTrajectories(model) +
+    labs(y = "rel. Intensity [arb. u.]",
+         x = "Log10 Concentration",
+         title = "Average Trajectories")
+  p <- ggplotly(p)
 
   return(p)
 }
@@ -66,5 +66,6 @@ plotClusterMetrics <- function(models) {
                scales = "free_y",
                nrow = 1) +
     scale_x_continuous(breaks = c(2, 5, 10, 15))
+  p <- ggplotly(p)
   return(p)
 }

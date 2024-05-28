@@ -1,4 +1,5 @@
 test_that("detectOutliers detects outliers", {
+  set.seed(42)
   # create 40 spectra with 100 mz values each so that we can have
   # 5 concentrations with 4 replicates each
   # after that we test out outlier detection on that data
@@ -20,11 +21,12 @@ test_that("detectOutliers detects outliers", {
 })
 
 test_that("detectOutliers detects if no outliers are present", {
+  set.seed(42)
   # create 40 spectra with 100 mz values each so that we can have
   # 5 concentrations with 4 replicates each
   # after that we test out outlier detection on that data
   spectra <- replicate(40, createMassSpectrum(mass = 1:100,
-                                              intensity = abs(rnorm(n = 100))),
+                                              intensity = abs(rnorm(n = 100, sd = 0.5))),
                        simplify = FALSE)
   # create 5 concentrations
   conc <- rep(1:5, each = 8)
