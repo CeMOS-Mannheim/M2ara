@@ -20,10 +20,10 @@ shinyWidgets
 shinytest2
 common
 knitr
-devtools
 sparsepca
 platetools
 fs
 shinyjs
 latrend
 dtwclust
+pak

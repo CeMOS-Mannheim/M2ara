@@ -14,7 +14,7 @@ COPY req.txt /req.txt
 RUN R -e "packages <- readLines('/req.txt'); install.packages(packages)"
 
 # Install the MALDIcellassay from GitHub
-RUN R -e "devtools::install_github('CeMOS-Mannheim/MALDIcellassay')"
+RUN R -e "pak::pkg_install('CeMOS-Mannheim/MALDIcellassay')"
 
 ## copy app folder into container
 COPY ./ ./app
