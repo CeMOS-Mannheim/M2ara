@@ -18,7 +18,6 @@ loadAllFunctions <- function() {
   source("functions/createDataTable.R")
   source("functions/storeResults.R")
   source("functions/emptyAppDataObject.R")
-  source("functions/prepareVi.R")
   source("functions/detectOutliers.R")
 
 }

@@ -4,7 +4,6 @@ tibble
 tidyr
 ggplot2
 purrr
-readr
 stringr
 forcats
 shinyFiles
