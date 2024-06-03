@@ -1,4 +1,5 @@
 clusterCurves <- function(res, nClusters = 15) {
+  message(MALDIcellassay:::timeNow(), " running clustering...\n")
   fits <- getCurveFits(res)
 
   df <- seq_along(fits) %>%
@@ -25,7 +26,7 @@ clusterCurves <- function(res, nClusters = 15) {
   methods <- latrend::lcMethods(method,
                        nClusters = 2:nClusters)
   models <- latrend::latrendBatch(methods, data = df, verbose = FALSE)
-
+  message(MALDIcellassay:::timeNow(), " clustering done.\n")
   return(models)
 }
 

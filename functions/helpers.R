@@ -1,5 +1,5 @@
 checkSpecNames <- function(dir) {
-  # function to check if all spectra names/folders have a numeric as name
+  # check if all spectra names/folders have a numeric as name
   # we assume that this numeric is the corresponding concentration
 
   dirs <- basename(list.dirs(dir, recursive = FALSE))
@@ -8,10 +8,13 @@ checkSpecNames <- function(dir) {
   # this will return NA if the folder name could not be converted.
   numDirs <- suppressWarnings(as.numeric(dirs))
 
-  return(any(is.na(numDirs)))
+  hasNumericNames <- !any(is.na(numDirs))
+
+  return(hasNumericNames)
 }
 
 checkMetaData <- function(object) {
+  # check if meta data is coming from bruker device
   metaData <- MALDIquant:::.mergeMetaData(
     lapply(getAvgSpectra(object),
            function(x) {

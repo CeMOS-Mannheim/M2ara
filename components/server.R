@@ -82,7 +82,7 @@ server <- function(input, output, session) {
       # check if all spectra names are numeric/concentrations
       # for later: if pos and neg ctrls are included
       # checkSpecNames needs to return indices of the numeric folders
-      if (!checkSpecNames(appData$selected_dir)) {
+      if (checkSpecNames(appData$selected_dir)) {
         switch(input$fileFormat,
                "bruker" = {
                  spec_raw <- loadSpectra(appData$selected_dir)
@@ -302,7 +302,7 @@ server <- function(input, output, session) {
   })
 
   #### QC tab ####
-  #  recal check
+  # re-calibration check
   output$checkRecal <- renderPlotly({
     if (appData$show_plot) {
       p <- checkRecalibration(appData$res,
@@ -335,7 +335,8 @@ server <- function(input, output, session) {
                             smooth = appData$preprocessing$smooth,
                             rmBl = appData$preprocessing$rmBl,
                             sqrtTrans = appData$preprocessing$sqrtTrans,
-                            monoFil = appData$preprocessing$monoisotopicFilter)
+                            monoFil = appData$preprocessing$monoisotopicFilter,
+                            concUnit = input$concUnits)
       }
     })
   })
@@ -410,7 +411,7 @@ server <- function(input, output, session) {
     }
   })
 
-  #### HClust tab #####
+  #### clustering tab #####
   observeEvent(input$doHC, {
     if (appData$show_plot) {
       show_spinner()

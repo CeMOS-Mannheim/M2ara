@@ -4,31 +4,6 @@ theme_set(theme_light(base_size = 16) +
                   strip.text.x = element_text(margin = margin(2,1,2,1, "mm"),
                                               size = 10)))
 
-generateSpecPlots <- function(res) {
-  allPeaks <- getAvgPeaks(res)
-  avgSpec <- mergeMassPeaks(allPeaks)
-
-  mzRange <- range(mass(avgSpec))
-  specNames <- c("Global Average",
-                 paste(as.character(unique(getConc(res))), "M"))
-
-  l <- c(avgSpec, allPeaks)
-
-  p <- lapply(1:length(specNames), FUN = function(i) {
-
-    df <- tibble(mz = mass(l[[i]]),
-                 int = intensity(l[[i]]))
-    pspec <- ggplot(df, aes(x = mz, ymin = 0, ymax = int)) +
-      geom_linerange() +
-      scale_x_continuous(limits = mzRange) +
-      labs(x = "m/z",
-           y = "Intensity",
-           title = specNames[i])
-    return(pspec)
-  })
-  return(p)
-}
-
 pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
   xnum <- parse_number(x)
   ynum <- parse_number(y)
@@ -159,7 +134,6 @@ plateMapPlot <- function(appData,
                      lab <- paste0("No normalization applied")
                    }
            )
-
 
            df <- tibble(spot = spots,
                         val = getAppliedNormFactors(res))

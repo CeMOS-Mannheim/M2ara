@@ -1,5 +1,5 @@
 clustTab <- function() {
-  #### HClust tab ####
+  #### clustering tab ####
   tabPanel("Cluster",
            h4("Curve clustering"),
            fluidRow(

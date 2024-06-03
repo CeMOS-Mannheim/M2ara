@@ -1,10 +1,9 @@
 loadAllFunctions <- function() {
-
   source("functions/preprocessFunction.R")
   source("functions/plotFunctions.R")
   source("functions/generatePCA.R")
   source("functions/getVolumes.R")
-  source("functions/hclust.R")
+  source("functions/clustering.R")
   source("functions/getVolumes.R")
   source("functions/generateSummaryText.R")
   source("functions/helpers.R")
@@ -19,7 +18,6 @@ loadAllFunctions <- function() {
   source("functions/storeResults.R")
   source("functions/emptyAppDataObject.R")
   source("functions/detectOutliers.R")
-
 }
 
 
