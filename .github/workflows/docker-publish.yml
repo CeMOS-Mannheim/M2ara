@@ -45,8 +45,12 @@ jobs:
       - name: Install R packages from req.txt
         run: |
           R -e "install.packages('pak')"
-          R -e "pak::pkg_install('CeMOS-Mannheim/MALDIcellassay')"
           R -e "packages <- readLines('req.txt'); pak::pkg_install(packages)"
+
+       # Install R package dependencies from req.txt
+      - name: Install MALDIcellassay
+        run: |
+          R -e "pak::pkg_install('CeMOS-Mannheim/MALDIcellassay')"
 
       # Install testthat if it's not listed in req.txt
       - name: Install testthat
