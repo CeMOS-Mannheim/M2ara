@@ -15,8 +15,6 @@ shinyFiles
 shinycssloaders
 shinyhelper
 shinybusy
-shinythemes
-shinyWidgets
 shinytest2
 common
 knitr
@@ -27,3 +25,4 @@ shinyjs
 latrend
 dtwclust
 readr
+clValid

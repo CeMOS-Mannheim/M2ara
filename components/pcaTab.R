@@ -45,11 +45,9 @@ pcaTab <- function() {
                                 multiple = FALSE,
                                 selected = defaults$pcaEllipse)),
              column(1,
-                    materialSwitch(
-                      inputId = "simpleLoadings",
-                      label = "Summarise loadings",
-                      value = defaults$simpleLoadings,
-                      status = "primary")
+                    checkboxInput(inputId = "simpleLoadings",
+                                  label = "Summarise loadings",
+                                  value = defaults$simpleLoadings)
              ),
              column(2,
                     createActionButton(inputId = "pca2peaksTable",
