@@ -5,14 +5,13 @@ tibble
 tidyr
 ggplot2
 purrr
-stringr
 forcats
-shinyFiles
 MALDIquant
 MALDIquantForeign
 DT
 plotly
 shiny
+shinyFiles
 shinycssloaders
 shinyhelper
 shinybusy
