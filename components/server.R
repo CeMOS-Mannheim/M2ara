@@ -254,7 +254,7 @@ server <- function(input, output, session) {
 
 
 
-  # on reprocess or if data is send from PCA, LASSO, HC
+  # on reprocess or if data is send from PCA or clustering
   observeEvent(appData$stats, {
     output$mzTable <- createDataTable(appData$stats,
                                       plot_ready = appData$show_plot)
@@ -412,50 +412,47 @@ server <- function(input, output, session) {
   })
 
   #### clustering tab #####
-  observeEvent(input$doHC, {
+  observeEvent(input$doClust, {
     if (appData$show_plot) {
       show_spinner()
-
-      appData$hc <- clusterCurves(appData$res, nClusters = 15)
+      appData$clust <- clusterCurves(appData$res, nClusters = 15)
       hide_spinner()
     }
   })
-  output$hclustPlot <- renderPlotly({
-    if (appData$show_plot & !is.null(appData$hc)) {
-      plotClusters(appData$hc, k = input$num_cluster)
-
+  output$clustPlot <- renderPlotly({
+    if (appData$show_plot & !is.null(appData$clust)) {
+      show_spinner()
+      plotClusters(appData$clust, k = input$num_cluster)
+      hide_spinner()
     }
   })
 
   output$clustCurvesPlot <- renderPlotly({
-    if (appData$show_plot & !is.null(appData$hc)) {
+    if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
-
-      p <- plotTraj(appData$hc, k = input$num_cluster)
-
+      p <- plotTraj(appData$clust, k = input$num_cluster)
       hide_spinner()
       return(p)
     }
   })
 
   output$optNumClust <- renderPlotly({
-    if (appData$show_plot & !is.null(appData$hc)) {
+    if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
-      p <- plotClusterMetrics(appData$hc)
-
+      p <- plotClusterMetrics(appData$clust)
       hide_spinner()
       return(p)
     }
   })
 
 
-  observeEvent(input$hc2peaksTable, {
-    if (appData$show_plot & !is.null(appData$hc)) {
+  observeEvent(input$clust2peaksTable, {
+    if (appData$show_plot & !is.null(appData$clust)) {
 
-      clusters <- extractLaClusters(appData$hc, k = input$num_cluster)
+      clusters <- extractLaClusters(appData$clust, k = input$num_cluster)
       appData$stats <- appData$stats_original %>%
         left_join(clusters, by = join_by(mzIdx))
-      message("Updated peak table with HC data.\n")
+      message("Updated peak table with clustering data.\n")
     }
   })
 
@@ -478,7 +475,9 @@ server <- function(input, output, session) {
 
   exportTestValues(numSpec = length(appData$spec_all),
                    isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),
-                   infoState =  appData$info_state)
+                   infoState =  appData$info_state,
+                   pca =  appData$pca,
+                   clust = appData$clust)
 
   session$onSessionEnded(function() {
     stopApp()

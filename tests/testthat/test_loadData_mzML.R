@@ -37,12 +37,30 @@ test_that("data can be loaded and processed from mzML",
             cat(timeNow(), "done!\n")
             exp <- app$get_values(export = TRUE)
 
-            cat(timeNow(), "running tests...\n")
+            cat(timeNow(), "performing pca...\n")
+            app$click("doPCA")
+            Sys.sleep(3)
+
+            cat(timeNow(), "performing clustering...\n")
+            app$click("doClust")
+            Sys.sleep(5)
+
+            cat(timeNow(), "check loading sucess\n")
             expect_equal(exp$export$isSpectrumList, TRUE)
             expect_equal(exp$export$numSpec, 144)
+
+            cat(timeNow(), "check processing sucess\n")
             expect_equal(exp$export$infoState, "processed")
 
-            cat(timeNow(), "Sucess! Cleaning up...\n")
+            cat(timeNow(), "check PCA sucess\n")
+            expect_true(is_tibble(exp$export$pca$scores))
+            expect_true(is_tibble(exp$export$pca$loadings))
+            expect_true(all(is.numeric(exp$export$pca$percExp)))
+
+            cat(timeNow(), "check clustering sucess\n")
+            expect_true(latrend::is.lcModels(exp$export$clust$models))
+            expect_true(is_tibble(extractLaClusters(exp$export$clust$models)))
+            cat(timeNow(), "Cleaning up...\n")
             fs::file_delete("settings.csv")
             fs::dir_delete("mzML")
             fs::file_delete("testdata_mzML.zip")
