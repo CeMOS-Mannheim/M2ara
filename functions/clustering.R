@@ -2,7 +2,8 @@ clusterCurves <- function(res, nClusters = 15) {
   message(MALDIcellassay:::timeNow(), " running clustering...\n")
   fits <- getCurveFits(res)
 
-  df <- seq_along(fits) %>%
+  l <-
+    seq_along(fits) %>%
     lapply(function(i) {
       y <- getYcurve(fits[[i]]$model)
       x <- getXcurve(fits[[i]]$model)
@@ -11,8 +12,13 @@ clusterCurves <- function(res, nClusters = 15) {
 
       tibble(y = y[sel],
              x = x[sel])
-    }) %>%
-    bind_rows(.id = "mzIdx")
+    })
+
+  names(l) <- seq_along(fits)
+
+  df <-
+    l %>%
+    bind_rows(.id = "mzIdx") %>%
     group_by(mzIdx) %>%
     mutate(y = (y - min(y, na.rm = TRUE)) /
              (max(y, na.rm = TRUE) - min(y, na.rm = TRUE))) %>%
