@@ -3,7 +3,7 @@ clusterCurves <- function(res, nClusters = 15) {
   fits <- getCurveFits(res)
 
   df <- seq_along(fits) %>%
-    map_df(function(i) {
+    lapply(function(i) {
       y <- getYcurve(fits[[i]]$model)
       x <- getXcurve(fits[[i]]$model)
 
@@ -11,8 +11,8 @@ clusterCurves <- function(res, nClusters = 15) {
 
       tibble(y = y[sel],
              x = x[sel])
-    },
-    .id = "mzIdx") %>%
+    }) %>%
+    bind_rows(.id = "mzIdx")
     group_by(mzIdx) %>%
     mutate(y = (y - min(y, na.rm = TRUE)) /
              (max(y, na.rm = TRUE) - min(y, na.rm = TRUE))) %>%

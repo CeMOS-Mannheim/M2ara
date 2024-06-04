@@ -47,7 +47,7 @@ detectOutliers <- function(spectra, conc, n = 1, method = c("mz", "n"), mzIdx) {
   }
 
   # extract intensities for all mz values per spectra
-  outlier <- map(seq_along(spectra), function(i) {
+  outlier <- lapply(seq_along(spectra), function(i) {
     tibble(mz = mass(spectra[[i]]),
            intensity = intensity(spectra[[i]]),
            conc = conc[i])

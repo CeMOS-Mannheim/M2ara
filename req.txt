@@ -4,7 +4,6 @@ dplyr
 tibble
 tidyr
 ggplot2
-purrr
 forcats
 MALDIquant
 MALDIquantForeign
