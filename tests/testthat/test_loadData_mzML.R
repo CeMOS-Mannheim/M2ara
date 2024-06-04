@@ -35,7 +35,6 @@ test_that("data can be loaded and processed from mzML",
             app$click("process")
             Sys.sleep(30)
             cat(timeNow(), "done!\n")
-            exp <- app$get_values(export = TRUE)
 
             cat(timeNow(), "performing pca...\n")
             app$click("doPca")
@@ -44,6 +43,9 @@ test_that("data can be loaded and processed from mzML",
             cat(timeNow(), "performing clustering...\n")
             app$click("doClust")
             Sys.sleep(5)
+
+            cat(timeNow(), "extracting values...\n")
+            exp <- app$get_values(export = TRUE)
 
             cat(timeNow(), "check loading sucess\n")
             expect_equal(exp$export$isSpectrumList, TRUE)
