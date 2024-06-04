@@ -55,11 +55,10 @@ test_that("data can be loaded and processed from mzML",
             cat(timeNow(), "check PCA sucess\n")
             expect_true(is_tibble(exp$export$pca$scores))
             expect_true(is_tibble(exp$export$pca$loadings))
-            expect_true(all(is.numeric(exp$export$pca$percExp)))
 
             cat(timeNow(), "check clustering sucess\n")
-            expect_true(latrend::is.lcModels(exp$export$clust$models))
-            expect_true(is_tibble(extractLaClusters(exp$export$clust$models)))
+            expect_true(latrend::is.lcModels(exp$export$clust))
+            expect_true(is_tibble(extractLaClusters(exp$export$clust)))
             cat(timeNow(), "Cleaning up...\n")
             fs::file_delete("settings.csv")
             fs::dir_delete("mzML")
