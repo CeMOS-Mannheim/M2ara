@@ -38,7 +38,7 @@ test_that("data can be loaded and processed from mzML",
             exp <- app$get_values(export = TRUE)
 
             cat(timeNow(), "performing pca...\n")
-            app$click("doPCA")
+            app$click("doPca")
             Sys.sleep(3)
 
             cat(timeNow(), "performing clustering...\n")
