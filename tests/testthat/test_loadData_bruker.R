@@ -32,7 +32,7 @@ test_that("data can be loaded and processed from Bruker Flex",
             app$click("process")
             exp <-app$get_values(export = TRUE)
 
-            show_failureexpect_equal(exp$export$isSpectrumList, TRUE)
+            expect_equal(exp$export$isSpectrumList, TRUE)
             expect_equal(exp$export$numSpec, 88)
             fs::dir_delete("Curve")
             fs::file_delete("settings.csv")
