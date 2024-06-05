@@ -38,7 +38,17 @@ infoStateMassageHandler <- function(info_state, output) {
     "fitErrorOther" = {
       output$info1 <- renderText(("Dataset:"))
       output$info2 <- renderText(appData$selected_dir)
-      output$info3 <- renderText("Could not be processed. Unkown error.\n")
+      output$info3 <- renderText("Could not be processed. Unkown error.")
+    },
+    "loadErrorNum" = {
+      output$info1 <- renderText(("Failed to load:"))
+      output$info2 <- renderText(appData$selected_dir)
+      output$info3 <- renderText("All folders need to have concentrations as names.")
+    },
+    "loadErrorFormat" = {
+      output$info1 <- renderText(("Failed to load:"))
+      output$info2 <- renderText(appData$selected_dir)
+      output$info3 <- renderText("Wrong file format.")
     }
   )
 

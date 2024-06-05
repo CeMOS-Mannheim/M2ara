@@ -18,6 +18,8 @@ loadAllFunctions <- function() {
   source("functions/storeResults.R")
   source("functions/emptyAppDataObject.R")
   source("functions/detectOutliers.R")
+  source("functions/handlePreprocSettings.R")
+  source("functions/loadSpectraData.R")
 }
 
 

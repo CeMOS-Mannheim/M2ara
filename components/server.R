@@ -36,21 +36,7 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$preproc_settings, {
-    appData$preprocessing$smooth <-
-      handlePreprocSettings(input$preproc_settings,
-                            "smooth")
-
-    appData$preprocessing$rmBl <-
-      handlePreprocSettings(input$preproc_settings,
-                            "rmBl")
-
-    appData$preprocessing$sqrtTrans <-
-      handlePreprocSettings(input$preproc_settings,
-                            "sqrtTrans")
-
-    appData$preprocessing$monoisotopicFilter <-
-      handlePreprocSettings(input$preproc_settings,
-                            "monoisotopicFilter")
+    appData <- setPreprocessSettings(input, appData)
   })
 
   ### Text massage logic ####
@@ -76,75 +62,13 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$load, {
-    if (appData$info_state == "dir_set") {
-      show_spinner()
-
-      # check if all spectra names are numeric/concentrations
-      # for later: if pos and neg ctrls are included
-      # checkSpecNames needs to return indices of the numeric folders
-      if (checkSpecNames(appData$selected_dir)) {
-        switch(input$fileFormat,
-               "bruker" = {
-                 spec_raw <- loadSpectra(appData$selected_dir)
-               },
-               "mzml" = {
-                 spec_raw <- loadSpectraMzML(appData$selected_dir)
-               })
-
-        appData$info_state <- "loaded"
-      } else {
-        warning("Found folder names that could not be converted to numeric.
-                All folders/spectra need to have concentrations as names.\n")
-        hide_spinner()
-        return()
-      }
-
-      # make sure that the concentrations are in acending order
-      spec_raw <- spec_raw[order(as.numeric(names(spec_raw)))]
-
-      appData$org_conc <- as.numeric(names(spec_raw))
-
-      appData$spec_all <- spec_raw
-      if(input$checkEmpty) {
-        message(MALDIcellassay:::timeNow(),  " check for empty spectra...\n")
-
-        # MAD would be faster but may fail in some circumstances...
-        peaks <- detectPeaks(appData$spec_all,
-                             SNR = input$SNR,
-                             method = "SuperSmoother")
-        appData$spec_idx <- vapply(peaks,
-                                   function(x) {
-                                     ifelse(length(mz(x)) > 0, TRUE, FALSE)
-                                   },
-                                   FUN.VALUE = TRUE)
-        message(MALDIcellassay:::timeNow(), " ",
-                sum(appData$spec_idx), "/", length(appData$spec_all),
-                " spectra retained.\n")
-      } else {
-        appData$spec_idx <- rep(TRUE, length(appData$spec_all))
-      }
-
-
-      hide_spinner()
-    }
+    appData <- loadSpectraData(input, appData)
   })
 
   ### process spectra ####
   observeEvent(input$process, {
-    if(!input$concUnits == "M") {
-      message("Changing concentrations to ", input$concUnits, ".\n")
-    }
-
-    unitFactor <- switch (input$concUnits,
-                          "M" = 1,
-                          "mM" = 1e-3,
-                          "µM" = 1e-6,
-                          "nM" = 1e-9,
-                          "pM" = 1e-12,
-                          "fM" = 1e-15)
-
     # change concentrations according to unit
-    names(appData$spec_all) <- appData$org_conc * unitFactor
+    appData <- setConcentrationUnit(appData, input)
 
     if (!appData$info_state %in% c("intial", "dir_set")) {
       show_spinner()

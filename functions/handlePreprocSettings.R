@@ -1,3 +1,11 @@
+setPreprocessSettings <- function(input, appData, label) {
+  appData$preprocessing$smooth <- handlePreprocSettings(input$preproc_settings, "smooth")
+  appData$preprocessing$rmBl <- handlePreprocSettings(input$preproc_settings, "rmBl")
+  appData$preprocessing$sqrtTrans <- handlePreprocSettings(input$preproc_settings, "sqrtTrans")
+  appData$preprocessing$monoisotopicFilter <- handlePreprocSettings(input$preproc_settings, "monoisotopicFilter")
+  return(appData)
+}
+
 handlePreprocSettings <- function(preproc_settings, parameter) {
   stopifnot(is.character(parameter))
   stopifnot(length(parameter) == 1)
