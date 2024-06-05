@@ -20,6 +20,7 @@ loadAllFunctions <- function() {
   source("functions/detectOutliers.R")
   source("functions/handlePreprocSettings.R")
   source("functions/loadSpectraData.R")
+  source("functions/selectDir.R")
 }
 
 

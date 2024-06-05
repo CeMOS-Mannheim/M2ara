@@ -1,6 +1,5 @@
 # Sever ####
 server <- function(input, output, session) {
-
   ## load ext. functions ####
   source("functions/loadAllFunctions.R")
   loadAllFunctions()
@@ -10,30 +9,8 @@ server <- function(input, output, session) {
 
   ## main ####
   appData <<- emptyAppDataObject()
-  vol <- getVolumes()
 
-  # check if "dir" is set in defaults
-  if (!is.null(defaults$dir)) {
-    appData$selected_dir <- defaults$dir
-    message("Dir set from loaded default value.\n")
-    appData$info_state <- "dir_set"
-  }
-
-  ### choose dir ####
-  shinyDirChoose(input,
-                 "dir",
-                 roots = vol,
-                 allowDirCreate = FALSE,
-                 defaultRoot = names(vol)[1])
-
-  observeEvent(input$dir, {
-    # check if folder was selected
-    # prepare info massage
-    appData$selected_dir <- parseDirPath(vol, input$dir)
-    if (length(appData$selected_dir) > 0) {
-      appData$info_state <- "dir_set"
-    }
-  })
+  appData <- selectDir(appData, input)
 
   observeEvent(input$preproc_settings, {
     appData <- setPreprocessSettings(input, appData)
@@ -93,7 +70,6 @@ server <- function(input, output, session) {
         hide_spinner()
         return()
       }
-
 
       #### average spectra ####
       message(MALDIcellassay:::timeNow(), " calculating ", input$avgMethod, " spectra... \n")
@@ -155,7 +131,6 @@ server <- function(input, output, session) {
                                input = input)) {
         return()
       }
-
       message(MALDIcellassay:::timeNow(),  " processing done\n")
 
       # write everything needed into appData
@@ -175,8 +150,6 @@ server <- function(input, output, session) {
   # first initialization
   output$mzTable <- createDataTable(appData$stats,
                                     plot_ready = appData$show_plot)
-
-
 
   # on reprocess or if data is send from PCA or clustering
   observeEvent(appData$stats, {
@@ -200,7 +173,6 @@ server <- function(input, output, session) {
     } else {
       dummyPlot()
     }
-
   })
 
   output$peak <- renderPlotly({
@@ -213,7 +185,6 @@ server <- function(input, output, session) {
     } else {
       dummyPlot()
     }
-
   })
 
   ### score plot ####
@@ -225,7 +196,7 @@ server <- function(input, output, session) {
     }
   })
 
-  #### QC tab ####
+  ### QC tab ####
   # re-calibration check
   output$checkRecal <- renderPlotly({
     if (appData$show_plot) {
@@ -234,9 +205,7 @@ server <- function(input, output, session) {
       ggplotly(p)
     } else {
       dummyPlot()
-
     }
-
   })
 
   # platemap
@@ -265,7 +234,7 @@ server <- function(input, output, session) {
     })
   })
 
-  #### PCA tab ####
+  ### PCA tab ####
   # default plot for PCA
   output$pca <- renderPlotly({
     dummyPlot()
@@ -303,10 +272,8 @@ server <- function(input, output, session) {
                         simple = input$simpleLoadings)
 
       return(p)
-
     } else {
       dummyPlot()
-
     }
   })
 
@@ -335,7 +302,7 @@ server <- function(input, output, session) {
     }
   })
 
-  #### clustering tab #####
+  ### clustering tab #####
   observeEvent(input$doClust, {
     if (appData$show_plot) {
       show_spinner()
@@ -343,6 +310,7 @@ server <- function(input, output, session) {
       hide_spinner()
     }
   })
+
   output$clustPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
@@ -369,7 +337,6 @@ server <- function(input, output, session) {
     }
   })
 
-
   observeEvent(input$clust2peaksTable, {
     if (appData$show_plot & !is.null(appData$clust)) {
 
@@ -380,13 +347,13 @@ server <- function(input, output, session) {
     }
   })
 
-  #### save settings ####
+  ### save settings ####
   observeEvent(input$saveSettings, {
     saveSettings(input, filename = "settings.csv", info_state = appData$info_state)
 
   })
 
-  #### download handler ####
+  ### download handler ####
   output$downloadPlot <- downloadHandlerPlots(res = appData$res,
                                               selected_row = input$mzTable_rows_selected[1],
                                               p_curve = p_curve,
