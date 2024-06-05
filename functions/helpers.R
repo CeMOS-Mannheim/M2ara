@@ -1,3 +1,20 @@
+handleButtonStatus <- function(appData) {
+  # disable load button if no dir is set
+  disable("load")
+  # disable process button if no spectra are loaded
+  disable("process")
+
+  # enable buttons when state is reached
+  observeEvent(appData$info_state, {
+    if (appData$info_state == "dir_set") {
+      enable("load")
+    }
+    if (appData$info_state == "loaded") {
+      enable("process")
+    }
+  })
+}
+
 setConcentrationUnit <- function(appData, input) {
   if(!input$concUnits == "M") {
     message("Changing concentrations to ", input$concUnits, ".\n")
