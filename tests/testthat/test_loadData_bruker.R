@@ -7,7 +7,6 @@ test_that("data can be loaded and processed from Bruker Flex",
             setwd(dirname(common::file.find(pattern = "req.txt")))
 
             # download test data and unzip
-            cat(timeNow(), "downloading Bruker Flex test data...\n")
             curl::curl_download("https://figshare.com/ndownloader/files/46156791", "testdata_bruker.zip")
             unzip("testdata_bruker.zip")
 
