@@ -36,6 +36,9 @@ server <- function(input, output, session) {
 
     if (!appData$info_state %in% c("intial", "dir_set")) {
       show_spinner()
+      showNotification("Processing started. Please wait.",
+                       duration = 5,
+                       type = "default")
       message(MALDIcellassay:::timeNow(), " start processing...\n")
       appData$spec_all <- MALDIcellassay:::.repairMetaData(appData$spec_all)
 
@@ -51,10 +54,9 @@ server <- function(input, output, session) {
                         alignTol = input$alignTol * 1e-3,
                         halfWindowSize = input$halfWindowSize)
 
-      if(is.null(prc)) {
-        # on error stop here
-        appData$info_state <- "RefMzError"
-        hide_spinner()
+      if(!fitCurveErrorHandler(appData = appData,
+                               prc = prc,
+                               input = input)) {
         return()
       }
 
@@ -114,10 +116,6 @@ server <- function(input, output, session) {
                          )
       )
 
-      if(!fitCurveErrorHandler(appData = appData,
-                               input = input)) {
-        return()
-      }
       message(MALDIcellassay:::timeNow(),  " processing done\n")
 
       # write everything needed into appData
