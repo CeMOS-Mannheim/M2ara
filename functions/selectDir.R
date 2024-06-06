@@ -2,7 +2,7 @@ selectDir <- function(appData, input) {
   vol <- getVolumes()
 
   # check if "dir" is set in defaults
-  if (!is.null(defaults$dir)) {
+  if (!is.na(defaults$dir)) {
     appData$selected_dir <- defaults$dir
     message("Dir set from loaded default value.\n")
     appData$info_state <- "dir_set"
