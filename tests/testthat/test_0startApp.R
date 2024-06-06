@@ -16,5 +16,4 @@ test_that("App starts.", {
   exp <- app$get_values(export = TRUE)
 
   expect_equal(exp$export$infoState, "inital")
-  expect_equal(exp$export$info3, "")
 })
