@@ -350,6 +350,7 @@ server <- function(input, output, session) {
   exportTestValues(numSpec = length(appData$spec_all),
                    isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),
                    infoState =  appData$info_state,
+                   info3 = output$info3,
                    pca =  appData$pca,
                    clust = appData$clust)
 
