@@ -33,42 +33,42 @@ infoStateMassageHandler <- function(info_state, output) {
            output$info2 <- renderText(appData$selected_dir)
            output$info3 <- renderText("Could not be processed. Wrong lock-mass?")
            msg <- paste0("'", basename(appData$selected_dir), "' could not be processed. Wrong lock-mass?")
-           showNotification(msg, duration = 5, type = "error")
+           showNotification(msg, duration = 15, type = "error")
          },
          "fitErrorNorm" = {
            output$info1 <- renderText(("Dataset:"))
            output$info2 <- renderText(appData$selected_dir)
            output$info3 <- renderText("Could not be processed. Wrong normalization-mass?")
            msg <- paste0("'", basename(appData$selected_dir), "' could not be processed. Wrong normalization-mass?")
-           showNotification(msg, duration = 5, type = "error")
+           showNotification(msg, duration = 15, type = "error")
          },
          "RefMzError" = {
            output$info1 <- renderText(("Dataset:"))
            output$info2 <- renderText(appData$selected_dir)
            output$info3 <- renderText("Could not be processed. Increase tolerance?")
            msg <- paste0("'", basename(appData$selected_dir), "' could not be processed. Increase tolerance?")
-           showNotification(msg, duration = 5, type = "error")
+           showNotification(msg, duration = 15, type = "error")
          },
          "fitErrorOther" = {
            output$info1 <- renderText(("Dataset:"))
            output$info2 <- renderText(appData$selected_dir)
            output$info3 <- renderText("Could not be processed. Unknown error.")
            msg <- paste0("'", basename(appData$selected_dir), "' could not be processed. Unknown error")
-           showNotification(msg, duration = 5, type = "error")
+           showNotification(msg, duration = 15, type = "error")
          },
          "loadErrorNum" = {
            output$info1 <- renderText(("Failed to load:"))
            output$info2 <- renderText(appData$selected_dir)
            output$info3 <- renderText("All folders need to have concentrations as names.")
            msg <- paste0("Faild to load '", basename(appData$selected_dir), "'. All folders need to have concentrations as names.")
-           showNotification(msg, duration = 5, type = "error")
+           showNotification(msg, duration = 15, type = "error")
          },
          "loadErrorFormat" = {
            output$info1 <- renderText(("Failed to load:"))
            output$info2 <- renderText(appData$selected_dir)
            output$info3 <- renderText("Wrong file format.")
            msg <- paste0("Faild to load '", basename(appData$selected_dir), "'. Wrong file format.")
-           showNotification(msg, duration = 5, type = "error")
+           showNotification(msg, duration = 15, type = "error")
          }
   )
 
