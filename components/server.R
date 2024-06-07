@@ -297,8 +297,9 @@ server <- function(input, output, session) {
   output$clustPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
-      plotClusters(appData$clust, k = input$num_cluster)
+      p <- plotClusters(appData$clust, k = input$num_cluster)
       hide_spinner()
+      return(p)
     }
   })
 
