@@ -30,5 +30,6 @@ options(dplyr.summarise.inform = FALSE)
 # special case for packages not on CRAN
 if (!require("MALDIcellassay", character.only = TRUE)) {
   pak::pkg_install("CeMOS-Mannheim/MALDIcellassay")
+
   library(MALDIcellassay, character.only = TRUE)
 }

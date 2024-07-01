@@ -73,6 +73,7 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
       theme(legend.position = "none")
   }
   p <- ggplotly(p)
+
   return(p)
 }
 

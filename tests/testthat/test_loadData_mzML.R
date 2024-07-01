@@ -20,6 +20,8 @@ test_that("data can be loaded and processed from mzML",
 
             library(shinytest2)
             options(shiny.testmode = TRUE)
+
+            cat(timeNow(), "Starting app...\n")
             app <- AppDriver$new(app_dir = getwd(),
                                  name = "M2ara_mzML load test",
                                  seed = 42,
