@@ -11,7 +11,7 @@ emptyAppDataObject <- function(){
                  stats = NULL,
                  pca = NULL,
                  model = NULL,
-                 hc = NULL,
+                 clust = NULL,
                  opt = NULL,
                  info_state = "inital",
                  show_plot = FALSE)

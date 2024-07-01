@@ -5,3 +5,4 @@
 defaults.conf
 settings.conf
 settings.csv
+checkUsedFunctions.R

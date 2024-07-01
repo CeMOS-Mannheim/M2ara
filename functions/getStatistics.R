@@ -6,7 +6,6 @@ CalculateCurveResponseScore <- function(z, v, log2FC) {
   # limit to -1
   zScore <- if_else(z < -0.5, -0.5, z)
 
-
   # z > 0.5 is an excellent assay and this is what we aim for
   # z = 1.0 is hard to reach
   zScore <- if_else(zScore > 0,

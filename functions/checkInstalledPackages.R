@@ -30,7 +30,7 @@ checkInstalledPackages <- function(req_file = "req.txt") {
 
   # special case for packages not on CRAN
   if (!require("MALDIcellassay", character.only = TRUE)) {
-    devtools::install_github("CeMOS-Mannheim/MALDIcellassay", dependencies = TRUE)
+    pak::pkg_install("CeMOS-Mannheim/MALDIcellassay")
     library(MALDIcellassay, character.only = TRUE)
   }
 }

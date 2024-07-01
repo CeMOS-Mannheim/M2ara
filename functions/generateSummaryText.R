@@ -1,4 +1,4 @@
-generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil) {
+generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil, concUnit) {
   # helper functions
   parentDir <- function(path, times) {
     newPath <- path
@@ -25,10 +25,9 @@ generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil) {
     normStr <- paste("Normalization using", getNormMethod(object), "method.\n")
   }
 
-
   concStr <- c("<h4>MALDIassay object</h4>",
                paste("Including", length(unique(conc)), "concentrations,\n"),
-               paste("ranging from", min(conc), "to", max(conc), "."),
+               paste("ranging from", min(conc), "to", max(conc), " ", concUnit, "."),
                "\n")
 
   # Compose processing steps
@@ -59,7 +58,6 @@ generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil) {
                      paste("using variance filtering method:", paste0(varFilterMethod, ".")),
                      "\n")
   }
-
 
   # merge meta data
   metaData <- MALDIquant:::.mergeMetaData(

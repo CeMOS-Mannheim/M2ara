@@ -11,7 +11,6 @@ defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
 ui <- fluidPage(
   title = "M²ara",
   lang = "en",
-  theme = shinytheme("flatly"),
   # shiny sidebar layout
   sidebarLayout(
     #### Sidebar ####

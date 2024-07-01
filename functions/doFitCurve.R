@@ -1,5 +1,3 @@
-
-
 doFitCurve <- function(appData, spec, input) {
 
   #res <- NULL
@@ -23,7 +21,6 @@ doFitCurve <- function(appData, spec, input) {
   if(is.null(res)) {
     cat("fitCurve returned null.\n")
   }
-
 
   return(res)
 }

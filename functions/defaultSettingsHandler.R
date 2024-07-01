@@ -28,8 +28,6 @@ generateDefaults <- function() {
                      corFilter = FALSE,
                      penalty = -5,
                      num_cluster = 4,
-                     hcDist = "Euclidean",
-                     hcMethod = "average",
                      fileFormat = "bruker",
                      halfWindowSize = 20,
                      checkEmpty = TRUE,

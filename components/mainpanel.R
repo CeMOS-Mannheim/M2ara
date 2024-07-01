@@ -1,7 +1,7 @@
 source("components/mainTab.R")
 source("components/qcTab.R")
 source("components/pcaTab.R")
-source("components/hcTab.R")
+source("components/clustTab.R")
 
 appMainPanel <- function(defaults) {
   m <- mainPanel(

@@ -1,5 +1,5 @@
-fitCurveErrorHandler <- function(appData, input) {
-  if (is.null(appData$res)) {
+fitCurveErrorHandler <- function(appData, prc, input) {
+  if (is.null(prc)) {
     cat("Error: ")
     if (input$SinglePointRecal) {
       appData$info_state <- "fitErrorRecal"

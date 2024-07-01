@@ -24,7 +24,7 @@ generatePCA <- function(res, num_PC, alpha = 1e-3, beta = 1e-3, verbose = FALSE,
   vars <- pca$sdev^2
   # make sure to not have NA values
   vars <- ifelse(is.na(vars), 0, vars)
-  percExp<- vars/sum(vars)*100
+  percExp <- vars/sum(vars)*100
 
   cat("Done!\n")
   return(list(scores = scores,

@@ -45,7 +45,7 @@ getVolumes <- function(exclude = NULL) {
     volumes <- volumes[!names(volumes) %in% exclude]
   }
   volumes <- tolower(volumes)
-  names(volumes) <- str_remove(volumes, ":")
+  names(volumes) <- gsub(x = volumes, pattern = ":", replacement = "")
 
   return(volumes)
 }
