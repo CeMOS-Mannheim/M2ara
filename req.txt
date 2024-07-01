@@ -4,21 +4,12 @@ dplyr
 tibble
 tidyr
 ggplot2
-<<<<<<< HEAD
 forcats
-=======
-purrr
-readr
-stringr
-forcats
-shinyFiles
->>>>>>> main
 MALDIquant
 MALDIquantForeign
 DT
 plotly
 shiny
-<<<<<<< HEAD
 shinyFiles
 shinycssloaders
 shinyhelper
@@ -26,17 +17,6 @@ shinybusy
 shinytest2
 common
 knitr
-=======
-shinycssloaders
-shinyhelper
-shinybusy
-shinythemes
-shinyWidgets
-shinytest2
-common
-knitr
-devtools
->>>>>>> main
 sparsepca
 platetools
 fs
@@ -45,4 +25,3 @@ latrend
 dtwclust
 readr
 clValid
-clusterCrit
