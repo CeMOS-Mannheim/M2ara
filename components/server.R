@@ -9,42 +9,6 @@ server <- function(input, output, session) {
 
   ## main ####
   appData <<- emptyAppDataObject()
-<<<<<<< HEAD
-=======
-  vol <- getVolumes()
-
-  # check if "dir" is set in defaults
-  if (!is.null(defaults$dir)) {
-    appData$selected_dir <- defaults$dir
-    message("Dir set from loaded default value.\n")
-    appData$info_state <- "dir_set"
-  }
-
-  ### choose dir ####
-  shinyDirChoose(input,
-                 "dir",
-                 roots = vol,
-                 allowDirCreate = FALSE,
-                 defaultRoot = names(vol)[1])
-
-  observeEvent(input$dir, {
-    # check if folder was selected
-    # prepare info massage
-    appData$selected_dir <- parseDirPath(vol, input$dir)
-    if (length(appData$selected_dir) > 0) {
-      appData$info_state <- "dir_set"
-    }
-  })
-
-  observeEvent(input$preproc_settings, {
-    appData$preprocessing$smooth <-
-      handlePreprocSettings(input$preproc_settings,
-                            "smooth")
-
-    appData$preprocessing$rmBl <-
-      handlePreprocSettings(input$preproc_settings,
-                            "rmBl")
->>>>>>> main
 
   appData <- selectDir(appData, input)
 
@@ -180,8 +144,8 @@ server <- function(input, output, session) {
   output$curve <- renderPlotly({
     if (appData$show_plot) {
       p_curve <- plotCurves(appData$res,
-                             mzIdx = input$mzTable_rows_selected[1],
-                             errorbars = input$errorbars) +
+                            mzIdx = input$mzTable_rows_selected[1],
+                            errorbars = input$errorbars) +
         labs(title = paste0("m/z = ",
                             round(
                               getMzFromMzIdx(appData$res,
@@ -197,8 +161,8 @@ server <- function(input, output, session) {
   output$peak <- renderPlotly({
     if (appData$show_plot) {
       p_peak <- plotPeak(appData$res,
-                          mzIdx = input$mzTable_rows_selected[1],
-                          tol = input$zoom) +
+                         mzIdx = input$mzTable_rows_selected[1],
+                         tol = input$zoom) +
         labs(title = NULL)
       ggplotly(p_peak)
     } else {
@@ -224,10 +188,6 @@ server <- function(input, output, session) {
       ggplotly(p)
     } else {
       dummyPlot()
-<<<<<<< HEAD
-=======
-
->>>>>>> main
     }
   })
 
@@ -293,19 +253,10 @@ server <- function(input, output, session) {
       p <- loadingsPlot(appData$pca,
                         pc = input$pcaX,
                         simple = input$simpleLoadings)
-<<<<<<< HEAD
-=======
-
-      return(p)
->>>>>>> main
 
       return(p)
     } else {
       dummyPlot()
-<<<<<<< HEAD
-=======
-
->>>>>>> main
     }
   })
 
@@ -334,7 +285,6 @@ server <- function(input, output, session) {
     }
   })
 
-<<<<<<< HEAD
   ### clustering tab #####
   observeEvent(input$doClust, {
     if (appData$show_plot) {
@@ -347,39 +297,15 @@ server <- function(input, output, session) {
   output$clustPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
-      p <- plotClusters(appData$clust, k = input$num_cluster)
-=======
-  #### HClust tab #####
-  observeEvent(input$doHC, {
-    if (appData$show_plot) {
-      show_spinner()
-
-      appData$hc <- clusterCurves(appData$res, nClusters = 15)
->>>>>>> main
+      plotClusters(appData$clust, k = input$num_cluster)
       hide_spinner()
-      return(p)
     }
   })
-<<<<<<< HEAD
-=======
-  output$hclustPlot <- renderPlotly({
-    if (appData$show_plot & !is.null(appData$hc)) {
-      plotClusters(appData$hc, k = input$num_cluster)
-
-    }
-  })
->>>>>>> main
 
   output$clustCurvesPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
-<<<<<<< HEAD
       p <- plotTraj(appData$clust, k = input$num_cluster)
-=======
-
-      p <- plotTraj(appData$hc, k = input$num_cluster)
-
->>>>>>> main
       hide_spinner()
       return(p)
     }
@@ -388,12 +314,7 @@ server <- function(input, output, session) {
   output$optNumClust <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
-<<<<<<< HEAD
       p <- plotClusterMetrics(appData$clust)
-=======
-      p <- plotClusterMetrics(appData$hc)
-
->>>>>>> main
       hide_spinner()
       return(p)
     }
@@ -402,14 +323,7 @@ server <- function(input, output, session) {
   observeEvent(input$clust2peaksTable, {
     if (appData$show_plot & !is.null(appData$clust)) {
 
-<<<<<<< HEAD
       clusters <- extractLaClusters(appData$clust, k = input$num_cluster)
-=======
-  observeEvent(input$hc2peaksTable, {
-    if (appData$show_plot & !is.null(appData$hc)) {
-
-      clusters <- extractLaClusters(appData$hc, k = input$num_cluster)
->>>>>>> main
       appData$stats <- appData$stats_original %>%
         left_join(clusters, by = join_by(mzIdx))
       message("Updated peak table with clustering data.\n")
@@ -435,15 +349,12 @@ server <- function(input, output, session) {
 
   exportTestValues(numSpec = length(appData$spec_all),
                    isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),
-<<<<<<< HEAD
                    infoState =  appData$info_state,
                    pca =  appData$pca,
                    clust = appData$clust)
-=======
-                   infoState =  appData$info_state)
->>>>>>> main
 
   session$onSessionEnded(function() {
     stopApp()
   })
+
 }
