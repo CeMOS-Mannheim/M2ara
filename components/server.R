@@ -1,6 +1,5 @@
 # Sever ####
 server <- function(input, output, session) {
-
   ## load ext. functions ####
   source("functions/loadAllFunctions.R")
   loadAllFunctions()
@@ -10,47 +9,11 @@ server <- function(input, output, session) {
 
   ## main ####
   appData <<- emptyAppDataObject()
-  vol <- getVolumes()
 
-  # check if "dir" is set in defaults
-  if (!is.null(defaults$dir)) {
-    appData$selected_dir <- defaults$dir
-    message("Dir set from loaded default value.\n")
-    appData$info_state <- "dir_set"
-  }
-
-  ### choose dir ####
-  shinyDirChoose(input,
-                 "dir",
-                 roots = vol,
-                 allowDirCreate = FALSE,
-                 defaultRoot = names(vol)[1])
-
-  observeEvent(input$dir, {
-    # check if folder was selected
-    # prepare info massage
-    appData$selected_dir <- parseDirPath(vol, input$dir)
-    if (length(appData$selected_dir) > 0) {
-      appData$info_state <- "dir_set"
-    }
-  })
+  appData <- selectDir(appData, input)
 
   observeEvent(input$preproc_settings, {
-    appData$preprocessing$smooth <-
-      handlePreprocSettings(input$preproc_settings,
-                            "smooth")
-
-    appData$preprocessing$rmBl <-
-      handlePreprocSettings(input$preproc_settings,
-                            "rmBl")
-
-    appData$preprocessing$sqrtTrans <-
-      handlePreprocSettings(input$preproc_settings,
-                            "sqrtTrans")
-
-    appData$preprocessing$monoisotopicFilter <-
-      handlePreprocSettings(input$preproc_settings,
-                            "monoisotopicFilter")
+    appData <- setPreprocessSettings(input, appData)
   })
 
   ### Text massage logic ####
@@ -60,94 +23,22 @@ server <- function(input, output, session) {
   })
 
   ### load spectra ####
-  # disable load button if no dir is set
-  disable("load")
-  # disable process button if no spectra are loaded
-  disable("process")
-
-  # enable buttons when state is reached
-  observeEvent(appData$info_state, {
-    if (appData$info_state == "dir_set") {
-      enable("load")
-    }
-    if (appData$info_state == "loaded") {
-      enable("process")
-    }
-  })
+  handleButtonStatus(appData)
 
   observeEvent(input$load, {
-    if (appData$info_state == "dir_set") {
-      show_spinner()
-
-      # check if all spectra names are numeric/concentrations
-      # for later: if pos and neg ctrls are included
-      # checkSpecNames needs to return indices of the numeric folders
-      if (!checkSpecNames(appData$selected_dir)) {
-        switch(input$fileFormat,
-               "bruker" = {
-                 spec_raw <- loadSpectra(appData$selected_dir)
-               },
-               "mzml" = {
-                 spec_raw <- loadSpectraMzML(appData$selected_dir)
-               })
-
-        appData$info_state <- "loaded"
-      } else {
-        warning("Found folder names that could not be converted to numeric.
-                All folders/spectra need to have concentrations as names.\n")
-        hide_spinner()
-        return()
-      }
-
-      # make sure that the concentrations are in acending order
-      spec_raw <- spec_raw[order(as.numeric(names(spec_raw)))]
-
-      appData$org_conc <- as.numeric(names(spec_raw))
-
-      appData$spec_all <- spec_raw
-      if(input$checkEmpty) {
-        message(MALDIcellassay:::timeNow(),  " check for empty spectra...\n")
-
-        # MAD would be faster but may fail in some circumstances...
-        peaks <- detectPeaks(appData$spec_all,
-                             SNR = input$SNR,
-                             method = "SuperSmoother")
-        appData$spec_idx <- vapply(peaks,
-                                   function(x) {
-                                     ifelse(length(mz(x)) > 0, TRUE, FALSE)
-                                   },
-                                   FUN.VALUE = TRUE)
-        message(MALDIcellassay:::timeNow(), " ",
-                sum(appData$spec_idx), "/", length(appData$spec_all),
-                " spectra retained.\n")
-      } else {
-        appData$spec_idx <- rep(TRUE, length(appData$spec_all))
-      }
-
-
-      hide_spinner()
-    }
+    appData <- loadSpectraData(input, appData)
   })
 
   ### process spectra ####
   observeEvent(input$process, {
-    if(!input$concUnits == "M") {
-      message("Changing concentrations to ", input$concUnits, ".\n")
-    }
-
-    unitFactor <- switch (input$concUnits,
-                          "M" = 1,
-                          "mM" = 1e-3,
-                          "µM" = 1e-6,
-                          "nM" = 1e-9,
-                          "pM" = 1e-12,
-                          "fM" = 1e-15)
-
     # change concentrations according to unit
-    names(appData$spec_all) <- appData$org_conc * unitFactor
+    appData <- setConcentrationUnit(appData, input)
 
     if (!appData$info_state %in% c("intial", "dir_set")) {
       show_spinner()
+      showNotification("Processing started. Please wait.",
+                       duration = 5,
+                       type = "default")
       message(MALDIcellassay:::timeNow(), " start processing...\n")
       appData$spec_all <- MALDIcellassay:::.repairMetaData(appData$spec_all)
 
@@ -163,13 +54,11 @@ server <- function(input, output, session) {
                         alignTol = input$alignTol * 1e-3,
                         halfWindowSize = input$halfWindowSize)
 
-      if(is.null(prc)) {
-        # on error stop here
-        appData$info_state <- "RefMzError"
-        hide_spinner()
+      if(!fitCurveErrorHandler(appData = appData,
+                               prc = prc,
+                               input = input)) {
         return()
       }
-
 
       #### average spectra ####
       message(MALDIcellassay:::timeNow(), " calculating ", input$avgMethod, " spectra... \n")
@@ -227,11 +116,6 @@ server <- function(input, output, session) {
                          )
       )
 
-      if(!fitCurveErrorHandler(appData = appData,
-                               input = input)) {
-        return()
-      }
-
       message(MALDIcellassay:::timeNow(),  " processing done\n")
 
       # write everything needed into appData
@@ -240,8 +124,6 @@ server <- function(input, output, session) {
                               input,
                               stats = getStatistics(appData$res))
 
-      appData$info_state <- "processed"
-      appData$show_plot <- TRUE
       updateActionButton(inputId = "process", label = "Re-process")
       hide_spinner()
     }
@@ -252,9 +134,7 @@ server <- function(input, output, session) {
   output$mzTable <- createDataTable(appData$stats,
                                     plot_ready = appData$show_plot)
 
-
-
-  # on reprocess or if data is send from PCA, LASSO, HC
+  # on reprocess or if data is send from PCA or clustering
   observeEvent(appData$stats, {
     output$mzTable <- createDataTable(appData$stats,
                                       plot_ready = appData$show_plot)
@@ -264,8 +144,8 @@ server <- function(input, output, session) {
   output$curve <- renderPlotly({
     if (appData$show_plot) {
       p_curve <- plotCurves(appData$res,
-                             mzIdx = input$mzTable_rows_selected[1],
-                             errorbars = input$errorbars) +
+                            mzIdx = input$mzTable_rows_selected[1],
+                            errorbars = input$errorbars) +
         labs(title = paste0("m/z = ",
                             round(
                               getMzFromMzIdx(appData$res,
@@ -276,20 +156,18 @@ server <- function(input, output, session) {
     } else {
       dummyPlot()
     }
-
   })
 
   output$peak <- renderPlotly({
     if (appData$show_plot) {
       p_peak <- plotPeak(appData$res,
-                          mzIdx = input$mzTable_rows_selected[1],
-                          tol = input$zoom) +
+                         mzIdx = input$mzTable_rows_selected[1],
+                         tol = input$zoom) +
         labs(title = NULL)
       ggplotly(p_peak)
     } else {
       dummyPlot()
     }
-
   })
 
   ### score plot ####
@@ -301,8 +179,8 @@ server <- function(input, output, session) {
     }
   })
 
-  #### QC tab ####
-  #  recal check
+  ### QC tab ####
+  # re-calibration check
   output$checkRecal <- renderPlotly({
     if (appData$show_plot) {
       p <- checkRecalibration(appData$res,
@@ -310,9 +188,7 @@ server <- function(input, output, session) {
       ggplotly(p)
     } else {
       dummyPlot()
-
     }
-
   })
 
   # platemap
@@ -335,12 +211,13 @@ server <- function(input, output, session) {
                             smooth = appData$preprocessing$smooth,
                             rmBl = appData$preprocessing$rmBl,
                             sqrtTrans = appData$preprocessing$sqrtTrans,
-                            monoFil = appData$preprocessing$monoisotopicFilter)
+                            monoFil = appData$preprocessing$monoisotopicFilter,
+                            concUnit = input$concUnits)
       }
     })
   })
 
-  #### PCA tab ####
+  ### PCA tab ####
   # default plot for PCA
   output$pca <- renderPlotly({
     dummyPlot()
@@ -378,10 +255,8 @@ server <- function(input, output, session) {
                         simple = input$simpleLoadings)
 
       return(p)
-
     } else {
       dummyPlot()
-
     }
   })
 
@@ -410,61 +285,58 @@ server <- function(input, output, session) {
     }
   })
 
-  #### HClust tab #####
-  observeEvent(input$doHC, {
+  ### clustering tab #####
+  observeEvent(input$doClust, {
     if (appData$show_plot) {
       show_spinner()
-
-      appData$hc <- clusterCurves(appData$res, nClusters = 15)
+      appData$clust <- clusterCurves(appData$res, nClusters = 15)
       hide_spinner()
     }
   })
-  output$hclustPlot <- renderPlotly({
-    if (appData$show_plot & !is.null(appData$hc)) {
-      plotClusters(appData$hc, k = input$num_cluster)
 
+  output$clustPlot <- renderPlotly({
+    if (appData$show_plot & !is.null(appData$clust)) {
+      show_spinner()
+      plotClusters(appData$clust, k = input$num_cluster)
+      hide_spinner()
     }
   })
 
   output$clustCurvesPlot <- renderPlotly({
-    if (appData$show_plot & !is.null(appData$hc)) {
+    if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
-
-      p <- plotTraj(appData$hc, k = input$num_cluster)
-
+      p <- plotTraj(appData$clust, k = input$num_cluster)
       hide_spinner()
       return(p)
     }
   })
 
   output$optNumClust <- renderPlotly({
-    if (appData$show_plot & !is.null(appData$hc)) {
+    if (appData$show_plot & !is.null(appData$clust)) {
       show_spinner()
-      p <- plotClusterMetrics(appData$hc)
-
+      p <- plotClusterMetrics(appData$clust)
       hide_spinner()
       return(p)
     }
   })
 
+  observeEvent(input$clust2peaksTable, {
+    if (appData$show_plot & !is.null(appData$clust)) {
 
-  observeEvent(input$hc2peaksTable, {
-    if (appData$show_plot & !is.null(appData$hc)) {
-
-      clusters <- extractLaClusters(appData$hc, k = input$num_cluster)
+      clusters <- extractLaClusters(appData$clust, k = input$num_cluster)
       appData$stats <- appData$stats_original %>%
         left_join(clusters, by = join_by(mzIdx))
-      message("Updated peak table with HC data.\n")
+      message("Updated peak table with clustering data.\n")
     }
   })
 
-  #### save settings ####
+  ### save settings ####
   observeEvent(input$saveSettings, {
     saveSettings(input, filename = "settings.csv", info_state = appData$info_state)
 
   })
 
-  #### download handler ####
+  ### download handler ####
   output$downloadPlot <- downloadHandlerPlots(res = appData$res,
                                               selected_row = input$mzTable_rows_selected[1],
                                               p_curve = p_curve,
@@ -477,9 +349,12 @@ server <- function(input, output, session) {
 
   exportTestValues(numSpec = length(appData$spec_all),
                    isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),
-                   infoState =  appData$info_state)
+                   infoState =  appData$info_state,
+                   pca =  appData$pca,
+                   clust = appData$clust)
 
   session$onSessionEnded(function() {
     stopApp()
   })
+
 }

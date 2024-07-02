@@ -1,16 +1,16 @@
 clustTab <- function() {
-  #### HClust tab ####
+  #### clustering tab ####
   tabPanel("Cluster",
            h4("Curve clustering"),
            fluidRow(
              column(6,
-                    plotlyOutput("hclustPlot")),
+                    plotlyOutput("clustPlot")),
              column(6,
                     plotlyOutput("clustCurvesPlot"))
            ),
            fluidRow(
              column(2,
-                    createActionButton(inputId = "doHC",
+                    createActionButton(inputId = "doClust",
                                        label = "Perform clustering",
                                        icon = "circle-nodes")),
              column(2,
@@ -21,7 +21,7 @@ clustTab <- function() {
                                 value = defaults$num_cluster,
                                 step = 1)),
              column(2,
-                    createActionButton(inputId = "hc2peaksTable",
+                    createActionButton(inputId = "clust2peaksTable",
                                        label = "Send to Peak Table",
                                        icon = "share-from-square"))
            ),

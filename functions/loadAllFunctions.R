@@ -1,10 +1,9 @@
 loadAllFunctions <- function() {
-
   source("functions/preprocessFunction.R")
   source("functions/plotFunctions.R")
   source("functions/generatePCA.R")
   source("functions/getVolumes.R")
-  source("functions/hclust.R")
+  source("functions/clustering.R")
   source("functions/getVolumes.R")
   source("functions/generateSummaryText.R")
   source("functions/helpers.R")
@@ -18,9 +17,10 @@ loadAllFunctions <- function() {
   source("functions/createDataTable.R")
   source("functions/storeResults.R")
   source("functions/emptyAppDataObject.R")
-  source("functions/prepareVi.R")
   source("functions/detectOutliers.R")
-
+  source("functions/handlePreprocSettings.R")
+  source("functions/loadSpectraData.R")
+  source("functions/selectDir.R")
 }
 
 

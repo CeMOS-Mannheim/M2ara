@@ -1,8 +1,10 @@
 clusterCurves <- function(res, nClusters = 15) {
+  message(MALDIcellassay:::timeNow(), " running clustering...\n")
   fits <- getCurveFits(res)
 
-  df <- seq_along(fits) %>%
-    map_df(function(i) {
+  l <-
+    seq_along(fits) %>%
+    lapply(function(i) {
       y <- getYcurve(fits[[i]]$model)
       x <- getXcurve(fits[[i]]$model)
 
@@ -10,8 +12,13 @@ clusterCurves <- function(res, nClusters = 15) {
 
       tibble(y = y[sel],
              x = x[sel])
-    },
-    .id = "mzIdx") %>%
+    })
+
+  names(l) <- seq_along(fits)
+
+  df <-
+    l %>%
+    bind_rows(.id = "mzIdx") %>%
     group_by(mzIdx) %>%
     mutate(y = (y - min(y, na.rm = TRUE)) /
              (max(y, na.rm = TRUE) - min(y, na.rm = TRUE))) %>%
@@ -25,7 +32,7 @@ clusterCurves <- function(res, nClusters = 15) {
   methods <- latrend::lcMethods(method,
                        nClusters = 2:nClusters)
   models <- latrend::latrendBatch(methods, data = df, verbose = FALSE)
-
+  message(MALDIcellassay:::timeNow(), " clustering done.\n")
   return(models)
 }
 
