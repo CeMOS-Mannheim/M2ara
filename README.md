@@ -54,7 +54,7 @@ docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara:mai
 
 ### Stand-alone installer for Windows
 Use the stand-alone installer (Windows only, no R installation needed).
-The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.1/M.ara_1.1.exe).
+The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.2/MALDIcellassay_1.2.exe).
 
 ## Example data
 To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541). 
