@@ -68,7 +68,8 @@ server <- function(input, output, session) {
                                                 monoisotopicFilter = appData$preprocessing$monoisotopicFilter,
                                                 binTol = input$binTol * 1e-6,
                                                 normMz = input$normMz,
-                                                normTol = input$normTol)
+                                                normTol = input$normTol,
+                                                halfWindowSize = input$halfWindowSize)
       ### single spectra data
       # this is the single spectra data but based on the same signals as in the
       # avg spectra
