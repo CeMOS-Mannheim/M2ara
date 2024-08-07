@@ -26,7 +26,7 @@ For more detailed information please take a look at the [Manual](manual.md) that
 
 ### R
 
-Clone the GitHub repository to your local machine (please make sure to have R installed) and start the app by sourcing the `app.R` file.
+Clone the GitHub repository to your local machine (please make sure to have R installed, tested with **R v4.3.2**) and start the app by sourcing the `app.R` file.
 
 ```bash
 git clone https://github.com/CeMOS-Mannheim/M2ara.git
