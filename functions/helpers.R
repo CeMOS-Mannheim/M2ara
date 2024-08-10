@@ -23,10 +23,11 @@ setConcentrationUnit <- function(appData, input) {
   unitFactor <- switch (input$concUnits,
                         "M" = 1,
                         "mM" = 1e-3,
-                        "µM" = 1e-6,
+                        "uM" = 1e-6,
                         "nM" = 1e-9,
                         "pM" = 1e-12,
-                        "fM" = 1e-15)
+                        "fM" = 1e-15,
+                        1)
 
   # change concentrations according to unit
   names(appData$spec_all) <- appData$org_conc * unitFactor

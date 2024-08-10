@@ -1,3 +1,5 @@
+library(testthat)
+
 test_that("data can be loaded and processed from Bruker Flex",
           {
 

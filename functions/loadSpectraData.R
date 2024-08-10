@@ -1,4 +1,4 @@
-loadSpectraData <- function(input, appData) {
+loadSpectraData <- function(input, appData, mapping) {
   if (appData$info_state %in% c("dir_set",
                                 "loadErrorNum",
                                 "loadErrorFormat")) {
@@ -7,13 +7,16 @@ loadSpectraData <- function(input, appData) {
     # check if all spectra names are numeric/concentrations
     # for later: if pos and neg ctrls are included
     # checkSpecNames needs to return indices of the numeric folders
-    if (!checkSpecNamesNumeric(appData$selected_dir, input$fileFormat)) {
-      warning("Found folder names that could not be converted to numeric.
-                All folders/spectra need to have concentrations as names.\n")
-      appData$info_state <- "loadErrorNum"
-      hide_spinner()
-      return()
+    if(!length(mapping)>0) {
+      if (!checkSpecNamesNumeric(appData$selected_dir, input$fileFormat)) {
+        warning("Found folder names that could not be converted to numeric and no mapping file found.
+                All folders/spectra need to have concentrations as names or mapping file with conc. needed.\n")
+        appData$info_state <- "loadErrorNum"
+        hide_spinner()
+        return()
+      }
     }
+
     if (!checkSpecNamesFormat(appData$selected_dir, input$fileFormat)) {
       warning("Could not find data with '", input$fileFormat, "' file format.\n")
       appData$info_state <- "loadErrorFormat"
@@ -28,6 +31,17 @@ loadSpectraData <- function(input, appData) {
            "mzml" = {
              spec_raw <- loadSpectraMzML(appData$selected_dir)
            })
+    if(length(mapping > 0)) {
+      if(!length(mapping) == length(spec_raw)) {
+        warning("Number of concentrations in mapping file do not match number of spectra.\n")
+        appData$info_state <- "loadErrorMapping"
+        hide_spinner()
+        return()
+      }
+      message("Changed spectra names using mapping file.\n")
+      names(spec_raw) <- mapping
+    }
+
     appData$info_state <- "loaded"
 
     # make sure that the concentrations are in acending order

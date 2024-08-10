@@ -14,5 +14,6 @@ emptyAppDataObject <- function(){
                  clust = NULL,
                  opt = NULL,
                  info_state = "inital",
-                 show_plot = FALSE)
+                 show_plot = FALSE,
+                 mapping = NULL)
 }

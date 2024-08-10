@@ -69,6 +69,20 @@ infoStateMassageHandler <- function(info_state, output) {
            output$info3 <- renderText("Wrong file format.")
            msg <- paste0("Faild to load '", basename(appData$selected_dir), "'. Wrong file format.")
            showNotification(msg, duration = 15, type = "error")
+         },
+         "loadErrorMapping" = {
+           output$info1 <- renderText(("Failed to load:"))
+           output$info2 <- renderText(appData$selected_dir)
+           output$info3 <- renderText("Mapping error.")
+           msg <- paste0("Faild to load '", basename(appData$selected_dir), "'. Mapping file error.\nNumber conc. != Number spectra.")
+           showNotification(msg, duration = 15, type = "error")
+         },
+         "errorMapping" = {
+           output$info1 <- renderText(("Failed to load:"))
+           output$info2 <- renderText(appData$selected_dir)
+           output$info3 <- renderText("Mapping error.")
+           msg <- paste0("Mapping file error. No concentrations found.")
+           showNotification(msg, duration = 15, type = "error")
          }
   )
 

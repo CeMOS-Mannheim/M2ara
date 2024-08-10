@@ -1,3 +1,4 @@
+library(testthat)
 test_that("App starts.", {
   setwd(dirname(common::file.find(pattern = "req.txt")))
   # make sure settings.csv is not present

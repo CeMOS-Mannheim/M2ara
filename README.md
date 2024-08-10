@@ -12,8 +12,6 @@ For more information please check out the [preprint](https://chemrxiv.org/engage
 
 ## How to use
 
-
-
 This application simplifies the analysis of Molecular High Content Screening (MHCS) MALDI-TOF MS assay data and the evaluation of complex drug actions. After your data has been loaded, you can adjust settings as needed and start the processing. From here, you can analyze your data by selecting entries in the data table, visually inspect and rank mass features using the Curve Response Score (CRS) fingerprints, and save the curve fit and peak profile of your chosen *m/z* value. 
 
 This app is specifically designed for use with Bruker flex series raw data but also features support for mzML.
@@ -59,7 +57,7 @@ The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/r
 ## Example data
 To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541). 
 
-### Unger2020_OATP2B1_inhibition_mzML.zip
+#### Unger2020_OATP2B1_inhibition_mzML.zip
 
 The file contains mzML data (converted from Bruker Flex using MSConvert) originally published in Unger, et. al., 2020.
 
@@ -70,7 +68,7 @@ To replicate the results shown use the following parameters:
 - set Normalization/re-calibration *m/z* to 354.1418 (D4-E3S, [M-H]<sup>-</sup>)
 - set recalibration tolerance to 0.1 Da
 - set normalization to *m/z*
-- activate smoothing and baseline removal
+- deactivate smoothing and activate baseline removal
 - set Aggregation method to mean
 - set SNR to 3
 - set alignment to 0 mDa (no alignment)
@@ -79,7 +77,7 @@ To replicate the results shown use the following parameters:
 
 The target *m/z* is 349.11 (E3S, [M-H]<sup>-</sup>) the pIC50 value should be 6.1.
 
-### Weigt2018_BCR-ABL_inhibition_Dasatinib_BrukerFlex.zip
+#### Weigt2018_BCR-ABL_inhibition_Dasatinib_BrukerFlex.zip
 
 The file contains data in the Bruker Flex format originally published in Weigt, et. al., 2018.
 

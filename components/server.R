@@ -26,7 +26,7 @@ server <- function(input, output, session) {
   handleButtonStatus(appData)
 
   observeEvent(input$load, {
-    appData <- loadSpectraData(input, appData)
+    appData <- loadSpectraData(input, appData, mapping = appData$mapping)
   })
 
   ### process spectra ####
@@ -52,7 +52,8 @@ server <- function(input, output, session) {
                         normTol = input$normTol,
                         normMeth = input$normMeth,
                         alignTol = input$alignTol * 1e-3,
-                        halfWindowSize = input$halfWindowSize)
+                        halfWindowSize = input$halfWindowSize,
+                        peakMethod = input$peakMethod)
 
       if(!fitCurveErrorHandler(appData = appData,
                                prc = prc,
@@ -69,7 +70,8 @@ server <- function(input, output, session) {
                                                 binTol = input$binTol * 1e-6,
                                                 normMz = input$normMz,
                                                 normTol = input$normTol,
-                                                halfWindowSize = input$halfWindowSize)
+                                                halfWindowSize = input$halfWindowSize,
+                                                peakMethod = input$peakMethod)
       ### single spectra data
       # this is the single spectra data but based on the same signals as in the
       # avg spectra
@@ -194,13 +196,18 @@ server <- function(input, output, session) {
 
   # platemap
   output$platemap <- renderPlot({
-    if (appData$show_plot) {
+    if (appData$show_plot & input$fileFormat == "bruker") {
+      shinyjs::show(id = "plateStat")
+      shinyjs::show(id = "plateScale")
       plateMapPlot(appData,
                    stat = input$plateStat,
                    PCs = c(input$pcaX, input$pcaY),
                    penalty = input$penalty,
                    log10 = input$plateScale,
                    mz_idx = input$mzTable_rows_selected[1])
+    } else {
+      shinyjs::hide(id = "plateStat")
+      shinyjs::hide(id = "plateScale")
     }
   })
 
@@ -347,7 +354,23 @@ server <- function(input, output, session) {
 
   output$downloadTable <- downloadHandlerTable(res = appData$res,
                                                stats = appData$stats,
-                                               plot_ready = appData$show_plot)
+                                               plot_ready = appData$show_plot,
+                                               name = "peakTable")
+
+  output$downloadFittingParameter <- downloadHandlerTable(res = appData$res,
+                                                          stats = getFittingParameters(appData$res),
+                                                          plot_ready = appData$show_plot,
+                                                          name = "fittingParam")
+
+  # mappig of concentrations by external txt
+  observeEvent(input$mappingFile, {
+    mapping <- processMappingFile(input$mappingFile)
+    if(is.null(mapping)) {
+      appData$info_state <- "errorMapping"
+      return()
+    }
+    appData$mapping <- mapping
+  })
 
   exportTestValues(numSpec = length(appData$spec_all),
                    isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),

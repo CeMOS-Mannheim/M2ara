@@ -1,3 +1,5 @@
+library(testthat)
+
 test_that("detectOutliers detects outliers", {
   set.seed(42)
   # create 40 spectra with 100 mz values each so that we can have
