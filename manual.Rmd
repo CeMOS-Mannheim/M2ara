@@ -103,7 +103,7 @@ knitr::include_graphics("figures/pipeline.png")
 
 ### Main Tab
 
-#### Curve
+#### Curve subtab
 
 The main [Curve](#curve-screen) screen is intended for a univariate analysis in a peak-by-peak manner.
 
@@ -113,7 +113,7 @@ The upper left show's a zoom-in to the corresponding individual peaks. The level
 
 Below the two plots the peak table is shown. Here all found signals as well as all metrics are displayed. The two upper plots will change if a signal is selected.
 
-#### Metrics
+#### Metrics subtab
 
 The metrics screen enables to visualize different metrics (Z', V', SSMD, logFC, CRS as well as pEC50, etc.) as a function of **m/z**. The direction of the peaks (up or down) highlights the direction of regulation (if the intensity of the signal increases or decreases with the concentration). It is therefor useful to get a fast overview of the whole data set. The different metrics concentrate on different aspects of the quality of the curve.
 
