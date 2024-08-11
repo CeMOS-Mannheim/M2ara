@@ -31,16 +31,12 @@ test_that("data can be loaded and processed from Bruker Flex",
             app <- AppDriver$new(app_dir = getwd(),
                                  name = "M2ara_bruker load test",
                                  seed = 42,
-                                 timeout = 4000)
-
-            app$wait_for_idle()
-
-            app$get_logs()
+                                 timeout = 10000)
 
             app$click("load")
-            Sys.sleep(120)
+            app$wait_for_idle(timeout = 300*1000)
             app$click("process")
-            Sys.sleep(120)
+            app$wait_for_idle(timeout = 300*1000)
             exp <-app$get_values(export = TRUE)
 
             expect_equal(exp$export$isSpectrumList, TRUE)

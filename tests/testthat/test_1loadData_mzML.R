@@ -29,19 +29,17 @@ test_that("data can be loaded and processed from mzML",
             app <- AppDriver$new(app_dir = getwd(),
                                  name = "M2ara_mzML load test",
                                  seed = 42,
-                                 timeout = 4000,
+                                 timeout = 10000,
                                  load_timeout = 30*1000)
 
 
             app$wait_for_idle()
             cat(timeNow(), "App started. Loading data...\n")
             app$click("load")
-            Sys.sleep(90)
-            app$wait_for_idle()
+            app$wait_for_idle(timeout = 300*1000)
             cat(timeNow(), "Start processing...\n")
             app$click("process")
-            Sys.sleep(90)
-            app$wait_for_idle()
+            app$wait_for_idle(timeout = 300*1000)
             cat(timeNow(), "Processing done.\n")
 
             app$click("doPca")
