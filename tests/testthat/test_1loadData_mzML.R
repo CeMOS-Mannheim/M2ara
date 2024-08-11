@@ -25,18 +25,21 @@ test_that("data can be loaded and processed from mzML",
             library(shinytest2)
             options(shiny.testmode = TRUE)
 
-            cat(timeNow(), "Starting app...\n")
+            cat("\n", timeNow(), "Starting app...\n")
             app <- AppDriver$new(app_dir = getwd(),
                                  name = "M2ara_mzML load test",
                                  seed = 42,
                                  timeout = 10000,
-                                 load_timeout = 30*1000)
+                                 load_timeout = 30*1000,
+                                 wait = TRUE)
 
 
             app$wait_for_idle()
+            Sys.sleep(5)
             cat(timeNow(), "App started. Loading data...\n")
             app$click("load")
             app$wait_for_idle(timeout = 300*1000)
+            Sys.sleep(60)
             cat(timeNow(), "Start processing...\n")
             app$click("process")
             app$wait_for_idle(timeout = 300*1000)

@@ -6,3 +6,7 @@ defaults.conf
 settings.conf
 settings.csv
 checkUsedFunctions.R
+testdata_bruker.zip
+testdata_mzML.zip
+Curve
+mzMl
