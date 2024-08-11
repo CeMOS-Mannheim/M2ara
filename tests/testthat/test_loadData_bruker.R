@@ -10,7 +10,12 @@ test_that("data can be loaded and processed from Bruker Flex",
 
             # download test data and unzip
             curl::curl_download("https://figshare.com/ndownloader/files/46156791", "testdata_bruker.zip")
+            if(!file.exists("testdata_bruker.zip")) {
+              stop("Downloading testdata_bruker.zip failed.")
+            }
             unzip("testdata_bruker.zip")
+
+
 
             # overwrite settings
             if(!file.exists("tests/testthat/settings_bruker_data.csv")) {
@@ -26,11 +31,16 @@ test_that("data can be loaded and processed from Bruker Flex",
             app <- AppDriver$new(app_dir = getwd(),
                                  name = "M2ara_bruker load test",
                                  seed = 42,
-                                 timeout = 4.5*1e5)
+                                 timeout = 4000)
+
+            app$wait_for_idle()
+
+            app$get_logs()
 
             app$click("load")
             Sys.sleep(120)
             app$click("process")
+            Sys.sleep(120)
             exp <-app$get_values(export = TRUE)
 
             expect_equal(exp$export$isSpectrumList, TRUE)

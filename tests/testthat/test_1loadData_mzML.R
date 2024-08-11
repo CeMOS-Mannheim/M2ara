@@ -12,6 +12,8 @@ test_that("data can be loaded and processed from mzML",
             curl::curl_download("https://figshare.com/ndownloader/files/46156788", "testdata_mzML.zip")
             unzip("testdata_mzML.zip")
 
+            fs::file_delete("testdata_mzML.zip")
+
             # overwrite settings
             if(!file.exists("tests/testthat/settings_mzML_data.csv")) {
               stop("Could not find settings_mzML_data.csv.\n")
@@ -27,17 +29,26 @@ test_that("data can be loaded and processed from mzML",
             app <- AppDriver$new(app_dir = getwd(),
                                  name = "M2ara_mzML load test",
                                  seed = 42,
-                                 timeout = 2.4*1e5)
+                                 timeout = 4000,
+                                 load_timeout = 30*1000)
 
+
+            app$wait_for_idle()
+            cat(timeNow(), "App started. Loading data...\n")
             app$click("load")
+            Sys.sleep(90)
+            app$wait_for_idle()
+            cat(timeNow(), "Start processing...\n")
             app$click("process")
-            Sys.sleep(30)
+            Sys.sleep(90)
+            app$wait_for_idle()
+            cat(timeNow(), "Processing done.\n")
 
             app$click("doPca")
-            Sys.sleep(3)
+            app$wait_for_idle()
 
             app$click("doClust")
-            Sys.sleep(5)
+            app$wait_for_idle()
 
             exp <- app$get_values(export = TRUE)
 
@@ -53,6 +64,5 @@ test_that("data can be loaded and processed from mzML",
             expect_true(is_tibble(extractLaClusters(exp$export$clust)))
             fs::file_delete("settings.csv")
             fs::dir_delete("mzML")
-            fs::file_delete("testdata_mzML.zip")
           })
 

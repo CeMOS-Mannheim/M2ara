@@ -10,9 +10,11 @@ test_that("App starts.", {
   options(shiny.testmode = TRUE)
 
   app <- AppDriver$new(app_dir = getwd(),
-                       name = "M2ara_bruker load test",
+                       name = "M2ara_start test",
                        seed = 42,
                        timeout = 4.5*1e5)
+
+  app$wait_for_idle()
 
   exp <- app$get_values(export = TRUE)
 
