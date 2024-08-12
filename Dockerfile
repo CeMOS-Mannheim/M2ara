@@ -13,6 +13,9 @@ COPY req.txt /req.txt
 # Install pak
 RUN R -e "install.packages('pak')"
 
+# Install reshape2 as it lead to errors with pak
+RUN R -e "install.packages('reshape2')"
+
 # Install R packages from req.txt
 RUN R -e "packages <- readLines('/req.txt'); pak::pkg_install(packages)"
 

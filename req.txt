@@ -1,5 +1,4 @@
 pak
-reshape2@1.4.3
 nplr
 dplyr
 tibble
