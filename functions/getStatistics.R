@@ -1,5 +1,10 @@
 CalculateCurveResponseScore <- function(z, v, log2FC) {
-  maxFC <- 2.59 # top = 6 * bottom
+  # logFC=2.59 equals: top = 6 * bottom
+  # logFC=1 would still be ok but at 2.59 we should cover everything.
+  # What goes even higher should not influence the score, otherwise it could be
+  # inflated by high FC it low z or v.
+  # S we set this upper limit.
+  maxFC <- 2.59
 
   absFC <- abs(log2FC)
 
@@ -8,14 +13,13 @@ CalculateCurveResponseScore <- function(z, v, log2FC) {
 
   # z > 0.5 is an excellent assay and this is what we aim for
   # z = 1.0 is hard to reach
-  zScore <- if_else(zScore > 0,
-                    if_else(zScore/0.5 > 1, 1, zScore/0.5),
-                    zScore)
+  zScore <- if_else(zScore > 0.5, 1,
+                    zScore/0.5)
 
-  # limit to -1
-  vScore <- if_else(v < -1, -1, v)
+  vScore <- v
 
-  fcScore <- if_else(absFC > maxFC, 1, absFC/maxFC)
+  fcScore <- if_else(absFC > maxFC, 1,
+                     absFC/maxFC)
 
   score <- (zScore + vScore + fcScore) / 3 * 100
 
