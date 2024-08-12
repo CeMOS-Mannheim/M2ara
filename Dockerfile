@@ -10,8 +10,11 @@ RUN apt-get update && apt-get install -y \
 # Copy the req.txt file to the Docker image
 COPY req.txt /req.txt
 
+# Install pak
+RUN R -e "install.packages('pak')"
+
 # Install R packages from req.txt
-RUN R -e "packages <- readLines('/req.txt'); install.packages(packages)"
+RUN R -e "packages <- readLines('/req.txt'); pak::pkg_install(packages)"
 
 # Install the MALDIcellassay from GitHub
 RUN R -e "pak::pkg_install('CeMOS-Mannheim/MALDIcellassay')"
