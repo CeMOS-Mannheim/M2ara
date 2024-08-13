@@ -15,6 +15,26 @@ This is **M2ara**, a shiny application based on the R-package `MALDIcellassay` w
 
 This manual describes some of the details of the inner-workings of the `MALDIcellassay`-package and how this shiny application (**M2ara**) is supposed to be used.
 
+The following features were already part of `MALDIcellassay`:
+
+-   pre-processing though the `MALDIquant`-package
+-   re-calibration to a single *m/z* (single point-re-calibration)
+-   normalization to a single *m/z*
+-   fitting curves to the data using the `nplr`-package
+
+**M2ara** adds the following features:
+
+-   graphical user interface
+-   interactive data exploration
+-   support for [mzML](#mzml) data \*
+-   calculation of quality metrics (Z', V', log2FC, CRS) \*
+-   feature ranking by metric \*
+-   principle component analysis (PCA)
+-   curve clustering
+-   outlier detection \*
+
+\* The features marked with a asterisks were re-implemented to `MALDIcellassay`.
+
 ## General information
 
 The blue question mark icons (`r icon("question-circle")`) throughout the application can be clicked and provide further information on the specific settings.
@@ -165,16 +185,13 @@ knitr::include_graphics("figures/clustering_metrics.png")
 
 ### Settings tab
 
-
 ```{r, echo=FALSE, out.width="33%", fig.cap="Settings tab"}
 knitr::include_graphics("figures/settings.png")
 ```
 
 The `File format`-menu can be used to select between Bruker raw data of mzML format (see [Requirements to the raw data](#requirements-to-the-raw-data)).
 
-The `Conc. mapping` upload button enables the upload of a mapping file containing one concentration for each spectrum.
-It needs to be in the *.txt-format and needs to contain one concentration (dont include units!) per line, one for each spectrum.
-The file needs to be uploaded before the spectra are loaded using the button on the sidebar if the mapping should be used.
+The `Conc. mapping` upload button enables the upload of a mapping file containing one concentration for each spectrum. It needs to be in the \*.txt-format and needs to contain one concentration (dont include units!) per line, one for each spectrum. The file needs to be uploaded before the spectra are loaded using the button on the sidebar if the mapping should be used.
 
 The `Peak window size` and `Peak method` setting enables to change the peak detection. Usually a `Peak window size` of 20 and the *SuperSmoother* method should lead to good results. Sometimes, especially if a small peak is close to a large one, this small peak might not be detected. In this cases the `Peak window size` can be decreased or if this is still not enough the *MAD* peak detection method can be chosen. Please note that both will lead to much more signals being considered as valid peaks, so it makes sense to increase SNR at the same time.
 
