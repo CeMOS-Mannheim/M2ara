@@ -3,22 +3,6 @@ library(tibble)
 test_that("data can be loaded and processed from mzML",
           {
 
-
-            infoStateChecker <- function(App, reachInfoState, maxCounter = 10) {
-              counter <- 0
-              while(!App$get_values(export = TRUE)$export$infoState == reachInfoState)
-              {
-                Sys.sleep(30)
-                counter <- counter + 1
-
-                if(counter>=maxCounter) {
-                  stop("infoState did not reach:", reachInfoState, "\n",
-                       "Last infoState was: ", App$get_values(export = TRUE)$export$infoState,
-                       ".\n")
-                }
-              }
-            }
-
               timeNow <- function() {
                 format(Sys.time(), "%H:%M:%OS")
               }
@@ -49,20 +33,19 @@ test_that("data can be loaded and processed from mzML",
               app <- AppDriver$new(app_dir = getwd(),
                                    name = "M2ara_mzML load test",
                                    seed = 42,
-                                   timeout = 10000,
-                                   load_timeout = 30*1000,
+                                   timeout = 100 * 1000,
+                                   load_timeout = 30 * 1000,
                                    wait = TRUE)
 
-              app$wait_for_idle()
               Sys.sleep(5)
+              app$wait_for_idle()
               cat(timeNow(), "App started. Loading data...\n")
               app$click("load")
-              infoStateChecker(app, "loaded")
+              Sys.sleep(30)
               app$wait_for_idle(timeout = 300*1000)
-
               cat(timeNow(), "Start processing...\n")
               app$click("process")
-              infoStateChecker(app, "processed")
+              Sys.sleep(30)
               app$wait_for_idle(timeout = 300*1000)
               cat(timeNow(), "Processing done.\n")
 

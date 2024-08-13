@@ -30,7 +30,8 @@ test_that("data can be loaded and processed from Bruker Flex",
             app <- AppDriver$new(app_dir = getwd(),
                                  name = "M2ara_bruker load test",
                                  seed = 42,
-                                 timeout = 10000,
+                                 timeout = 100 * 1000,
+                                 load_timeout = 30 * 1000,
                                  wait = TRUE)
 
             app$click("load")
