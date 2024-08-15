@@ -67,7 +67,7 @@ appMainPanel <- function(defaults) {
                                 )
                        ),
                        #### Manual tab ####
-                       tabPanel("Manual", htmltools::includeMarkdown("manual.md")
+                       tabPanel("Manual", withMathJax(htmltools::includeMarkdown("manual.md"))
                        )
     )
   )
