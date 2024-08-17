@@ -192,6 +192,7 @@ The Strictly Standardized Mean Difference (*SSMD*), is implemented [Bray and Car
 $$
 SSMD = \frac{|\mu_l-\mu_u|}{\sqrt{\sigma^2_u+\sigma^2_l}}
 $$
+
 In short: The *SSMD* gives the difference between the upper and lower part of the curves in units of standard deviation. Or in other words, it gives a weigthed differences.
 
 ##### Curve-repsonse-score (CRS)
@@ -203,6 +204,7 @@ CRS=
 0 \quad for \quad Z'_{mod.}<-0.5 \quad or \quad V'_{mod.}<-0.5
 \end{cases}
 $$
+
 with
 
 $$
