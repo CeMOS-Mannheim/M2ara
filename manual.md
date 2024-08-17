@@ -181,6 +181,7 @@ The $Log_2FC$ denotes the magnitude i.e. effect size of a response. It is define
 $$
 Log_2 FC =log_2\frac{a_u}{a_l}
 $$
+
 where $a_u$ and $a_l$ the upper and lower asymptotes.
 In short: The $Log_2FC$ gives the raw (no variation of data points considered) difference between the upper and lower part of the curve.
 
@@ -211,11 +212,15 @@ fcScore=
 \frac{|log_2FC|}{log_2FC}
 \end{cases}
 $$
+
 and
+
 $$
 vScore=V'_{mod.}
 $$
+
 and
+
 $$
 zScore=
 \begin{cases}
@@ -223,6 +228,7 @@ zScore=
 \frac{Z'_{mod.}}{0.5} \quad for \quad 0.5 > Z'_{mod.}>-0.5
 \end{cases}
 $$
+
 The *CRS* combines three measures used to describe the quality of a response curve, the effect size defined as $Log_2FC$ and incorporated in the fcScore, the $V'_{mod.}$ factor being equal to the vScore and the $Z'_{mod.}$ factor used in the definition of the zScore. In the fcScore, the $Log_2FC$ is normalized by and thresholded at $Log_2FC_{max}=2.59$ . The factor is chosen to not overrate features that exhibit substantial changes. The restriction of the $Z'_{mod.}$ factor to the zScore is made due to the common interpretation of the *Z’* factor (Zhang, Chung and Oldenburg 1999). For $Z'_{mod.}>0.5$ a bioassay is said to be excellent, since for $\sigma_l=\sigma_u$ a value of 0.5 is equivalent to a separation of 12 standard deviations between $\mu_u$ and $\mu_l$ . Accordingly, a value of -0.5 is equivalent to a separation of 3 standard deviations between  $\mu_u$ and $\mu_l$ for $\sigma_l=\sigma_u$ . The rather moderate lower threshold is in particular of importance for MALDI MS-based bioassay exhibiting a relatively high variance in the data. 
 
 ### Metrics subtab
