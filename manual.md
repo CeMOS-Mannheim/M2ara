@@ -37,7 +37,7 @@ The following features were already part of `MALDIcellassay`:
 
 # General information
 
-The blue question mark icons (<!--html_preserve--><i class="far fa-circle-question" role="presentation" aria-label="circle-question icon"></i><!--/html_preserve-->) throughout the application can be clicked and provide further information on the specific settings.
+The blue question mark icons (preservef45ef1239f806958) throughout the application can be clicked and provide further information on the specific settings.
 
 # Requirements to the raw data {#requirements-to-the-raw-data}
 
@@ -197,39 +197,31 @@ In short: The *SSMD* gives the difference between the upper and lower part of th
 
 ##### Curve-repsonse-score (CRS)
 
-$$
-CRS=
+$$CRS=
 \begin{cases}
 \frac{fcScore+vScore+zScore}{3}*100,\\
 0 \quad for \quad Z'_{mod.}<-0.5 \quad or \quad V'_{mod.}<-0.5
-\end{cases}
-$$
+\end{cases}$$
 
 with
 
-$$
-fcScore=
+$$fcScore=
 \begin{cases}
 1 \quad for \quad |log_2FC| > log_2FC_{max}\\
 \frac{|log_2FC|}{log_2FC}
-\end{cases}
-$$
+\end{cases}$$
 
 and
 
-$$
-vScore=V'_{mod.}
-$$
+$$vScore=V'_{mod.}$$
 
 and
 
-$$
-zScore=
+$$zScore=
 \begin{cases}
 1 \quad for \quad Z'_{mod.}>0.5\\
 \frac{Z'_{mod.}}{0.5} \quad for \quad 0.5 > Z'_{mod.}>-0.5
-\end{cases}
-$$
+\end{cases}$$
 
 The *CRS* combines three measures used to describe the quality of a response curve, the effect size defined as $Log_2FC$ and incorporated in the fcScore, the $V'_{mod.}$ factor being equal to the vScore and the $Z'_{mod.}$ factor used in the definition of the zScore. In the fcScore, the $Log_2FC$ is normalized by and thresholded at $Log_2FC_{max}=2.59$ . The factor is chosen to not overrate features that exhibit substantial changes. The restriction of the $Z'_{mod.}$ factor to the zScore is made due to the common interpretation of the *Z’* factor (Zhang, Chung and Oldenburg 1999). For $Z'_{mod.}>0.5$ a bioassay is said to be excellent, since for $\sigma_l=\sigma_u$ a value of 0.5 is equivalent to a separation of 12 standard deviations between $\mu_u$ and $\mu_l$ . Accordingly, a value of -0.5 is equivalent to a separation of 3 standard deviations between  $\mu_u$ and $\mu_l$ for $\sigma_l=\sigma_u$ . The rather moderate lower threshold is in particular of importance for MALDI MS-based bioassay exhibiting a relatively high variance in the data. 
 
