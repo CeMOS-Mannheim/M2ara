@@ -156,6 +156,7 @@ $$ is implemented into **M²ara**. The mod. Z' score helps to make a judgment ab
 ##### Modified V':
 
 The modified *V*’ [Ravkin et al.] is introduced to assess the root-mean-square deviation of the response data relative to the log-logistic model fit, determined by 
+
 $$
 V'_{mod.}=1-6*\frac{\sigma_f}{|a_u-a_l|} 
 $$ 
@@ -163,7 +164,7 @@ $$
 with 
 
 $$
-\sigma_f=\sqrt{\frac{1}{N}\sum(f_exp-f)^2}
+\sigma_f=\sqrt{\frac{1}{N}\sum(f_{exp}-f)^2}
 $$
 
 where $\sigma_f$ is the standard deviation of the residuals of the 4-parameter non-linear regression model *f* calculated from the experimental (exp) data and the model. Hereby, the modified *V*’ factor reflects the goodness of the fit and thus the variance within all data points described by the model.
