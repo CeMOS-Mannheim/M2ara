@@ -89,9 +89,9 @@ server <- function(input, output, session) {
                                                      method = input$VarFilterMethod))
 
       # peak statistics
-      stat_df <- calculatePeakStatistics(curveFits = fits,
-                                         singlePeaks = singlePeaks,
-                                         spec = prc$spec)
+      stat_df <- MALDIcellassay:::calculatePeakStatistics(curveFits = fits,
+                                                          singlePeaks = singlePeaks,
+                                                          spec = prc$spec)
 
       appData$res <- new("MALDIassay",
                          avgSpectra = avg$avgSpec,

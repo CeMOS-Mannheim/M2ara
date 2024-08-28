@@ -16,8 +16,8 @@ This manual describes some of the details of the inner-workings of the `MALDIcel
 The following features were already part of `MALDIcellassay`:
 
 -   pre-processing though the `MALDIquant`-package
--   re-calibration to a single **m/z** (single point-re-calibration)
--   normalization to a single **m/z**
+-   re-calibration to a single *m/z* (single point-re-calibration)
+-   normalization to a single *m/z*
 -   fitting curves to the data using the `nplr`-package
 
 **M2ara** adds the following features:
@@ -26,6 +26,7 @@ The following features were already part of `MALDIcellassay`:
 -   interactive data exploration
 -   support for [mzML](#mzml) data \*
 -   calculation of quality metrics (Z', V', log2FC, CRS) \*
+-   feature ranking by metric \*
 -   principle component analysis (PCA)
 -   curve clustering
 -   outlier detection \*
