@@ -52,7 +52,7 @@ docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara:mai
 
 ### Stand-alone installer for Windows
 Use the stand-alone installer (Windows only, no R installation needed).
-The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.2/MALDIcellassay_1.2.exe).
+The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.4.1/M2ara_1.4.1.exe).
 
 ## Example data
 To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541). 
@@ -75,6 +75,8 @@ To replicate the results shown use the following parameters:
 - set binning tolerance to 100 ppm
 - select the folder `mzML` (parent folder of the mzML files) from the .zip file, please make sure that no other files are in this folder.
 
+Alternatively, copy the [this file](https://github.com/CeMOS-Mannheim/M2ara/blob/main/tests/testthat/settings_mzML_data.csv) as `settings.csv` into the main folder of the app.
+
 The target *m/z* is 349.11 (E3S, [M-H]<sup>-</sup>) the pIC50 value should be 6.1.
 
 #### Weigt2018_BCR-ABL_inhibition_Dasatinib_BrukerFlex.zip
@@ -94,6 +96,8 @@ To replicate the results shown use the following parameters:
 - set alignment to 0 mDa (no alignment)
 - set binning tolerance to 100 ppm
 - select the the folder `curve` from the .zip file, make sure no other files/folders are present.
+
+Alternatively, copy the [this file](https://github.com/CeMOS-Mannheim/M2ara/blob/main/tests/testthat/settings_bruker_data.csv) as `settings.csv` into the main folder of the app.
 
 The target is *m/z* 826.5722 (PC(36:1) [M+K]<sup>+</sup>) and *m/z* 616.1767 (Heme B [M+H]<sup>+</sup>) the pIC50 values should be 9.5 and 9.7.
 
