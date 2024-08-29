@@ -105,3 +105,14 @@ checkMetaData <- function(object) {
 
  return(TRUE)
 }
+
+#' Extract directory path
+#'
+#' @param object Object of class MALDIassay
+#'
+#' @return
+#' List, containing the data used to do the fits as well as the nlpr curve fit .
+getDirectory <- function(object) {
+  MALDIcellassay:::stopIfNotIsMALDIassay(object)
+  return(object@settings$dir)
+}
