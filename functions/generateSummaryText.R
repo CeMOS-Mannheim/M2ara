@@ -77,10 +77,7 @@ generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil, concUn
 
     instrumentSettingStr <- c(head, instrument, laser, method, path)
   } else {
-    head <- c("<h4>Measurement method</h4>")
-
-    instrumentSettingStr <- c(head,
-                              "Meta data extraction supported for Bruker format only.")
+    instrumentSettingStr <- NULL
   }
 
   if(object@settings$SinglePointRecal) {

@@ -1,1 +1,7 @@
 ^\.github$
+^M2ara\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^Dockerfile$
+^\.dockerignore$
+^\.lintr$

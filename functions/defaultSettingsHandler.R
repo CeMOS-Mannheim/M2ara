@@ -10,7 +10,7 @@ generateDefaults <- function() {
                      VarFilterMethod = "none",
                      SinglePointRecal = TRUE,
                      normTol = 0.1,
-                     normMz = 349.1,
+                     normMz = 354.1,
                      alignTol = 0,
                      binTol = 100,
                      errorbars = "none",
@@ -22,7 +22,7 @@ generateDefaults <- function() {
                      pcaX = "PC1",
                      pcaY = "PC2",
                      pcaEllipse = 0.67,
-                     simpleLoadings = FALSE,
+                     simpleLoadings = TRUE,
                      sigmoidModel = FALSE,
                      elasticNet = FALSE,
                      corFilter = FALSE,
@@ -31,7 +31,8 @@ generateDefaults <- function() {
                      fileFormat = "bruker",
                      halfWindowSize = 20,
                      checkEmpty = TRUE,
-                     dir = NA)
+                     dir = NULL,
+                     peakMethod = "SuperSmoother")
   return(defaults)
 }
 

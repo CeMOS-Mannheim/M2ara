@@ -23,7 +23,7 @@ appSidebar <- function(defaults) {
       column(6,
              selectInput(inputId = "concUnits",
                          label = "Conc. unit",
-                         choices = c("M", "mM", "µM", "nM", "pM"),
+                         choices = c("M", "mM", "uM", "nM", "pM"),
                          selected = defaults$concUnits, multiple = FALSE, width = "80%")
       )
     ),
@@ -61,7 +61,7 @@ appSidebar <- function(defaults) {
              selectInput(inputId = "normMeth",
                          label = "Normalize",
                          selected = defaults$normMeth,
-                         choices = c("mz", "TIC", "PQN", "median", "none")) %>%
+                         choices = c("mz", "TIC", "median", "none")) %>%
                helper(type = "markdown", content = "normalization")),
       column(6,
              selectInput("VarFilterMethod", label = "Var. filter",

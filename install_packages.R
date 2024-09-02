@@ -14,10 +14,10 @@ req <- scan(req_file, character(), quiet = TRUE)
 
 # Install missing packages
 if (length(req) > 0) {
-  missing_packages <- req[!(req %in% pak::pkg_install()[,"Package"])]
+  missing_packages <- req[!(req %in% installed.packages()[,"Package"])]
   if (length(missing_packages) > 0) {
     cat("Number of packages to install: ", length(missing_packages), "\n")
-    pak::pkg_install(missing_packages)
+    pak::pkg_install(missing_packages, ask = FALSE)
   }
 }
 

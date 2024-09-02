@@ -21,6 +21,7 @@ loadAllFunctions <- function() {
   source("functions/handlePreprocSettings.R")
   source("functions/loadSpectraData.R")
   source("functions/selectDir.R")
+  source("functions/processMappingFile.R")
 }
 
 

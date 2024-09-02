@@ -30,12 +30,13 @@ downloadHandlerPlots <- function(res, selected_row, p_curve, p_peak, plot_ready)
     })
 }
 
-downloadHandlerTable <- function(res, stats, plot_ready) {
+downloadHandlerTable <- function(res, stats, plot_ready, name) {
   downloadHandler(
     filename = function()  {
       if (plot_ready == "TRUE") {
         paste0(basename(getDirectory(res)),
-               "_peakTable",
+               "_",
+               name,
                ".csv")
       }
     },

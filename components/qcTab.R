@@ -9,24 +9,28 @@ qcTab <- function() {
 
            fluidRow(
              column(2,
-                    selectInput("plateStat",
-                                label = "Metric",
-                                choices = c("Concentration",
-                                            "Total Peak Intensity",
-                                            "Normalization factor",
-                                            "Recal-shift",
-                                            "Selected-mz",
-                                            "PC-x",
-                                            "PC-y",
-                                            "Outlier-mz",
-                                            "Outlier-all"),
-                                multiple = FALSE,
-                                selected = defaults$plateStat)
+                    hidden(
+                      selectInput("plateStat",
+                                  label = "Metric",
+                                  choices = c("Concentration",
+                                              "Total Peak Intensity",
+                                              "Normalization factor",
+                                              "Recal-shift",
+                                              "Selected-mz",
+                                              "PC-x",
+                                              "PC-y",
+                                              "Outlier-mz",
+                                              "Outlier-all"),
+                                  multiple = FALSE,
+                                  selected = defaults$plateStat)
+                    )
              ),
              column(2,
-                    checkboxInput("plateScale",
-                                  label = "Log10 scale",
-                                  value = defaults$plateScale)
+                    hidden(
+                      checkboxInput("plateScale",
+                                    label = "Log10 scale",
+                                    value = defaults$plateScale)
+                    )
              )
            ),
 
