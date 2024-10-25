@@ -27,7 +27,7 @@ The following features were already part of `MALDIcellassay`:
 -   graphical user interface
 -   interactive data exploration
 -   support for [mzML](#mzml) data \*
--   calculation of quality metrics (*Z'*, *V'*, *log2FC*, *CRS*) \*
+-   calculation of quality metrics (*FZ*, *FV*, *log2FC*, *CRS*) \*
 -   feature ranking by metric \*
 -   principle component analysis (PCA)
 -   curve clustering
@@ -120,7 +120,7 @@ The analysis pipeline consist of the following steps (see figure below for a gra
 9.  `Intensity matrix`: The peaks of the average spectra are transformed into a matrix with columns representing *m/z* values and rows representing concentrations whereas cells contain the respective intensity.
 10. `Varience filtering` is applied.
 11. `Curve fitting` is performed.
-12. `Quality metrics` are calculated (*V'*, *Z'*, *SSMD*, *Log2FC*, *CRS*).
+12. `Quality metrics` are calculated (*FV*, *FZ*, *SSMD*, *Log2FC*, *CRS*).
 13. The peaks can be selected in the `Peak table`.
 14. The respective dose-response curve as well as the peak profile is visualized and might be saved.
 
@@ -147,22 +147,22 @@ Below the two plots the peak table is shown. Here all found signals as well as a
 
 **M²ara** comes with a variety of helpful scores/metrics that are meant to help judging the quality of response curves.
 
-##### Modified Z':
+##### FZ:
 
-In pharmaceutical industry and research, the quality of a bioassay is assessed by common metrics that rely on a negative and positive control [Zhang et al., 1999](https://pubmed.ncbi.nlm.nih.gov/10838414/), [Iversen et al., 2006](https://doi.org/10.1177/1087057105285610), [Ravkin et al., 2004](http://www.ravkin.net/articles/5322-7.pdf) . However, in order to be able to explore unknown cellular drug effects in whole-cell MALDI MS bioassays and to classify m/z features as either up-, down- or non-regulated, characteristic measures need to be deduced from the concentration response data directly. First, to assess the variability within the assay data relative to the effective window size, a modified form of the *Z’* factor [Zhang et al., 1999](https://pubmed.ncbi.nlm.nih.gov/10838414/), defined by 
+In pharmaceutical industry and research, the quality of a bioassay is assessed by common metrics that rely on a negative and positive control [Zhang et al., 1999](https://pubmed.ncbi.nlm.nih.gov/10838414/), [Iversen et al., 2006](https://doi.org/10.1177/1087057105285610), [Ravkin et al., 2004](http://www.ravkin.net/articles/5322-7.pdf) . However, in order to be able to explore unknown cellular drug effects in whole-cell MALDI MS bioassays and to classify m/z features as either up-, down- or non-regulated, characteristic measures need to be deduced from the concentration response data directly. First, to assess the variability within the assay data relative to the effective window size, a modified form of the *Z'* factor [Zhang et al., 1999](https://pubmed.ncbi.nlm.nih.gov/10838414/), defined by 
 
 $$
-Z'_{mod.} = 1-\frac{3*(\sigma_u+\sigma_l)}{|\mu_u-\mu_l|}
+F_{Z} = 1-\frac{3*(\sigma_u+\sigma_l)}{|\mu_u-\mu_l|}
 $$ 
 
-is implemented into **M²ara**. The modified *Z'* score helps to make a judgment about the distance of the means ( $\mu$ , more is better) and standard deviation ( $\sigma$ , less is better) of the upper ( $_u$ ) and lower ( $_l$ ) end of the curve.
+is implemented into **M²ara**. The modified *FZ* score helps to make a judgment about the distance of the means ( $\mu$ , more is better) and standard deviation ( $\sigma$ , less is better) of the upper ( $_u$ ) and lower ( $_l$ ) end of the curve.
 
-##### Modified V':
+##### FZ:
 
-The modified *V'* [Ravkin et al., 2004](http://www.ravkin.net/articles/5322-7.pdf) is introduced to assess the root-mean-square deviation of the response data relative to the log-logistic model fit, determined by 
+A modified *V'* [Ravkin et al., 2004](http://www.ravkin.net/articles/5322-7.pdf) is introduced to assess the root-mean-square deviation of the response data relative to the log-logistic model fit, determined by 
 
 $$
-V'_{mod.}=1-6*\frac{\sigma_f}{|a_u-a_l|} 
+F_{V}=1-6*\frac{\sigma_f}{|a_u-a_l|} 
 $$ 
 
 with 
@@ -171,8 +171,8 @@ $$
 \sigma_f=\sqrt{\frac{1}{N}\sum(f_{exp}-f)^2}
 $$
 
-where $\sigma_f$ is the standard deviation of the residuals of the 4-parameter non-linear regression model *f* calculated from the experimental (exp) data and the model. Hereby, the modified *V'* factor reflects the goodness of the fit and thus the variance within all data points described by the model.
-In short: *V'* focuses more on the goodness of fit of the curve to the data points.
+where $\sigma_f$ is the standard deviation of the residuals of the 4-parameter non-linear regression model *f* calculated from the experimental (exp) data and the model. Hereby, the *FV* factor reflects the goodness of the fit and thus the variance within all data points described by the model.
+In short: *FZ* focuses more on the goodness of fit of the curve to the data points.
 
 ##### Log2-Fold-Change
 
@@ -185,22 +185,22 @@ $$
 where $a_u$ and $a_l$ the upper and lower asymptotes.
 In short: The $Log_2FC$ gives the raw (no variation of data points considered) difference between the upper and lower part of the curve.
 
-##### SSMD
+##### FS
 
-The Strictly Standardized Mean Difference (*SSMD*), is implemented [Bray and Carpenter 2004](https://pubmed.ncbi.nlm.nih.gov/23469374/); [Zhang et al., 2007](https://doi.org/10.1016/j.ygeno.2006.12.014), with:
+The *FS* is baed on the Strictly Standardized Mean Difference (*SSMD*) and is implemented [Bray and Carpenter 2004](https://pubmed.ncbi.nlm.nih.gov/23469374/); [Zhang et al., 2007](https://doi.org/10.1016/j.ygeno.2006.12.014), with:
 
 $$
-SSMD = \frac{|\mu_l-\mu_u|}{\sqrt{\sigma^2_u+\sigma^2_l}}
+F_S = \frac{|\mu_l-\mu_u|}{\sqrt{\sigma^2_u+\sigma^2_l}}
 $$
 
-In short: The *SSMD* gives the difference between the upper and lower part of the curves in units of standard deviation. Or in other words, it gives a weigthed differences.
+In short: The *FS* gives the difference between the upper and lower part of the curves in units of standard deviation. Or in other words, it gives a weigthed differences.
 
 ##### Curve-repsonse-score (CRS)
 
 $$CRS=
 \begin{cases}
 \frac{fcScore+vScore+zScore}{3}*100,\\
-0 \quad for \quad Z'_{mod.}<-0.5 \quad or \quad V'_{mod.}<-0.5
+0 \quad for \quad F_{Z}<-0.5 \quad or \quad F_{V}<-0.5
 \end{cases}$$
 
 with
@@ -213,27 +213,27 @@ $$fcScore=
 
 and
 
-$$vScore=V'_{mod.}$$
+$$vScore=F_{V}$$
 
 and
 
 $$zScore=
 \begin{cases}
-1 \quad for \quad Z'_{mod.}>0.5\\
-\frac{Z'_{mod.}}{0.5} \quad for \quad 0.5 > Z'_{mod.}>-0.5
+1 \quad for \quad F_{Z}>0.5\\
+\frac{F_{Z}}{0.5} \quad for \quad 0.5 > F_{Z}>-0.5
 \end{cases}$$
 
-The *CRS* combines three measures used to describe the quality of a response curve, the effect size defined as $Log_2FC$ and incorporated in the fcScore, the $V'_{mod.}$ factor being equal to the vScore and the $Z'_{mod.}$ factor used in the definition of the zScore. In the fcScore, the $Log_2FC$ is normalized by and thresholded at $Log_2FC_{max}=2.59$ . The factor is chosen to not overrate features that exhibit substantial changes. The restriction of the $Z'_{mod.}$ factor to the zScore is made due to the common interpretation of the *Z’* factor (Zhang, Chung and Oldenburg 1999). For $Z'_{mod.}>0.5$ a bioassay is said to be excellent, since for $\sigma_l=\sigma_u$ a value of 0.5 is equivalent to a separation of 12 standard deviations between $\mu_u$ and $\mu_l$ . Accordingly, a value of -0.5 is equivalent to a separation of 3 standard deviations between  $\mu_u$ and $\mu_l$ for $\sigma_l=\sigma_u$ . The rather moderate lower threshold is in particular of importance for MALDI MS-based bioassay exhibiting a relatively high variance in the data. 
+The *CRS* combines three measures used to describe the quality of a response curve, the effect size defined as $Log_2FC$ and incorporated in the fcScore, the $F_{V}$ factor being equal to the vScore and the $F_{Z}$ factor used in the definition of the zScore. In the fcScore, the $Log_2FC$ is normalized by and thresholded at $Log_2FC_{max}=2.59$ . The factor is chosen to not overrate features that exhibit substantial changes. The restriction of the $F_{Z}$ factor to the zScore is made due to the common interpretation of the *FZ* factor (Zhang, Chung and Oldenburg 1999). For $F_{Z}>0.5$ a bioassay is said to be excellent, since for $\sigma_l=\sigma_u$ a value of 0.5 is equivalent to a separation of 12 standard deviations between $\mu_u$ and $\mu_l$ . Accordingly, a value of -0.5 is equivalent to a separation of 3 standard deviations between  $\mu_u$ and $\mu_l$ for $\sigma_l=\sigma_u$ . The rather moderate lower threshold is in particular of importance for MALDI MS-based bioassay exhibiting a relatively high variance in the data. 
 
 ### Metrics subtab
 
-The metrics screen enables to visualize different metrics (*Z'*, *V'*, *SSMD*, *logFC*, *CRS* as well as pEC50, etc.) as a function of **m/z**. The direction of the peaks (up or down) highlights the direction of regulation (if the intensity of the signal increases or decreases with the concentration). It is therefor useful to get a fast overview of the whole data set. The different metrics concentrate on different aspects of the quality of the curve.
+The metrics screen enables to visualize different metrics (*FZ*, *FV*, *FS*, *logFC*, *CRS* as well as pEC50, etc.) as a function of **m/z**. The direction of the peaks (up or down) highlights the direction of regulation (if the intensity of the signal increases or decreases with the concentration). It is therefor useful to get a fast overview of the whole data set. The different metrics concentrate on different aspects of the quality of the curve.
 
 ## QC tab
 
 The top part of the OC tab focuses on the (potential) peak used for re-calibration and enables the user to inspect the alignment of the (average) spectra per concentration.
 
-The lower left part shows different metrics (both assay quality metrics like *Z'*, *V'*, *CRS* and MALDI parameters like total ion current as well as re-calibration shifts and PCA loadings) per spot in a target plate view. **This functionality is currently only featured for Bruker raw data. And wont be visible with the `mzML` input file format selected.**
+The lower left part shows different metrics (both assay quality metrics like *FZ*, *FV*, *CRS* and MALDI parameters like total ion current as well as re-calibration shifts and PCA loadings) per spot in a target plate view. **This functionality is currently only featured for Bruker raw data. And wont be visible with the `mzML` input file format selected.**
 
 The lower right shows processing (and in case of Bruker data also some measurement meta data) as a summary.
 
