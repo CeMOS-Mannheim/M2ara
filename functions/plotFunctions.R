@@ -267,7 +267,7 @@ plateMapPlot <- function(appData,
   return(p)
 }
 
-scorePlot <- function(stats, metric = c("CRS", "V'", "Z'", "log2FC", "pEC50", "SSMD")) {
+scorePlot <- function(stats, metric = c("CRS", "FV", "FZ", "log2FC", "pEC50", "FS")) {
   metric <- match.arg(metric)
 
   df <- stats %>%
@@ -275,7 +275,7 @@ scorePlot <- function(stats, metric = c("CRS", "V'", "Z'", "log2FC", "pEC50", "S
     select(c("mz", "direction")) %>%
     mutate(value = pull(stats, metric))
 
-  if(metric %in% c("V'", "Z'")) {
+  if(metric %in% c("FV", "FZ")) {
     # cut V' and Z' at zero as lower values then zero just indicate bad models
     # and its prettier for visualization
     df <- df %>%
@@ -284,7 +284,7 @@ scorePlot <- function(stats, metric = c("CRS", "V'", "Z'", "log2FC", "pEC50", "S
     limits <- c(-1, 1)
   }
 
-  if(metric %in% c("CRS", "V'", "Z'", "SSMD")) {
+  if(metric %in% c("CRS", "FV", "FZ", "FS")) {
     df <- df %>%
       mutate(value = if_else(direction == "down", -value, value))
   }
@@ -300,14 +300,14 @@ scorePlot <- function(stats, metric = c("CRS", "V'", "Z'", "log2FC", "pEC50", "S
          y = ylab,
          col = NULL)
 
-  if(metric %in% c("V'", "Z'")) {
+  if(metric %in% c("FV", "FZ")) {
     p <- p +
       scale_y_continuous(limits = limits,
                          breaks = c(-1, -0.5, 0, 0.5, 1),
                          labels = c(1, 0.5, 0, 0.5 , 1))
   }
 
-  if(metric %in% c("log2FC", "SSMD")) {
+  if(metric %in% c("log2FC", "FS")) {
     absVal <- abs(df$value)
     absVal <- absVal[!is.infinite(absVal)]
     absMax <- max(absVal, na.rm = TRUE)

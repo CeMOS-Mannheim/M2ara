@@ -51,6 +51,7 @@ server <- function(input, output, session) {
                         normMz = input$normMz,
                         normTol = input$normTol,
                         normMeth = input$normMeth,
+                        smoothHalfWindowSize = 3,
                         alignTol = input$alignTol * 1e-3,
                         halfWindowSize = input$halfWindowSize,
                         peakMethod = input$peakMethod)
@@ -118,7 +119,6 @@ server <- function(input, output, session) {
                            dir = appData$selected_dir
                          )
       )
-
       message(MALDIcellassay:::timeNow(),  " processing done\n")
 
       # write everything needed into appData
