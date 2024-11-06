@@ -50,11 +50,14 @@ docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara:mai
 
 ### Stand-alone installer for Windows
 
-Use the stand-alone installer (Windows only, no R installation needed). The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.4.1/M2ara_1.4.1.exe).
+Use the stand-alone installer (Windows only, no R installation needed). The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.4.2/M2ara_1.4.2.exe).
 
 ## Example data
 
 To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541).
+You can find 5 datasets on FigShare, each with the corresponding processing parameter file. 
+
+For completeness find the processing parameters and expected results of two datasets (one as Bruker Flex format and one in imzML) here:
 
 #### Unger2020_OATP2B1_inhibition_mzML.zip
 
