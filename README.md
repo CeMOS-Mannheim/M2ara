@@ -18,6 +18,18 @@ For more detailed information please take a look at the [Manual](manual.md) that
 
 <img src="figures/gui_example.png" alt="M²ara GUI overview" width="100%"/>
 
+## Quality metrics
+
+In M²ara the following quality metrics might be used (see Figure for an graphical explanation):
+
+-   $log_2FC$: Unadjusted magnitude of the curve. Given by the ratio between the upper ($a_u$) and lower ($a_l$) asymptotes.
+-   $F_Z$: Incorporates the inherent variability of the measurements given by the standard deviation ($σ_u$ and $σ_l$) and the upper ($µ_u$) and lower ($µ_l$) mean values of the two highest and lowest concentrations.
+-   $F_V$: Takes into account the residuals ($Res(f, f_{exp})$) and relating them to the difference between the upper ($a_u$) and lower ($a_l$) asymptotes.
+
+<img src="figures/curve_figure.png" alt="Graphical explation of quality factors" width="100%"/>
+
+Finally, the Curve response score (CRS) combines the tree quality factors above to give a ranking of the features and a decision boundary from which on a curve can be surely classified as non-artificial.
+
 ## How to install
 
 ### R
@@ -54,8 +66,7 @@ Use the stand-alone installer (Windows only, no R installation needed). The inst
 
 ## Example data
 
-To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541).
-You can find 5 datasets on FigShare, each with the corresponding processing parameter file. 
+To test the app please use the example data on [FigShare](https://dx.doi.org/10.6084/m9.figshare.25736541). You can find 5 datasets on FigShare, each with the corresponding processing parameter file.
 
 For completeness find the processing parameters and expected results of two datasets (one as Bruker Flex format and one in mzML) here:
 
