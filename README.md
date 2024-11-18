@@ -24,7 +24,7 @@ In M²ara the following quality metrics might be used (see Figure for an graphic
 
 -   $log_2FC$: Unadjusted magnitude of the curve. Given by the ratio between the upper ($a_u$) and lower ($a_l$) asymptotes.
 -   $F_Z$: Incorporates the inherent variability of the measurements given by the standard deviation ($σ_u$ and $σ_l$) and the upper ($µ_u$) and lower ($µ_l$) mean values of the two highest and lowest concentrations.
--   $F_V$: Takes into account the residuals ($Res(f, f_{exp})$) and relating them to the difference between the upper ($a_u$) and lower ($a_l$) asymptotes.
+-   $F_V$: Takes into account the residuals and relating them to the difference between the upper ($a_u$) and lower ($a_l$) asymptotes.
 
 <img src="figures/curve_figure.png" alt="Graphical explation of quality factors" width="100%"/>
 
