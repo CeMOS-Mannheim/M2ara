@@ -4,7 +4,7 @@ M²ara is a software tool to facilitate the exploration of metabolomic responses
 
 M²ara is based on the R package [MALDIcellassay](https://github.com/CeMOS-Mannheim/MALDIcellassay) (published in [Unger et. al. 2021](https://www.nature.com/articles/s41596-021-00624-z), Nature Protocols) and extends its capabilities with a GUI and adds helpful features like clustering of curves, PCA analysis as well as the Curve Response Score (CRS) which enables fast screening for molecules regulated by drug treatment.
 
-For more information please check out the [preprint](https://chemrxiv.org/engage/chemrxiv/article-details/663a1d0f418a5379b0aa286b).
+For more information please check out the [publication](https://doi.org/10.1093/bioinformatics/btae694).
 
 <img src="figures/Workflow_figure.png" alt="M²ara workflow overview" width="100%"/>
 
