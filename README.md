@@ -77,7 +77,7 @@ The file contains mzML data (converted from Bruker Flex using MSConvert) origina
 To replicate the results shown use the following parameters:
 
 -   under Settings set File Format to mzML
--   set Concentration unit to nM
+-   set Concentration unit to uM
 -   set Normalization/re-calibration *m/z* to 354.1418 (D4-E3S, [M-H]<sup>-</sup>)
 -   set recalibration tolerance to 0.1 Da
 -   set normalization to *m/z*
@@ -99,7 +99,7 @@ The file contains data in the Bruker Flex format originally published in Weigt, 
 To replicate the results shown use the following parameters:
 
 -   under Settings set File Format to Bruker Flex
--   set Concentration unit to µM
+-   set Concentration unit to uM
 -   set Normalization/re-calibration *m/z* to 760.5851 (PC(34:1) [M+H]<sup>+</sup>)
 -   set recalibration tolerance to 0.1 Da
 -   set normalization to TIC
