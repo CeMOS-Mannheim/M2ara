@@ -55,7 +55,7 @@ Install the [docker container](https://hub.docker.com/repository/docker/thomasen
 #### Stable version
 
 ``` bash
-docker pull thomasenzlein/m2ara:6e1f1390a54b
+docker pull thomasenzlein/m2ara:release
 ```
 
 #### Development version
