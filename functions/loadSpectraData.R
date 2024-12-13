@@ -4,6 +4,8 @@ loadSpectraData <- function(input, appData, mapping) {
                                 "loadErrorFormat")) {
     show_spinner()
 
+    checkEmpty <- input$checkEmpty
+
     # check if all spectra names are numeric/concentrations
     # for later: if pos and neg ctrls are included
     # checkSpecNames needs to return indices of the numeric folders
@@ -29,7 +31,25 @@ loadSpectraData <- function(input, appData, mapping) {
              spec_raw <- loadSpectra(appData$selected_dir)
            },
            "mzml" = {
-             spec_raw <- loadSpectraMzML(appData$selected_dir)
+
+             # check if data is centroided for first file
+             # assume rest is also centroided
+             f <- list.files(appData$selected_dir,
+                             recursive = FALSE,
+                             full.names = TRUE,
+                             pattern = "mzML")
+             centroided <- any(stringr::str_detect(readLines(f[1],
+                                                             n = -1L),
+                                                   pattern = "centroid spectrum"))
+
+             if(centroided) {
+               message("      found centroided data. Will not check for empty spectra.")
+             }
+
+             spec_raw <- loadSpectraMzML(appData$selected_dir,
+                                         centroided = centroided)
+             appData$centroided <- centroided
+             checkEmpty <- FALSE
            })
     if(length(mapping > 0)) {
       if(!length(mapping) == length(spec_raw)) {
@@ -50,7 +70,7 @@ loadSpectraData <- function(input, appData, mapping) {
     appData$org_conc <- as.numeric(names(spec_raw))
 
     appData$spec_all <- spec_raw
-    if(input$checkEmpty) {
+    if(checkEmpty) {
       message(MALDIcellassay:::timeNow(),  " check for empty spectra...\n")
 
       # MAD would be faster but may fail in some circumstances...

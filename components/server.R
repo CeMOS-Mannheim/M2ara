@@ -54,7 +54,8 @@ server <- function(input, output, session) {
                         smoothHalfWindowSize = 3,
                         alignTol = input$alignTol * 1e-3,
                         halfWindowSize = input$halfWindowSize,
-                        peakMethod = input$peakMethod)
+                        peakMethod = input$peakMethod,
+                        centroided = appData$centroided)
 
       if(!fitCurveErrorHandler(appData = appData,
                                prc = prc,

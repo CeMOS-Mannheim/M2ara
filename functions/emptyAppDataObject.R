@@ -15,5 +15,6 @@ emptyAppDataObject <- function(){
                  opt = NULL,
                  info_state = "inital",
                  show_plot = FALSE,
-                 mapping = NULL)
+                 mapping = NULL,
+                 centroided = NULL)
 }
