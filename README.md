@@ -52,12 +52,22 @@ source("app.R")
 
 Install the [docker container](https://hub.docker.com/repository/docker/thomasenzlein/m2ara), run it and access `localhost:3838` to interact with the app. Don't forget to change the path `c:/path/to/massSpecData` to your data so that it can be mounted when running the container.
 
+#### Stable version
+
+``` bash
+docker pull thomasenzlein/m2ara:6e1f1390a54b
+```
+
+#### Development version
+
 ``` bash
 docker pull thomasenzlein/m2ara:main
 ```
 
+#### Starting the container
+
 ``` bash
-docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara:main
+docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara
 ```
 
 ### Stand-alone installer for Windows
