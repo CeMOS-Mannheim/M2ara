@@ -12,47 +12,58 @@ preprocess <- function(spectra,
                        normMeth,
                        alignTol,
                        halfWindowSize,
-                       peakMethod
+                       peakMethod,
+                       centroided = centroided
 ) {
   nm <- names(spectra)
-  if(!smooth & !rmBaseline & !sqrtTransform) {
-    cat("No preprocessing selected. Returning unprocessed spectra.\n")
-    return(spectra)
-  }
 
-  if(sqrtTransform) {
-    cat("Applying variance stabilitzation by sqrt-transform...\n")
+  if(isTruthy(sqrtTransform)) {
+    message("Applying variance stabilitzation by sqrt-transform...\n")
     spectra <- suppressWarnings(
       transformIntensity(spectra,
-                         method = "sqrt")
-    )
+                         method = "sqrt"))
   }
 
 
-  if(smooth) {
-    cat("Smoothing...\n")
-    spectra <- suppressWarnings(
-      smoothIntensity(spectra,
-                      method = smoothMethod,
-                      halfWindowSize = smoothHalfWindowSize)
-    )
+
+  if(isTruthy(smooth)) {
+    if(centroided) {
+      message("Skipping smoothing because spectra are centroided.\n")
+    } else {
+      message("Smoothing...\n")
+      spectra <- suppressWarnings(
+        smoothIntensity(spectra,
+                        method = smoothMethod,
+                        halfWindowSize = smoothHalfWindowSize)
+      )
+    }
   }
 
-  if(rmBaseline) {
-    cat("Removing baseline...\n")
-    spectra <- suppressWarnings(
-      removeBaseline(spectra,
-                     method = rmBlMethod)
-    )
+  if(isTruthy(rmBaseline)) {
+    if(centroided) {
+      message("Skipping baseline removal because spectra are centroided.\n")
+    } else {
+      message("Removing baseline...\n")
+      spectra <- suppressWarnings(
+        removeBaseline(spectra,
+                       method = rmBlMethod)
+      )
+    }
+
   }
 
   names(spectra) <- nm
-  cat("Detecting peaks...\n")
+  if(centroided) {
+    message("Skipping peak detection because spectra are centroided.\n")
+    peaks <- spectra
+  } else {
+    message("Detecting peaks...\n")
+    peaks <- MALDIcellassay:::.detectPeaks(spectra,
+                                           SNR = SNR,
+                                           method = peakMethod,
+                                           halfWindowSize = halfWindowSize)
+  }
 
-  peaks <- MALDIcellassay:::.detectPeaks(spectra,
-                                         SNR = SNR,
-                                         method = peakMethod,
-                                         halfWindowSize = halfWindowSize)
   prc <- tryCatch({
     prc <- MALDIcellassay:::.preprocess(peaks_single = peaks,
                                         spec = spectra,

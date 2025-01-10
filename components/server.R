@@ -41,7 +41,6 @@ server <- function(input, output, session) {
                        type = "default")
       message(MALDIcellassay:::timeNow(), " start processing...\n")
       appData$spec_all <- MALDIcellassay:::.repairMetaData(appData$spec_all)
-
       prc <- preprocess(spectra = appData$spec_all[appData$spec_idx],
                         sqrtTransform = appData$preprocessing$sqrtTrans,
                         smooth = appData$preprocessing$smooth,
@@ -54,7 +53,8 @@ server <- function(input, output, session) {
                         smoothHalfWindowSize = 3,
                         alignTol = input$alignTol * 1e-3,
                         halfWindowSize = input$halfWindowSize,
-                        peakMethod = input$peakMethod)
+                        peakMethod = input$peakMethod,
+                        centroided = appData$centroided)
 
       if(!fitCurveErrorHandler(appData = appData,
                                prc = prc,
@@ -67,7 +67,7 @@ server <- function(input, output, session) {
       avg <- MALDIcellassay:::.aggregateSpectra(spec = prc$spec,
                                                 averageMethod = input$avgMethod,
                                                 SNR = input$SNR,
-                                                monoisotopicFilter = appData$preprocessing$monoisotopicFilter,
+                                                monoisotopicFilter = isTruthy(appData$preprocessing$monoisotopicFilter),
                                                 binTol = input$binTol * 1e-6,
                                                 normMz = input$normMz,
                                                 normTol = input$normTol,
