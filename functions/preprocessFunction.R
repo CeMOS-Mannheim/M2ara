@@ -16,12 +16,8 @@ preprocess <- function(spectra,
                        centroided = centroided
 ) {
   nm <- names(spectra)
-  if(!smooth & !rmBaseline & !sqrtTransform) {
-    message("No preprocessing selected. Returning unprocessed spectra.\n")
-    return(spectra)
-  }
 
-  if(sqrtTransform) {
+  if(isTruthy(sqrtTransform)) {
     message("Applying variance stabilitzation by sqrt-transform...\n")
     spectra <- suppressWarnings(
       transformIntensity(spectra,
@@ -30,7 +26,7 @@ preprocess <- function(spectra,
 
 
 
-  if(smooth) {
+  if(isTruthy(smooth)) {
     if(centroided) {
       message("Skipping smoothing because spectra are centroided.\n")
     } else {
@@ -43,7 +39,7 @@ preprocess <- function(spectra,
     }
   }
 
-  if(rmBaseline) {
+  if(isTruthy(rmBaseline)) {
     if(centroided) {
       message("Skipping baseline removal because spectra are centroided.\n")
     } else {
@@ -58,7 +54,7 @@ preprocess <- function(spectra,
 
   names(spectra) <- nm
   if(centroided) {
-    message("Skipping baseline removal because spectra are centroided.\n")
+    message("Skipping peak detection because spectra are centroided.\n")
     peaks <- spectra
   } else {
     message("Detecting peaks...\n")

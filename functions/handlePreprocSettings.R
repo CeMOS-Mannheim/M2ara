@@ -15,6 +15,12 @@ handlePreprocSettings <- function(preproc_settings, parameter) {
          "Known options are ", paste(options, collapse = ", "))
   }
 
+  if(is.null(preproc_settings)) {
+    # no settings selected, preproc_settings is empty
+    # -> everything is false
+    return(FALSE)
+  }
+
   if(parameter %in% preproc_settings) {
     return(TRUE)
   }
