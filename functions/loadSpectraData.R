@@ -29,6 +29,8 @@ loadSpectraData <- function(input, appData, mapping) {
     switch(input$fileFormat,
            "bruker" = {
              spec_raw <- loadSpectra(appData$selected_dir)
+             # at the moment we assume Bruker flex data to always be continuous
+             appData$centroided <- FALSE
            },
            "mzml" = {
 
