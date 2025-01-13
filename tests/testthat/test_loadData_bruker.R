@@ -35,9 +35,11 @@ test_that("data can be loaded and processed from Bruker Flex",
                                  wait = TRUE)
 
             app$click("load")
-            app$wait_for_idle(timeout = 300*1000)
+            Sys.sleep(30)
+            app$wait_for_idle(500)
             app$click("process")
-            app$wait_for_idle(timeout = 300*1000)
+            Sys.sleep(30)
+            app$wait_for_idle(500)
             exp <-app$get_values(export = TRUE)
 
             expect_equal(exp$export$isSpectrumList, TRUE)

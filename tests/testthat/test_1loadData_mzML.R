@@ -42,11 +42,11 @@ test_that("data can be loaded and processed from mzML",
               cat(timeNow(), "App started. Loading data...\n")
               app$click("load")
               Sys.sleep(30)
-              app$wait_for_idle(timeout = 120*1000)
+              app$wait_for_idle(500)
               cat(timeNow(), "Start processing...\n")
               app$click("process")
               Sys.sleep(30)
-              app$wait_for_idle(timeout = 120*1000)
+              app$wait_for_idle(500)
               cat(timeNow(), "Processing done.\n")
 
               app$click("doPca")
