@@ -51,6 +51,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-R-
 
+      - name: Ensure pak cache dir exists
+        run: mkdir -p ~/.cache/R/pak
+
       # Cache pak’s binary download cache
       - name: Cache pak downloads
         uses: actions/cache@v4
