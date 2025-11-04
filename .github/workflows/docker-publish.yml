@@ -11,6 +11,7 @@ env:
   REGISTRY: docker.io
   IMAGE_NAME: thomasenzlein/m2ara
   GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+  R_LIBS_USER: /home/runner/work/_temp/Library
 
 jobs:
   build:
@@ -38,14 +39,26 @@ jobs:
             build-essential libgit2-dev libudunits2-dev librsvg2-dev \
             tk libharfbuzz-dev libfribidi-dev
 
-      # Cache installed R packages (pak)
-      - name: Cache R packages
+      - name: Create R library path
+        run: mkdir -p $R_LIBS_USER
+
+      # Cache compiled R packages
+      - name: Cache R library
         uses: actions/cache@v4
         with:
-          path: ~/.local/share/R
+          path: ${{ env.R_LIBS_USER }}
           key: ${{ runner.os }}-R-${{ hashFiles('req.txt') }}
           restore-keys: |
             ${{ runner.os }}-R-
+
+      # Cache pak’s binary download cache
+      - name: Cache pak downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/R/pak
+          key: ${{ runner.os }}-pak-${{ hashFiles('req.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pak-
 
       - name: Install R packages from req.txt
         run: |
@@ -61,7 +74,7 @@ jobs:
       - name: Run R tests
         run: R -e "source('tests/testthat.R')"
 
-      # --- Docker build and push (only on push, not PR) ---
+      # --- Docker build and push (only if not PR) ---
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
