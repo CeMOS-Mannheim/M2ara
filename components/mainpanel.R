@@ -16,7 +16,7 @@ appMainPanel <- function(defaults) {
                                   column(3,
                                          createActionButton(inputId = "saveSettings",
                                                             label = "Save settings",
-                                                            icon = "floppy-disk")
+                                                            icon = "floppy-disk")                                                            
                                   )
                                 ),
                                 fluidRow(
@@ -61,6 +61,12 @@ appMainPanel <- function(defaults) {
                                   column(3,
                                   downloadButton(outputId = "downloadFittingParameter",
                                                  label = "Save fitting param.",
+                                                 icon = icon("download"),
+                                                 style = 'padding:6px; font-size:80%')
+                                  ),
+                                  column(3,
+                                  downloadButton(outputId = "downloadIntensityMatrix",
+                                                 label = "Save intensity matrix",
                                                  icon = icon("download"),
                                                  style = 'padding:6px; font-size:80%')
                                   )

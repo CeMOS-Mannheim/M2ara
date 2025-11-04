@@ -361,6 +361,14 @@ server <- function(input, output, session) {
                                                           stats = getFittingParameters(appData$res),
                                                           plot_ready = appData$show_plot,
                                                           name = "fittingParam")
+  
+  output$downloadIntensityMatrix <- downloadHandlerTable(res = appData$res,
+                                                         stats = getIntensityMatrix(appData$res) %>%
+                                                           as_tibble() %>%
+                                                           mutate(conc = getConc(appData$res)) %>%
+                                                           relocate(conc),
+                                                         plot_ready = appData$show_plot,
+                                                         name = "intensityMatrix")
 
   # mappig of concentrations by external txt
   observeEvent(input$mappingFile, {
