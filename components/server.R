@@ -64,6 +64,7 @@ server <- function(input, output, session) {
 
       #### average spectra ####
       message(MALDIcellassay:::timeNow(), " calculating ", input$avgMethod, " spectra... \n")
+
       avg <- MALDIcellassay:::.aggregateSpectra(spec = prc$spec,
                                                 averageMethod = input$avgMethod,
                                                 SNR = input$SNR,

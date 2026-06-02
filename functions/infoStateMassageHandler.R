@@ -70,6 +70,13 @@ infoStateMassageHandler <- function(info_state, output) {
            msg <- paste0("Faild to load '", basename(appData$selected_dir), "'. Wrong file format.")
            showNotification(msg, duration = 15, type = "error")
          },
+         "loadErrorUniqueMz" = {
+           output$info1 <- renderText(("Failed to import:"))
+           output$info2 <- renderText(appData$selected_dir)
+           output$info3 <- renderText("Non-unique m/z found.")
+           msg <- paste0("Failed to import '", basename(appData$selected_dir), "'. Non-unique m/z found.")
+           showNotification(msg, duration = 15, type = "error")
+         },
          "loadErrorMapping" = {
            output$info1 <- renderText(("Failed to load:"))
            output$info2 <- renderText(appData$selected_dir)

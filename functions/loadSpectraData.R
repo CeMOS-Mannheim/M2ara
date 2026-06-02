@@ -53,6 +53,32 @@ loadSpectraData <- function(input, appData, mapping) {
              appData$centroided <- centroided
              checkEmpty <- FALSE
            })
+    
+    unique_mz <- purrr::map_lgl(spec_raw, function(x) {
+      mz <- mass(x)
+      umz <- unique(mz)
+      
+      # first level check, if length dont match we are done
+      if(length(mz) != length(umz)) {
+        return(FALSE)
+      }
+
+      # detailed check: if all elements match all mz must be unique
+      if(all(mz == umz)) {
+        return(TRUE)
+      }
+
+      return(FALSE)
+    })
+
+    if(any(!unique_mz)) {
+      warning("Not all mz are unique. Did you use tims resolved data?\n")
+        appData$info_state <- "loadErrorUniqueMz"
+        hide_spinner()
+        return()
+    }
+    
+    
     if(length(mapping > 0)) {
       if(!length(mapping) == length(spec_raw)) {
         warning("Number of concentrations in mapping file do not match number of spectra.\n")

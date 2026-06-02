@@ -95,7 +95,7 @@ etc.
 </div>
 
 1.  Click on the **Select folder**-button (1, see figure above) and select a folder containing your experiment (see [Requirements to the raw data](#requirements-to-the-raw-data)). The following dialog is displayed:\
-    <img src="figures/selectFolder.png" width="431" />
+    <img src="figures/selectFolder.png" alt="" width="431" />
 
 2.  Click on the **Load spectra**-button (1) to import your spectra. Depending on the size of the experiment, loading takes 30s - 3 minutes.
 
