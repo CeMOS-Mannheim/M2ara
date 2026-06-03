@@ -41,7 +41,7 @@ test_that("Bruker Flex data can be loaded with expected properties", {
   skip_if_not(obtain_bruker_data(),
               "Could not obtain Bruker test data (figshare WAF may block download).")
 
-  spectra <- MALDIquantForeign::import("Curve", type = "bruker")
+  spectra <- MALDIquantForeign::importBrukerFlex("Curve")
 
   expect_true(MALDIquant::isMassSpectrumList(spectra))
   expect_length(spectra, 88)
