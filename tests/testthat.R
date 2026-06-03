@@ -6,16 +6,24 @@
 # * https://r-pkgs.org/tests.html
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
-
-
 library(testthat)
 
-# make sure we are in app folder
-reqpath <- dirname(common::file.find(pattern = "req.txt"))
+# Ensure NOT_CRAN is set so skip_on_cran() does not skip locally
+Sys.setenv(NOT_CRAN = "true")
 
-if(!length(reqpath) == 1) {
-  stop("could not find req.txt\n")
+# make sure we are in app folder
+find_req_txt <- function(start_dir = getwd()) {
+  d <- normalizePath(start_dir, winslash = "/", mustWork = FALSE)
+  while (d != dirname(d)) {
+    if (file.exists(file.path(d, "req.txt"))) {
+      return(file.path(d, "req.txt"))
+    }
+    d <- dirname(d)
+  }
+  stop("Could not find req.txt from ", start_dir)
 }
+
+reqpath <- dirname(find_req_txt())
 
 setwd(reqpath)
 
