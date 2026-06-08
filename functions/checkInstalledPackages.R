@@ -23,7 +23,7 @@ checkInstalledPackages <- function(req_file = "req.txt") {
   }
 
   # Load packages
-  suppressPackageStartupMessages(invisible(lapply(req, library, character.only = TRUE)))
+  suppressWarnings(suppressPackageStartupMessages(invisible(lapply(req, library, character.only = TRUE))))
 
   # options
   options(dplyr.summarise.inform = FALSE)
