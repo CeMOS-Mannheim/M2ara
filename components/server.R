@@ -8,22 +8,43 @@ server <- function(input, output, session) {
   observe_helpers(withMathJax = TRUE)
 
   ## main ####
-  appData <<- emptyAppDataObject()
+  appData <- emptyAppDataObject()
 
-  appData <- selectDir(appData, input)
+  appData <- selectDir(appData, input, output)
 
   observeEvent(input$preproc_settings, {
     appData <- setPreprocessSettings(input, appData)
   })
 
   ### Text massage logic ####
-  observeEvent(appData$info_state, {
+  observeEvent(list(appData$info_state, appData$selected_dir), {
     output <- infoStateMassageHandler(info_state = appData$info_state,
-                                      output = output)
+                                      output = output,
+                                      selected_dir = appData$selected_dir)
   })
 
   ### load spectra ####
   handleButtonStatus(appData)
+
+  ### download buttons (disabled until data is ready) ####
+  shinyjs::disable("downloadPlot")
+  shinyjs::disable("downloadTable")
+  shinyjs::disable("downloadFittingParameter")
+  shinyjs::disable("downloadIntensityMatrix")
+
+  observeEvent(appData$show_plot, {
+    if (appData$show_plot) {
+      shinyjs::enable("downloadPlot")
+      shinyjs::enable("downloadTable")
+      shinyjs::enable("downloadFittingParameter")
+      shinyjs::enable("downloadIntensityMatrix")
+    } else {
+      shinyjs::disable("downloadPlot")
+      shinyjs::disable("downloadTable")
+      shinyjs::disable("downloadFittingParameter")
+      shinyjs::disable("downloadIntensityMatrix")
+    }
+  })
 
   observeEvent(input$load, {
     appData <- loadSpectraData(input, appData, mapping = appData$mapping)
@@ -31,10 +52,14 @@ server <- function(input, output, session) {
 
   ### process spectra ####
   observeEvent(input$process, {
+    # guard against missing/empty numeric inputs
+    req(input$SNR, input$normMz, input$normTol, input$alignTol, input$binTol, input$halfWindowSize,
+        cancelOutput = FALSE)
+
     # change concentrations according to unit
     appData <- setConcentrationUnit(appData, input)
 
-    if (!appData$info_state %in% c("intial", "dir_set")) {
+    if (!appData$info_state %in% c("initial", "dir_set")) {
       show_spinner()
       showNotification("Processing started. Please wait.",
                        duration = 5,
@@ -203,7 +228,6 @@ server <- function(input, output, session) {
       plateMapPlot(appData,
                    stat = input$plateStat,
                    PCs = c(input$pcaX, input$pcaY),
-                   penalty = input$penalty,
                    log10 = input$plateScale,
                    mz_idx = input$mzTable_rows_selected[1])
     } else {
@@ -297,9 +321,19 @@ server <- function(input, output, session) {
   ### clustering tab #####
   observeEvent(input$doClust, {
     if (appData$show_plot) {
-      show_spinner()
-      appData$clust <- clusterCurves(appData$res, nClusters = 15)
-      hide_spinner()
+      withProgress(
+        message = "Clustering curves...",
+        detail = paste0("Fitting models (k=2..10, centroid=", input$centroid_method, ")"),
+        value = 0.1,
+        expr = {
+          appData$clust <- clusterCurves(appData$res, nClusters = 10,
+                                          centroidMethod = input$centroid_method)
+        }
+      )
+      if (is.null(appData$clust)) {
+        showNotification("Clustering failed. Check console for details.",
+                         duration = 10, type = "error")
+      }
     }
   })
 
@@ -348,9 +382,9 @@ server <- function(input, output, session) {
 
   ### download handler ####
   output$downloadPlot <- downloadHandlerPlots(res = appData$res,
-                                              selected_row = input$mzTable_rows_selected[1],
-                                              p_curve = p_curve,
-                                              p_peak = p_peak,
+                                              mzIdx = input$mzTable_rows_selected[1],
+                                              errorbars = input$errorbars,
+                                              zoom = input$zoom,
                                               plot_ready = appData$show_plot)
 
   output$downloadTable <- downloadHandlerTable(res = appData$res,

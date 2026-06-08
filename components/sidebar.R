@@ -50,6 +50,7 @@ appSidebar <- function(defaults) {
              numericInput("SNR",
                           label = "SNR",
                           min = 1,
+                          max = 100,
                           step = 1,
                           value = defaults$SNR) %>%
                helper(type = "markdown", content = "peakdetection")
@@ -74,9 +75,9 @@ appSidebar <- function(defaults) {
       checkboxInput("SinglePointRecal", "Recalibrate", value = defaults$SinglePointRecal) %>%
         helper(type = "markdown", content = "recalibration"),
       column(7,
-             numericInput("normMz", label = "m/z [Da]", min = 0, value = defaults$normMz, step = 0.05)),
+             numericInput("normMz", label = "m/z [Da]", min = 0, max = 10000, value = defaults$normMz, step = 0.05)),
       column(5,
-             numericInput("normTol", label = "tol. [Da]", min = 0, value = defaults$normTol, step = 0.05))),
+             numericInput("normTol", label = "tol. [Da]", min = 0, max = 10, value = defaults$normTol, step = 0.05))),
     #### alignment/binning ####
     fluidRow(
       h5("Align/bin:")  %>%
@@ -85,12 +86,14 @@ appSidebar <- function(defaults) {
              numericInput("alignTol",
                           label = HTML("align tol.<br>[mDa]"),
                           min = 0,
+                          max = 1000,
                           value = defaults$alignTol,
                           step = 1) ),
       column(6,
              numericInput("binTol",
                           label = HTML("bin tol.<br>[ppm]"),
                           min = 0,
+                          max = 1000,
                           value = defaults$binTol,
                           step = 5))
     ),

@@ -1,4 +1,4 @@
-pcaTab <- function() {
+pcaTab <- function(defaults) {
   #### PCA tab ####
   tabPanel("PCA",
            h4("PCA of single spectra"),

@@ -27,12 +27,16 @@ saveSettings <- function(input, filename = "settings.csv", info_state) {
 
   # add dir value
   if (!is.null(input$dir)) {
-    dir <- as.character(parseDirPath(getVolumes(), input$dir))
-    if(length(dir) > 0) {
-      fil_inputList$dir <- as.character(parseDirPath(getVolumes(), input$dir))
+    dir_path <- as.character(parseDirPath(getVolumes(), input$dir))
+    if(length(dir_path) > 0) {
+      fil_inputList$dir <- dir_path
     }
   }
 
-  write.csv(fil_inputList, file = filename, row.names = FALSE)
-  message("Inputs written to", file.path(getwd(), filename))
+  tryCatch({
+    write.csv(fil_inputList, file = filename, row.names = FALSE)
+    message("Inputs written to ", file.path(getwd(), filename))
+  }, error = function(e) {
+    warning("Failed to save settings: ", conditionMessage(e))
+  })
 }

@@ -2,7 +2,6 @@ loadAllFunctions <- function() {
   source("functions/preprocessFunction.R")
   source("functions/plotFunctions.R")
   source("functions/generatePCA.R")
-  source("functions/getVolumes.R")
   source("functions/clustering.R")
   source("functions/getVolumes.R")
   source("functions/generateSummaryText.R")

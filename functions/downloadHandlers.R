@@ -1,23 +1,32 @@
-downloadHandlerPlots <- function(res, selected_row, p_curve, p_peak, plot_ready) {
+downloadHandlerPlots <- function(res, mzIdx, errorbars, zoom, plot_ready) {
   downloadHandler(
     filename = function()  {
-      if (plot_ready == "TRUE") {
+      if (plot_ready) {
         paste0(basename(getDirectory(res)),
                "_mz", round(getMzFromMzIdx(res,
-                                           selected_row), 2),
+                                           mzIdx), 2),
                ".png")
       }
     },
     content = function(file) {
-      if (plot_ready == "TRUE") {
-        device <- function(..., width, height) {
-          grDevices::png(..., width = width, height = height,
-                         res = 300, units = "in")
-        }
-        p_main <- ggarrange(p_curve, p_peak)
+      if (plot_ready) {
+        # generate plots at download time (avoids out-of-scope variable issues)
+        p_curve <- plotCurves(res,
+                              mzIdx = mzIdx,
+                              errorbars = errorbars) +
+          labs(title = paste0("m/z = ",
+                              round(getMzFromMzIdx(res, mzIdx), 2)))
+
+        p_peak <- plotPeak(res,
+                           mzIdx = mzIdx,
+                           tol = zoom) +
+          labs(title = NULL)
+
+        p_main <- p_curve + p_peak
+
         ggsave(file,
                plot = p_main,
-               device = device,
+               device = "png",
                scale = 1.8,
                bg = "white",
                dpi = 600,
@@ -33,7 +42,7 @@ downloadHandlerPlots <- function(res, selected_row, p_curve, p_peak, plot_ready)
 downloadHandlerTable <- function(res, stats, plot_ready, name) {
   downloadHandler(
     filename = function()  {
-      if (plot_ready == "TRUE") {
+      if (plot_ready) {
         paste0(basename(getDirectory(res)),
                "_",
                name,
@@ -41,8 +50,8 @@ downloadHandlerTable <- function(res, stats, plot_ready, name) {
       }
     },
     content = function(file) {
-      if (plot_ready == "TRUE") {
-        write_excel_csv(file = file, x = stats)
+      if (plot_ready) {
+        readr::write_excel_csv(file = file, x = stats)
       } else {
         warning("Nothing to download. Load and process data.")
       }

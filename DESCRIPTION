@@ -6,7 +6,34 @@ Authors@R:
            comment = c(ORCID = "0000-0003-1789-4090"))
 Description: M2ara is a shiny based GUI for MALDIcellassay and allows for interactive exploration of MALDI-based concentration-response assays.
 License: MIT + file LICENSE
-Imports: MALDIcellassay, MALDIquant, MALDIquantForeign, ggplot2, dplyr, fs, latrend
+Imports:
+    MALDIcellassay,
+    MALDIquant,
+    MALDIquantForeign,
+    ggplot2,
+    dplyr,
+    tidyr,
+    tibble,
+    forcats,
+    stringr,
+    purrr,
+    readr,
+    fs,
+    DT,
+    plotly,
+    shiny,
+    shinyjs,
+    shinyFiles,
+    shinycssloaders,
+    shinyhelper,
+    shinybusy,
+    sparsepca,
+    platetools,
+    latrend,
+    dtwclust,
+    patchwork,
+    knitr,
+    markdown
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3

@@ -13,7 +13,7 @@ emptyAppDataObject <- function(){
                  model = NULL,
                  clust = NULL,
                  opt = NULL,
-                 info_state = "inital",
+                 info_state = "initial",
                  show_plot = FALSE,
                  mapping = NULL,
                  centroided = NULL)

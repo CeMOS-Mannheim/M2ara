@@ -14,6 +14,7 @@ generateDefaults <- function() {
                      alignTol = 0,
                      binTol = 100,
                      errorbars = "none",
+                     metric = "CRS",
                      zoom = 4,
                      plateStat = "Recal-shift",
                      plateScale = FALSE,
@@ -23,11 +24,8 @@ generateDefaults <- function() {
                      pcaY = "PC2",
                      pcaEllipse = 0.67,
                      simpleLoadings = TRUE,
-                     sigmoidModel = FALSE,
-                     elasticNet = FALSE,
-                     corFilter = FALSE,
-                     penalty = -5,
                      num_cluster = 4,
+                     centroid_method = "mean",
                      fileFormat = "bruker",
                      halfWindowSize = 20,
                      checkEmpty = TRUE,
@@ -36,9 +34,11 @@ generateDefaults <- function() {
   return(defaults)
 }
 
+# source preprocessing handler once at load time
+source("functions/handlePreprocSettings.R")
+
 defaultsSettingsHandler <- function(userSavedSettings = "settings.csv") {
   stopifnot(is.character(userSavedSettings))
-  source("functions/handlePreprocSettings.R")
 
   #### check for defaults ####
   if(file.exists(userSavedSettings)) {

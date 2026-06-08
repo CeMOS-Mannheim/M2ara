@@ -88,7 +88,6 @@ plateMapPlot <- function(appData,
                                   "Outlier-mz",
                                   "Outlier-all"),
                          PCs,
-                         penalty,
                          mz_idx = NULL,
                          format = 384,
                          log10 = FALSE) {
@@ -214,7 +213,7 @@ plateMapPlot <- function(appData,
                                  intensity = getSingleSpecIntensity(res,
                                                                     mz_idx = mz_idx))) %>%
                group_by(conc) %>%
-               mutate(val = calculateChauvenetCriterion(intensity))
+               mutate(val = MALDIcellassay::calculateChauvenetCriterion(intensity))
            }
          },
          "Outlier-all" = {
@@ -228,7 +227,7 @@ plateMapPlot <- function(appData,
                           names_to = "mz",
                           values_to = "intensity") %>%
              group_by(conc, mz) %>%
-             mutate(cheuv = calculateChauvenetCriterion(intensity)) %>%
+             mutate(cheuv = MALDIcellassay::calculateChauvenetCriterion(intensity)) %>%
              group_by(spot) %>%
              count(cheuv) %>%
              pivot_wider(names_from = cheuv, values_from = n) %>%

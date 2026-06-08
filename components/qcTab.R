@@ -1,4 +1,4 @@
-qcTab <- function() {
+qcTab <- function(defaults) {
   ### QC tab ####
   tabPanel("QC",
            fluidRow(

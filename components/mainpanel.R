@@ -6,10 +6,10 @@ source("components/clustTab.R")
 appMainPanel <- function(defaults) {
   m <- mainPanel(
     shiny::tabsetPanel(type = "tabs",
-                       mainTab(),
-                       qcTab(),
-                       pcaTab(),
-                       clustTab(),
+                       mainTab(defaults),
+                       qcTab(defaults),
+                       pcaTab(defaults),
+                       clustTab(defaults),
                        #### Settings ####
                        tabPanel("Settings",
                                 fluidRow(
@@ -39,6 +39,8 @@ appMainPanel <- function(defaults) {
                                          numericInput(inputId = "halfWindowSize",
                                                       label = "Peak window size",
                                                       value = defaults$halfWindowSize,
+                                                      min = 1,
+                                                      max = 100,
                                                       width = "80%")
                                   ),
                                   column(3,

@@ -1,4 +1,4 @@
-mainTab <- function() {
+mainTab <- function(defaults) {
   #### Main tab ####
   tabPanel("Main",
            tags$head(
@@ -58,7 +58,7 @@ mainTab <- function() {
                                                             "FS",
                                                             "log2FC",
                                                             "pEC50"),
-                                                selected = defaults$errorbars,
+                                                selected = if (!is.null(defaults$metric)) defaults$metric else "CRS",
                                                 multiple = FALSE),
                                     style = "width:70%"
                                   )

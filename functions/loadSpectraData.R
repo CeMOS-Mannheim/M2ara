@@ -79,7 +79,7 @@ loadSpectraData <- function(input, appData, mapping) {
     }
     
     
-    if(length(mapping > 0)) {
+    if(length(mapping) > 0) {
       if(!length(mapping) == length(spec_raw)) {
         warning("Number of concentrations in mapping file do not match number of spectra.\n")
         appData$info_state <- "loadErrorMapping"

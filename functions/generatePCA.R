@@ -4,7 +4,7 @@ generatePCA <- function(res, num_PC, alpha = 1e-3, beta = 1e-3, verbose = FALSE,
 
   cat("Performing PCA...\n")
 
-  pca <- spca(X = intmat,
+  pca <- sparsepca::spca(X = intmat,
        k = num_PC,
        alpha = alpha,
        beta = beta,

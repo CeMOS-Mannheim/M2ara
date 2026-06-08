@@ -54,7 +54,7 @@ detectOutliers <- function(spectra, conc, n = 1, method = c("mz", "n"), mzIdx) {
   }) %>%
     bind_rows(.id = "spectrum") %>%
     group_by(mz, conc) %>%
-    mutate(outlier = calculateChauvenetCriterion(intensity)) %>%
+    mutate(outlier = MALDIcellassay::calculateChauvenetCriterion(intensity)) %>%
     ungroup() %>%
     group_by(spectrum) %>%
     summarize(outlier = if (method == "mz") {
