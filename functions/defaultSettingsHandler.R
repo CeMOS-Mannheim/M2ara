@@ -46,6 +46,12 @@ defaultsSettingsHandler <- function(userSavedSettings = "settings.csv") {
     defaults <- read.csv(userSavedSettings) %>%
       tibble()
     cat(userSavedSettings, "loaded.\n")
+    # fill in any columns that are missing from the saved settings
+    default_template <- generateDefaults()
+    missing_cols <- setdiff(names(default_template), names(defaults))
+    for (col in missing_cols) {
+      defaults[[col]] <- default_template[[col]]
+    }
   } else {
     defaults <- generateDefaults()
     cat("defaults loaded\n")
