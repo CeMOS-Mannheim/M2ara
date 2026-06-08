@@ -6,7 +6,6 @@ loadAllFunctions <- function() {
   source("functions/getVolumes.R")
   source("functions/generateSummaryText.R")
   source("functions/helpers.R")
-  source("functions/doFitCurve.R")
   source("functions/infoStateMassageHandler.R")
   source("functions/fitCurveErrorHandler.R")
   source("functions/getStatistics.R")

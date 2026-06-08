@@ -9,7 +9,7 @@ generatePCA <- function(res, num_PC, alpha = 1e-3, beta = 1e-3, verbose = FALSE,
        alpha = alpha,
        beta = beta,
        center = TRUE,
-       scale = FALSE,
+       scale = TRUE,
        max_iter = max_iter,
        tol = 5e-5,
        verbose = verbose)
