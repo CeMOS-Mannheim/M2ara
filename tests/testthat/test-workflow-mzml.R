@@ -85,4 +85,5 @@ test_that("mzML workflow: load spectra, process, download non-empty CSV", {
 
   csv_content <- read.csv(csv_path)
   expect_gt(nrow(csv_content), 0)
+  expect_gt(sum(csv_content$CRS > 0, na.rm = TRUE), 0)
 })
