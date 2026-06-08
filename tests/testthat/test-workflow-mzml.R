@@ -84,6 +84,5 @@ test_that("mzML workflow: load spectra, process, download non-empty CSV", {
               info = "Downloaded CSV should exist on disk")
 
   csv_content <- read.csv(csv_path)
-  expect_gt(nrow(csv_content), 0,
-            info = "Downloaded peak table must have at least one row")
+  expect_gt(nrow(csv_content), 0)
 })
