@@ -59,11 +59,10 @@ test_that("mzML workflow: load spectra, process, download non-empty CSV", {
   app$click("load")
 
   app$wait_for_value(
-    export    = "infoState",
-    condition = "==",
-    expected  = "loaded",
-    timeout   = 120000    # 2 minutes for loading 144 mzML files
+    export  = "infoState",
+    timeout = 120000    # 2 minutes for loading 144 mzML files
   )
+  expect_equal(app$get_value(export = "infoState"), "loaded")
 
   # ------------------------------------------------------------------
   # 6. Click "Process spectra"
@@ -71,11 +70,10 @@ test_that("mzML workflow: load spectra, process, download non-empty CSV", {
   app$click("process")
 
   app$wait_for_value(
-    export    = "infoState",
-    condition = "==",
-    expected  = "processed",
-    timeout   = 300000    # 5 minutes for full processing + curve fitting
+    export  = "infoState",
+    timeout = 300000    # 5 minutes for full processing + curve fitting
   )
+  expect_equal(app$get_value(export = "infoState"), "processed")
 
   # ------------------------------------------------------------------
   # 7. Download the peak table CSV
