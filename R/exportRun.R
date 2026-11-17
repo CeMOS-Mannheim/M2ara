@@ -121,13 +121,13 @@ exportOverviewPlots <- function(res, stats, centroided, topN, root) {
 
   ggplot2::ggsave(
     file.path(root, "plots", "curves_top.png"),
-    plot = patchwork::wrap_plots(curves, ncol = 3),
+    plot = patchwork::wrap_plots(curves, ncol = 3, guides = "collect"),
     device = "png", bg = "white", dpi = 300,
     width = 30, height = 24, units = "cm"
   )
   ggplot2::ggsave(
     file.path(root, "plots", "peaks_top.png"),
-    plot = patchwork::wrap_plots(peaks, ncol = 3),
+    plot = patchwork::wrap_plots(peaks, ncol = 3, guides = "collect"),
     device = "png", bg = "white", dpi = 300,
     width = 30, height = 24, units = "cm"
   )
