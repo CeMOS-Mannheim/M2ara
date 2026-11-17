@@ -30,7 +30,14 @@ mainTab <- function(defaults) {
                                                  style='padding:6px; font-size:80%; margin-top:28px',
                                                  icon = icon("download"))
                            ),
-                           column(3),
+                           column(3,
+                                  div(
+                                    checkboxInput(inputId = "showPeaks",
+                                                  label = "Show peaks",
+                                                  value = defaults$showPeaks),
+                                    style = "margin-top: 28px"
+                                  )
+                           ),
                            column(2,
                                   sliderInput(inputId = "zoom",
                                               label = "m/z range",

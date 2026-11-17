@@ -15,6 +15,7 @@ generateDefaults <- function() {
                      binTol = 100,
                      errorbars = "none",
                      metric = "CRS",
+                     showPeaks = TRUE,
                      zoom = 4,
                      plateStat = "Recal-shift",
                      plateScale = FALSE,

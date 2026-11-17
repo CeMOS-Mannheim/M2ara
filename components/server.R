@@ -191,7 +191,9 @@ server <- function(input, output, session) {
     if (appData$show_plot) {
       p_peak <- plotPeak(appData$res,
                          mzIdx = input$mzTable_rows_selected[1],
-                         tol = input$zoom) +
+                         tol = input$zoom,
+                         centroided = isTRUE(appData$centroided),
+                         showPeaks = isTRUE(input$showPeaks)) +
         labs(title = NULL)
       ggplotly(p_peak)
     } else {
@@ -385,6 +387,8 @@ server <- function(input, output, session) {
                                               mzIdx = input$mzTable_rows_selected[1],
                                               errorbars = input$errorbars,
                                               zoom = input$zoom,
+                                              centroided = isTRUE(appData$centroided),
+                                              showPeaks = isTRUE(input$showPeaks),
                                               plot_ready = appData$show_plot)
 
   output$downloadTable <- downloadHandlerTable(res = appData$res,

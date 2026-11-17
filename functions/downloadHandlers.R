@@ -1,4 +1,5 @@
-downloadHandlerPlots <- function(res, mzIdx, errorbars, zoom, plot_ready) {
+downloadHandlerPlots <- function(res, mzIdx, errorbars, zoom, centroided = FALSE,
+                                  showPeaks = TRUE, plot_ready) {
   downloadHandler(
     filename = function()  {
       if (plot_ready) {
@@ -19,7 +20,9 @@ downloadHandlerPlots <- function(res, mzIdx, errorbars, zoom, plot_ready) {
 
         p_peak <- plotPeak(res,
                            mzIdx = mzIdx,
-                           tol = zoom) +
+                           tol = zoom,
+                           centroided = centroided,
+                           showPeaks = showPeaks) +
           labs(title = NULL)
 
         p_main <- p_curve + p_peak
