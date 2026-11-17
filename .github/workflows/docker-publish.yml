@@ -80,6 +80,15 @@ jobs:
       - name: Ensure testthat installed
         run: R -e "if (!require('testthat')) pak::pkg_install('testthat')"
 
+      - name: Check dependency lists
+        run: Rscript tools/check-dependencies.R
+
+      # Informational for now: the app is not a package yet (see installer/README).
+      # Once the code lives in R/ this becomes a blocking check.
+      - name: Lint R code (informational)
+        continue-on-error: true
+        run: Rscript tools/lint.R
+
       - name: Run R tests
         run: R -e "source('tests/testthat.R')"
 

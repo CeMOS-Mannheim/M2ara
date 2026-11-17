@@ -142,7 +142,31 @@ jobs:
           $ErrorActionPreference = 'Stop'
           Rscript --vanilla -e "cat(R.version.string, '\n'); cat('R_HOME:', R.home(), '\n'); cat('pkgType:', getOption('pkgType'), '\n')"
 
+      - name: Resolve MALDIcellassay ref
+        id: maldicellassay
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ref = $env:MALDI_CELLASSAY_REF
+          if ([string]::IsNullOrWhiteSpace($ref)) { $ref = 'main' }
+          $line = git ls-remote 'https://github.com/CeMOS-Mannheim/MALDIcellassay.git' $ref | Select-Object -First 1
+          if (-not $line) { throw "could not resolve MALDIcellassay ref '$ref'" }
+          $sha = ($line -split "`t")[0]
+          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "sha=$sha`n")
+          Write-Host "MALDIcellassay '$ref' -> $sha"
+
+      # Caches the bundled R runtime incl. its library. The key pins the R
+      # version, req.txt and the exact MALDIcellassay commit, so a cache hit
+      # cannot silently change package versions.
+      - name: Cache portable R library
+        id: cache-runtime
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/payload/R
+          key: payload-r-${{ runner.os }}-${{ env.R_VERSION }}-${{ hashFiles('req.txt') }}-${{ steps.maldicellassay.outputs.sha }}
+
       - name: Assemble portable R runtime
+        if: steps.cache-runtime.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -150,6 +174,7 @@ jobs:
           ./installer/scripts/prepare-runtime.ps1 -PayloadDir $payload
 
       - name: Install R packages into the payload
+        if: steps.cache-runtime.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -161,6 +186,16 @@ jobs:
           & $rscript --vanilla './installer/scripts/install-packages.R' $payload $env:GITHUB_WORKSPACE
           if ($LASTEXITCODE -ne 0) {
             throw "R package installation failed (exit code $LASTEXITCODE)"
+          }
+
+      - name: Report payload cache
+        shell: pwsh
+        run: |
+          $hit = '${{ steps.cache-runtime.outputs.cache-hit }}'
+          if ($hit -eq 'true') {
+            Write-Host 'R runtime and packages restored from cache.'
+          } else {
+            Write-Host 'R runtime and packages installed from scratch.'
           }
 
       - name: Download Chrome and assemble the app payload
