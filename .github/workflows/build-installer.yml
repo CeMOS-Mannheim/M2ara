@@ -7,9 +7,16 @@
 #   * workflow_dispatch   -> manual test build. The installer is uploaded as a
 #                            workflow artifact only, unless "release_tag" is
 #                            set, in which case it is attached to that release.
+#   * schedule (weekly)   -> canary build of the default branch, no upload. It
+#                            catches drift in the runner image or in the pinned
+#                            snapshot before a release is cut.
 #
 # The installer bundles a portable R runtime (all packages from req.txt plus
 # MALDIcellassay) and Chrome for Testing, so users do not need R.
+#
+# Package versions are pinned by pak.lock: the build installs from the frozen
+# CRAN snapshot in R_SNAPSHOT and MALDIcellassay from the commit recorded in the
+# lockfile. A check step verifies the result against pak.lock.
 #
 # NOTE: workflows for `release` events are taken from the default branch, so
 # this file has to be on `main` before the next release is published.
@@ -38,6 +45,9 @@ on:
         required: false
         type: boolean
         default: true
+  schedule:
+    # weekly canary build (Mondays 04:00 UTC)
+    - cron: '0 4 * * 1'
 
 permissions:
   contents: write
@@ -52,7 +62,10 @@ env:
   # here if the installer has to be reproducible bit by bit.
   R_VERSION: 'release'
   CHROME_CHANNEL: 'Stable'
-  MALDI_CELLASSAY_REF: 'main'
+  # Frozen CRAN snapshot, see pak.lock (created from this snapshot).
+  R_SNAPSHOT: '2026-11-17'
+  # Overrides the MALDIcellassay commit; empty = the commit pinned in pak.lock.
+  MALDI_CELLASSAY_REF: ''
 
 jobs:
   installer:
@@ -67,8 +80,8 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - name: Checkout build ref (manual run)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Checkout build ref (manual run / canary)
+        if: github.event_name != 'release'
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
@@ -147,23 +160,40 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+
           $ref = $env:MALDI_CELLASSAY_REF
-          if ([string]::IsNullOrWhiteSpace($ref)) { $ref = 'main' }
+          if ([string]::IsNullOrWhiteSpace($ref)) {
+            # take the commit that pak.lock pins
+            if (Test-Path -LiteralPath 'pak.lock') {
+              $lock = Get-Content -LiteralPath 'pak.lock' -Raw | ConvertFrom-Json
+              $entry = $lock.packages | Where-Object { $_.package -eq 'MALDIcellassay' } | Select-Object -First 1
+              if ($entry) {
+                $ref = $entry.metadata.RemoteSha
+                if (-not $ref) { $ref = $entry.metadata.GithubSHA1 }
+              }
+            }
+          }
+          if ([string]::IsNullOrWhiteSpace($ref)) {
+            Write-Host '::warning title=Unpinned MALDIcellassay::pak.lock has no MALDIcellassay commit, falling back to main'
+            $ref = 'main'
+          }
+
           $line = git ls-remote 'https://github.com/CeMOS-Mannheim/MALDIcellassay.git' $ref | Select-Object -First 1
           if (-not $line) { throw "could not resolve MALDIcellassay ref '$ref'" }
           $sha = ($line -split "`t")[0]
-          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "sha=$sha`n")
+
+          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "ref=$ref`nsha=$sha`n")
           Write-Host "MALDIcellassay '$ref' -> $sha"
 
       # Caches the bundled R runtime incl. its library. The key pins the R
-      # version, req.txt and the exact MALDIcellassay commit, so a cache hit
-      # cannot silently change package versions.
+      # version, the CRAN snapshot, req.txt and the exact MALDIcellassay commit,
+      # so a cache hit cannot silently change package versions.
       - name: Cache portable R library
         id: cache-runtime
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/payload/R
-          key: payload-r-${{ runner.os }}-${{ env.R_VERSION }}-${{ hashFiles('req.txt') }}-${{ steps.maldicellassay.outputs.sha }}
+          key: payload-r-${{ runner.os }}-${{ env.R_VERSION }}-${{ env.R_SNAPSHOT }}-${{ hashFiles('req.txt', 'pak.lock') }}-${{ steps.maldicellassay.outputs.sha }}
 
       - name: Assemble portable R runtime
         if: steps.cache-runtime.outputs.cache-hit != 'true'
@@ -176,6 +206,8 @@ jobs:
       - name: Install R packages into the payload
         if: steps.cache-runtime.outputs.cache-hit != 'true'
         shell: pwsh
+        env:
+          MALDI_CELLASSAY_REF: ${{ steps.maldicellassay.outputs.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
           $payload = Join-Path $env:RUNNER_TEMP 'payload'
@@ -196,6 +228,17 @@ jobs:
             Write-Host 'R runtime and packages restored from cache.'
           } else {
             Write-Host 'R runtime and packages installed from scratch.'
+          }
+
+      - name: Verify payload packages against pak.lock
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $payload = Join-Path $env:RUNNER_TEMP 'payload'
+          $rscript = Join-Path $payload 'R/bin/x64/Rscript.exe'
+          & $rscript --vanilla 'tools/check-lockfile.R' (Join-Path $payload 'R/library')
+          if ($LASTEXITCODE -ne 0) {
+            throw "payload packages differ from pak.lock (exit code $LASTEXITCODE)"
           }
 
       - name: Download Chrome and assemble the app payload
@@ -299,6 +342,7 @@ jobs:
           Write-Host "Built $installer ($sizeMb MB)"
 
       - name: Upload installer artifact
+        if: github.event_name != 'schedule'
         uses: actions/upload-artifact@v4
         with:
           name: M2ara-${{ steps.version.outputs.version }}-windows-x64

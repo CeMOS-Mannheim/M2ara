@@ -27,7 +27,19 @@ if (!dir.exists(lib_dir)) {
 # into the payload (base and recommended packages are part of R itself).
 .libPaths(lib_dir)
 
-cran <- "https://cloud.r-project.org"
+# Frozen CRAN snapshot (see pak.lock): with R_SNAPSHOT set, the installation
+# resolves exactly the versions recorded in pak.lock. Without it the current
+# CRAN is used (local development only).
+cran <- local({
+  snapshot <- Sys.getenv("R_SNAPSHOT", unset = "")
+  if (nzchar(snapshot)) {
+    paste0("https://packagemanager.posit.co/cran/", snapshot)
+  } else {
+    "https://cloud.r-project.org"
+  }
+})
+cat("CRAN repository:", cran, "\n")
+
 options(
   repos = c(CRAN = cran),
   timeout = 1800,

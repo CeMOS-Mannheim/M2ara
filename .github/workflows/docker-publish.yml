@@ -15,6 +15,10 @@ env:
   # R 4.3.2 no longer works: packages from req.txt (e.g. sparsepca) require
   # R >= 4.4. "release" follows the current R release, like the installer build.
   R_VERSION: 'release'
+  # Frozen CRAN snapshot: the package versions are pinned in pak.lock, which was
+  # created from this snapshot. A check step verifies that the installed
+  # versions match the lockfile.
+  R_SNAPSHOT: '2026-11-17'
 
 jobs:
   build:
@@ -66,13 +70,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pak-${{ env.R_VERSION }}-
 
-      - name: Install R packages from req.txt
+      - name: Install R packages (pinned by pak.lock)
         run: |
-          R -e "install.packages('pak')"
-          R -e "packages <- readLines('req.txt'); pak::pkg_install(packages)"
+          export R_SNAPSHOT_URL="https://packagemanager.posit.co/cran/${R_SNAPSHOT}"
+          echo "CRAN snapshot: ${R_SNAPSHOT_URL}"
+          R -e "install.packages('pak', repos = Sys.getenv('R_SNAPSHOT_URL'))"
+          R -e "options(repos = c(CRAN = Sys.getenv('R_SNAPSHOT_URL'))); pak::pkg_install(readLines('req.txt'))"
 
-      - name: Install MALDIcellassay
-        run: R -e "pak::pkg_install('CeMOS-Mannheim/MALDIcellassay')"
+      - name: Install MALDIcellassay (commit pinned in pak.lock)
+        run: |
+          export R_SNAPSHOT_URL="https://packagemanager.posit.co/cran/${R_SNAPSHOT}"
+          SHA=$(Rscript tools/locked-maldi-ref.R)
+          echo "MALDIcellassay commit: ${SHA}"
+          R -e "options(repos = c(CRAN = Sys.getenv('R_SNAPSHOT_URL'))); pak::pkg_install(paste0('CeMOS-Mannheim/MALDIcellassay@', '${SHA}'))"
+
+      - name: Verify packages against pak.lock
+        run: Rscript tools/check-lockfile.R "$R_LIBS_USER"
 
       - name: Install Chromium for shinytest2
         run: sudo apt-get install -y chromium-browser
