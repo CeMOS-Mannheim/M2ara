@@ -4,6 +4,10 @@
 # in pak.lock. Used by CI (Docker and installer) so that a build cannot
 # silently ship package versions that differ from the lockfile.
 #
+# Packages that ship with R itself (base and recommended, e.g. MASS, Matrix,
+# lattice, class, cluster, codetools) are skipped: their version is tied to the
+# R version and is therefore not something the lockfile can pin.
+#
 # Usage: Rscript tools/check-lockfile.R [library] [lockfile]
 #   library   defaults to .libPaths()[1]
 #   lockfile  defaults to pak.lock
@@ -33,6 +37,11 @@ wanted <- data.frame(
   stringsAsFactors = FALSE
 )
 
+# packages that are part of R itself (base + recommended)
+r_library <- file.path(R.home("library"))
+r_packages <- rownames(installed.packages(lib.loc = r_library))
+if (is.null(r_packages)) r_packages <- character()
+
 installed <- installed.packages(lib.loc = lib)[, c("Package", "Version"), drop = FALSE]
 installed <- data.frame(
   package = installed[, "Package"],
@@ -41,13 +50,24 @@ installed <- data.frame(
 )
 
 merged <- merge(wanted, installed, by = "package", all.x = TRUE)
+merged$in_target <- !is.na(merged$installed)
+# recommended/base packages are installed with R itself and may also live in the
+# checked library (the payload bundles R's library) - their version is tied to
+# the R version, so they are never compared
+merged$part_of_r <- merged$package %in% r_packages
 
-missing <- merged$package[is.na(merged$installed)]
-mismatch <- merged[!is.na(merged$installed) & merged$installed != merged$pinned, , drop = FALSE]
+missing <- merged$package[!merged$in_target & !merged$part_of_r]
+mismatch <- merged[merged$in_target & !merged$part_of_r &
+                     merged$installed != merged$pinned, , drop = FALSE]
+skipped <- merged$package[merged$part_of_r]
 
 cat("library:        ", lib, "\n")
 cat("lockfile:       ", lockfile, "\n")
 cat("pinned packages:", nrow(merged), "\n")
+cat("part of R:      ", length(skipped), "\n")
+if (length(skipped) > 0L) {
+  cat("               ", paste(skipped, collapse = ", "), "\n")
+}
 
 if (length(missing) > 0L) {
   cat("\nmissing in the library:\n  ", paste(missing, collapse = ", "), "\n")
@@ -55,11 +75,11 @@ if (length(missing) > 0L) {
 
 if (nrow(mismatch) > 0L) {
   cat("\nversion mismatches:\n")
-  print(mismatch, row.names = FALSE)
+  print(mismatch[, c("package", "pinned", "installed")], row.names = FALSE)
 }
 
 if (length(missing) > 0L || nrow(mismatch) > 0L) {
   stop("installed packages differ from pak.lock", call. = FALSE)
 }
 
-cat("\nall packages match pak.lock\n")
+cat("\nall pinned packages match pak.lock\n")
