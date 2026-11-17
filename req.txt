@@ -30,3 +30,5 @@ patchwork
 stringr
 purrr
 markdown
+zip
+jsonlite

@@ -41,22 +41,3 @@ downloadHandlerPlots <- function(res, mzIdx, errorbars, zoom, centroided = FALSE
       }
     })
 }
-
-downloadHandlerTable <- function(res, stats, plot_ready, name) {
-  downloadHandler(
-    filename = function()  {
-      if (plot_ready) {
-        paste0(basename(getDirectory(res)),
-               "_",
-               name,
-               ".csv")
-      }
-    },
-    content = function(file) {
-      if (plot_ready) {
-        readr::write_excel_csv(file = file, x = stats)
-      } else {
-        warning("Nothing to download. Load and process data.")
-      }
-    })
-}
