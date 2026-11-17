@@ -2,7 +2,9 @@
 source("functions/checkInstalledPackages.R")
 checkInstalledPackages(req_file = "req.txt")
 
-knit("manual.Rmd", quiet = TRUE)
+if (!getOption("shiny.testmode", FALSE)) {
+  knit("manual.Rmd", quiet = TRUE)
+}
 
 source("components/ui.R")
 source("components/server.R")

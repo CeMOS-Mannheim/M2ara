@@ -29,8 +29,11 @@ checkInstalledPackages <- function(req_file = "req.txt") {
   options(dplyr.summarise.inform = FALSE)
 
   # special case for packages not on CRAN
-  if (!require("MALDIcellassay", character.only = TRUE)) {
+  maldi_loaded <- suppressPackageStartupMessages(
+    require("MALDIcellassay", character.only = TRUE)
+  )
+  if (!maldi_loaded) {
     pak::pkg_install("CeMOS-Mannheim/MALDIcellassay")
-    library(MALDIcellassay, character.only = TRUE)
+    library("MALDIcellassay", character.only = TRUE)
   }
 }

@@ -1,3 +1,46 @@
+# Drive letters that can be browsed in the "Select folder" dialog.
+#
+# WMIC was used for this in the past, but it is deprecated and no longer part of
+# Windows 11 24H2+ (and it printed a confusing "report this to shinyFiles"
+# message when missing). Probing the drive letters with dir.exists() is not an
+# option either: a disconnected network drive can block for many seconds, so the
+# list is queried from Windows instead.
+windowsDriveLetters <- function() {
+  powershell <- file.path(
+    Sys.getenv("SystemRoot"), "System32", "WindowsPowerShell", "v1.0", "powershell.exe"
+  )
+
+  if (file.exists(powershell)) {
+    # GetLogicalDrives() only returns the drive letters (no volume access), so
+    # this is instant even when mapped network drives are offline. WMIC and
+    # Get-CimInstance were both too slow/unreliable here.
+    query <- "[System.IO.Directory]::GetLogicalDrives()"
+    drives <- try(
+      system2(
+        powershell,
+        args = c("-NoProfile", "-NonInteractive", "-Command", shQuote(query)),
+        stdout = TRUE,
+        stderr = FALSE,
+        timeout = 10
+      ),
+      silent = TRUE
+    )
+
+    if (!inherits(drives, "try-error") && length(drives) > 0L) {
+      drives <- toupper(trimws(drives))
+      drives <- drives[grepl("^[A-Z]:", drives)]
+      drives <- unique(paste0(substr(drives, 1L, 1L), ":"))
+      if (length(drives) > 0L) {
+        return(sort(drives))
+      }
+    }
+  }
+
+  system_drive <- Sys.getenv("SystemDrive")
+  if (!nzchar(system_drive)) system_drive <- "C:"
+  system_drive
+}
+
 getVolumes <- function(exclude = NULL) {
   osSystem <- Sys.info()["sysname"]
   if (osSystem == "Darwin") {
@@ -13,30 +56,7 @@ getVolumes <- function(exclude = NULL) {
     }
   }
   else if (osSystem == "Windows") {
-    wmic <- paste0(Sys.getenv("SystemRoot"), "\\System32\\Wbem\\WMIC.exe")
-    if (!file.exists(wmic)) {
-      message("\nThe wmic program does not seem to be in the default location")
-      message("Please report this problem and include output from the command")
-      message("'where wmic' to https://github.com/thomasp85/shinyFiles/issues")
-      volumes <- Sys.getenv("HOMEDRIVE")
-      volNames <- ""
-    }
-    else {
-      volumes <- system(paste(wmic, "logicaldisk get Caption"),
-                        intern = TRUE, ignore.stderr = TRUE)
-      volumes <- sub(" *\\r$", "", volumes)
-      keep <- !tolower(volumes) %in% c("caption", "")
-      volumes <- volumes[keep]
-      volNames <- system(paste(wmic, "/FAILFAST:1000 logicaldisk get VolumeName"),
-                         intern = TRUE, ignore.stderr = TRUE)
-      volNames <- sub(" *\\r$", "", volNames)
-      volNames <- volNames[keep]
-      volNames <- paste0(volNames, ifelse(volNames ==
-                                            "", "", " "))
-    }
-    volNames <- paste0(volNames, "(", volumes, ")")
-    names(volumes) <- volNames
-    #volumes <- gsub(":$", ":/", volumes)
+    volumes <- windowsDriveLetters()
   }
   else {
     stop("unsupported OS")
