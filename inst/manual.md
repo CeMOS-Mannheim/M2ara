@@ -103,7 +103,7 @@ etc.
 
 4.  Analyze your data by clicking on entries in the table on bottom left (3). The plots for the curve and the peaks will change accordingly (4). You may want to display error bars or use the slider to change the displayed *m/z*-range (aka zoom) in the plot displaying the peaks. Note, you do not need to re-upload your data if you want to play with the settings. Just click the **Process spectra**-button again to re-do the calculations and after a short time your results will be updated.
 
-5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** in the sidebar below **Process spectra**: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
+5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** below the peak table: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
 
 # Analysis pipeline
 
@@ -307,7 +307,7 @@ As processing is typically fast, this is a more efficient (time & disk-space) pr
 
 ## Export of the results
 
-**Export results (ZIP)** (sidebar, below **Process spectra**) writes one archive with
+**Export results (ZIP)** (below the peak table) writes one archive with
 
 - `peak_table.csv` - the table from the app,
 - `fitting_parameters.csv` and `intensity_matrix.csv`,
