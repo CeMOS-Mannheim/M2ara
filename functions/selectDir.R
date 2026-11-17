@@ -1,4 +1,4 @@
-selectDir <- function(appData, input, output = NULL) {
+selectDir <- function(appData, input, output = NULL, defaults = NULL) {
   vol <- getVolumes()
   userSelectedDir <- FALSE  # flag to skip initial trigger
 

@@ -27,3 +27,6 @@ readr
 clValid
 clusterCrit
 patchwork
+stringr
+purrr
+markdown

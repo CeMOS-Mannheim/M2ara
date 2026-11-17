@@ -1,5 +1,5 @@
 # Sever ####
-server <- function(input, output, session) {
+server <- function(input, output, session, defaults = NULL) {
   ## load ext. functions ####
   source("functions/loadAllFunctions.R")
   loadAllFunctions()
@@ -10,7 +10,7 @@ server <- function(input, output, session) {
   ## main ####
   appData <- emptyAppDataObject()
 
-  appData <- selectDir(appData, input, output)
+  appData <- selectDir(appData, input, output, defaults = defaults)
 
   observeEvent(input$preproc_settings, {
     appData <- setPreprocessSettings(input, appData)
