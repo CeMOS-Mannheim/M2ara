@@ -102,9 +102,16 @@ if (!requireNamespace("pak", quietly = TRUE)) {
 }
 
 # --- MALDIcellassay (GitHub) ------------------------------------------------
-maldi_ref <- Sys.getenv("MALDI_CELLASSAY_REF", unset = "main")
-if (!nzchar(maldi_ref)) maldi_ref <- "main"
-maldi_spec <- paste0("CeMOS-Mannheim/MALDIcellassay@", maldi_ref)
+# The commit comes from pak.lock (the workflow passes it in); a commit cannot be
+# used as a git ref by pak, see tools/maldi-spec.R
+maldi_ref <- Sys.getenv("MALDI_CELLASSAY_REF", unset = "")
+spec_helper <- file.path(repo_dir, "tools", "maldi-spec.R")
+if (file.exists(spec_helper)) {
+  source(spec_helper)
+  maldi_spec <- maldiCellAssaySpec(maldi_ref)
+} else {
+  maldi_spec <- paste0("CeMOS-Mannheim/MALDIcellassay@", maldi_ref)
+}
 
 if (!"MALDIcellassay" %in% installed_in_payload()) {
   cat("Installing ", maldi_spec, " ...\n", sep = "")

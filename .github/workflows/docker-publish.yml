@@ -78,11 +78,7 @@ jobs:
           R -e "options(repos = c(CRAN = Sys.getenv('R_SNAPSHOT_URL'))); pak::pkg_install(readLines('req.txt'))"
 
       - name: Install MALDIcellassay (commit pinned in pak.lock)
-        run: |
-          export R_SNAPSHOT_URL="https://packagemanager.posit.co/cran/${R_SNAPSHOT}"
-          SHA=$(Rscript tools/locked-maldi-ref.R)
-          echo "MALDIcellassay commit: ${SHA}"
-          R -e "options(repos = c(CRAN = Sys.getenv('R_SNAPSHOT_URL'))); pak::pkg_install(paste0('CeMOS-Mannheim/MALDIcellassay@', '${SHA}'))"
+        run: Rscript tools/install-maldi-from-lock.R
 
       - name: Verify packages against pak.lock
         run: Rscript tools/check-lockfile.R "$R_LIBS_USER"
