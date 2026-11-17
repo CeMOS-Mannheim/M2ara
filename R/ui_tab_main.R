@@ -82,12 +82,6 @@ mainTab <- function(defaults) {
              fluidRow(
                DT::DTOutput("mzTable") %>%
                  withSpinner(color="#0dc5c1")
-             ),
-             fluidRow(
-               downloadButton(outputId = "exportRun",
-                              label = "Export results (ZIP)",
-                              icon = icon("download"),
-                              style = 'padding:6px; font-size:80%')
              )
       )
     ),
