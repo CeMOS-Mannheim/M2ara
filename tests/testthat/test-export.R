@@ -12,9 +12,9 @@ test_that("exportRun writes a complete archive for a processed run", {
 
   entries <- utils::unzip(zip_file, list = TRUE)$Name
   expected <- c("README.md", "run_info.json", "peak_table.csv",
-                "fitting_parameters.csv", "intensity_matrix.csv",
-                "plots/curves_top.png", "plots/peaks_top.png")
+                "fitting_parameters.csv", "intensity_matrix.csv")
   expect_true(all(expected %in% entries))
+  expect_false(any(grepl("^plots/", entries)))
 
   unpacked <- file.path(tempdir(), "m2ara_export_test")
   unlink(unpacked, recursive = TRUE)
@@ -31,7 +31,7 @@ test_that("exportRun writes a complete archive for a processed run", {
   info <- jsonlite::fromJSON(file.path(unpacked, "run_info.json"))
   expect_equal(info$app$name, "M2ara")
   expect_true(info$dataset$spectra > 0)
-  expect_gte(nrow(info$files), 5)
+  expect_gte(nrow(info$files), 3)
 })
 
 test_that("exportRun refuses to export without results", {

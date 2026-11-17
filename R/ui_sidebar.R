@@ -104,6 +104,11 @@ appSidebar <- function(defaults) {
     textOutput("info1", inline = FALSE),
     textOutput("info2", inline = FALSE),
     textOutput("info3", inline = FALSE),
+    #### export of all results (enabled once data is processed)
+    downloadButton(outputId = "exportRun",
+                   label = "Export results (ZIP)",
+                   icon = icon("download"),
+                   style = 'padding:6px; font-size:80%'),
     width = 2L)
   return(s)
 }
