@@ -74,12 +74,39 @@ All knobs live at the top of the workflow (`env:`):
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `R_VERSION` | `release` | R version bundled in the installer. `release` follows the current R release, which has Windows binaries on CRAN and therefore keeps the build fast. Pin an exact version (`4.6.2`) for a reproducible payload. |
-| `CHROME_CHANNEL` | `Stable` | Channel of [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/) |
-| `MALDI_CELLASSAY_REF` | `main` | Git ref of `CeMOS-Mannheim/MALDIcellassay`; use a tag or commit hash for reproducible releases |
+| `R_SNAPSHOT` | `2026-11-17` | Frozen [Posit Package Manager](https://packagemanager.posit.co/) snapshot. It must be the snapshot that `pak.lock` was created from, otherwise the package check fails. |
+| `CHROME_CHANNEL` | `Stable` | Channel of [Chrome for Testing](https://chromelabs.github.io/chrome-for-testing/) |
+| `MALDI_CELLASSAY_REF` | *(empty)* | Git ref of `CeMOS-Mannheim/MALDIcellassay`. Empty means: use the commit pinned in `pak.lock`. |
 
 The R version used for the Docker image and mentioned in the README (`4.3.2`) is
 **not** used for the installer: CRAN no longer provides Windows binaries for it,
 so every package would have to be compiled from source during the build.
+
+## Reproducible builds (`pak.lock`)
+
+[`pak.lock`](../pak.lock) pins every R package (currently 149) with its version,
+download URL and SHA256, and pins `MALDIcellassay` to a specific commit.
+
+The workflows install from the frozen CRAN snapshot in `R_SNAPSHOT` - that
+snapshot contains exactly the versions from the lockfile - and
+`tools/check-lockfile.R` compares the result with `pak.lock`. A difference fails
+the build, so a release cannot silently ship other versions than the ones that
+were tested.
+
+Updating dependencies:
+
+```powershell
+# 1) pick a new snapshot date and recreate the lockfile from it
+$snapshot = "2026-12-01"
+Rscript -e "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/$snapshot')); pak::lockfile_create(pkg = unique(c(readLines('req.txt'), 'CeMOS-Mannheim/MALDIcellassay')), lockfile = 'pak.lock')"
+
+# 2) update R_SNAPSHOT in both workflows (.github/workflows/build-installer.yml and docker-publish.yml)
+# 3) commit pak.lock + workflows and run the installer workflow manually
+```
+
+The weekly canary build (`schedule`, Mondays 04:00 UTC) builds the installer from
+the default branch without uploading it. It catches drift in the runner image or
+in the snapshot before a release is cut.
 
 ## Local build (Windows)
 
