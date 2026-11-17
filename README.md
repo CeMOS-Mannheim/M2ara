@@ -72,7 +72,9 @@ docker run -p 3838:3838 -v  c:/path/to/massSpecData:/mnt thomasenzlein/m2ara
 
 ### Stand-alone installer for Windows
 
-Use the stand-alone installer (Windows only, no R installation needed). The installer can be downloaded [here](https://github.com/CeMOS-Mannheim/M2ara/releases/download/1.4.2/M2ara_1.4.2.exe).
+Use the stand-alone installer (Windows only, no R installation needed). The latest installer can be downloaded from the [releases page](https://github.com/CeMOS-Mannheim/M2ara/releases/latest) (`M2ara_<version>.exe`).
+
+The installer is built automatically by the [`Windows Installer`](.github/workflows/build-installer.yml) GitHub Action whenever a release is published - see [installer/README.md](installer/README.md) for details.
 
 ## Example data
 

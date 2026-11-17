@@ -1,0 +1,323 @@
+# Builds the M2ara stand-alone Windows installer and attaches it to the GitHub
+# release that triggered the run.
+#
+# Triggers
+#   * release: published  -> builds from the release tag and uploads
+#                            M2ara_<version>.exe to that release.
+#   * workflow_dispatch   -> manual test build. The installer is uploaded as a
+#                            workflow artifact only, unless "release_tag" is
+#                            set, in which case it is attached to that release.
+#
+# The installer bundles a portable R runtime (all packages from req.txt plus
+# MALDIcellassay) and Chrome for Testing, so users do not need R.
+#
+# NOTE: workflows for `release` events are taken from the default branch, so
+# this file has to be on `main` before the next release is published.
+
+name: Windows Installer
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (tag, branch or commit) to build from. Empty = the branch this workflow runs on.'
+        required: false
+        default: ''
+      version:
+        description: 'Installer version (e.g. 1.5.0). Empty = derived from the tag, otherwise from DESCRIPTION.'
+        required: false
+        default: ''
+      release_tag:
+        description: 'Optional: attach the installer to this existing release (e.g. 1.5.0).'
+        required: false
+        default: ''
+      bundle_chrome:
+        description: 'Bundle Chrome for Testing (otherwise the installer falls back to Edge / the default browser).'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-installer-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # "release" always resolves to the current R release (has Windows binaries
+  # on CRAN, which keeps the build fast). Pin an exact version like "4.6.1"
+  # here if the installer has to be reproducible bit by bit.
+  R_VERSION: 'release'
+  CHROME_CHANNEL: 'Stable'
+  MALDI_CELLASSAY_REF: 'main'
+
+jobs:
+  installer:
+    name: Build Windows installer
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout release tag
+        if: github.event_name == 'release'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Checkout build ref (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Resolve installer version
+        id: version
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_REF: ${{ inputs.ref }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $tag = $env:RELEASE_TAG
+          if ([string]::IsNullOrWhiteSpace($tag)) { $tag = $env:INPUT_REF }
+
+          $version = $env:INPUT_VERSION
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            if ($tag -match '^[vV]?(\d+\.\d+(?:\.\d+)?(?:[-+.][0-9A-Za-z.-]+)?)$') {
+              $version = $Matches[1]
+            } else {
+              $description = Get-Content -LiteralPath 'DESCRIPTION' -Raw
+              if ($description -match '(?m)^Version:\s*(\S+)\s*$') {
+                $version = $Matches[1]
+              } else {
+                throw "Cannot determine the version - pass the 'version' workflow input."
+              }
+            }
+          }
+
+          $version = $version.Trim()
+          if ($version -notmatch '^\d+\.\d+(\.\d+)?([-+.][0-9A-Za-z.-]+)?$') {
+            throw "Invalid version '$version'."
+          }
+
+          if (Test-Path -LiteralPath 'DESCRIPTION') {
+            $descriptionVersion = ''
+            $description = Get-Content -LiteralPath 'DESCRIPTION' -Raw
+            if ($description -match '(?m)^Version:\s*(\S+)\s*$') { $descriptionVersion = $Matches[1] }
+            if ($descriptionVersion -and $descriptionVersion -ne $version) {
+              Write-Host "::warning title=Version mismatch::DESCRIPTION says $descriptionVersion but the installer is built as $version."
+            }
+          }
+
+          # numeric version (a.b.c.d) for the Windows file version resource
+          $parts = @((($version -split '[-+]')[0]).Split('.'))
+          while ($parts.Count -lt 4) { $parts += '0' }
+          $versionInfo = ($parts[0..3] | ForEach-Object { [string][int]$_ }) -join '.'
+
+          # AppendAllText instead of Out-File: it never writes a BOM, which would
+          # corrupt the $GITHUB_OUTPUT protocol.
+          $outputs = @(
+            "version=$version",
+            "tag=$tag",
+            "versioninfo=$versionInfo"
+          )
+          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, ($outputs -join "`n") + "`n")
+
+          Write-Host "Building installer version $version (file version $versionInfo, ref: '$tag')"
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ env.R_VERSION }}
+          use-public-rspm: true
+
+      - name: Report R environment
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Rscript --vanilla -e "cat(R.version.string, '\n'); cat('R_HOME:', R.home(), '\n'); cat('pkgType:', getOption('pkgType'), '\n')"
+
+      - name: Assemble portable R runtime
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $payload = Join-Path $env:RUNNER_TEMP 'payload'
+          ./installer/scripts/prepare-runtime.ps1 -PayloadDir $payload
+
+      - name: Install R packages into the payload
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $payload = Join-Path $env:RUNNER_TEMP 'payload'
+          $rscript = Join-Path $payload 'R/bin/x64/Rscript.exe'
+          if (-not (Test-Path -LiteralPath $rscript)) {
+            throw "bundled Rscript.exe not found: $rscript"
+          }
+          & $rscript --vanilla './installer/scripts/install-packages.R' $payload $env:GITHUB_WORKSPACE
+          if ($LASTEXITCODE -ne 0) {
+            throw "R package installation failed (exit code $LASTEXITCODE)"
+          }
+
+      - name: Download Chrome and assemble the app payload
+        shell: pwsh
+        env:
+          BUNDLE_CHROME: ${{ inputs.bundle_chrome }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $payload = Join-Path $env:RUNNER_TEMP 'payload'
+          $arguments = @{
+            PayloadDir    = $payload
+            RepoDir       = $env:GITHUB_WORKSPACE
+            ChromeChannel = $env:CHROME_CHANNEL
+          }
+          if ($env:BUNDLE_CHROME -eq 'false') { $arguments['SkipChrome'] = $true }
+          ./installer/scripts/prepare-payload.ps1 @arguments
+
+      - name: Smoke test the app payload
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $payload = Join-Path $env:RUNNER_TEMP 'payload'
+          $rscript = Join-Path $payload 'R/bin/x64/Rscript.exe'
+          & $rscript --vanilla './installer/scripts/smoke-test.R' $payload
+          if ($LASTEXITCODE -ne 0) {
+            throw "payload smoke test failed (exit code $LASTEXITCODE)"
+          }
+
+      - name: Generate installer icon
+        id: icon
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $python = Get-Command python -ErrorAction SilentlyContinue
+          if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+          if (-not $python) { throw 'python not found on the runner' }
+
+          & $python.Source -m pip install --quiet --disable-pip-version-check pillow
+          if ($LASTEXITCODE -ne 0) { throw 'pip install pillow failed' }
+
+          & $python.Source './installer/scripts/make-ico.py' './figures/logo_resized.png' './installer/M2ara.ico'
+          if ($LASTEXITCODE -ne 0) { throw 'icon conversion failed' }
+
+          $iconPath = (Resolve-Path -LiteralPath './installer/M2ara.ico').Path
+          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "icon=$iconPath`n")
+
+      - name: Locate Inno Setup
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          )
+          $iscc = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+
+          if (-not $iscc) {
+            Write-Host 'Inno Setup not found, installing via Chocolatey ...'
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE -ne 0) { throw 'Chocolatey could not install Inno Setup' }
+            $iscc = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          }
+
+          if (-not $iscc) { throw 'ISCC.exe not found after installation' }
+          [System.IO.File]::AppendAllText($env:GITHUB_ENV, "ISCC=$iscc`n")
+          Write-Host "Using $iscc"
+
+      - name: Compile installer
+        id: build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $payload = Join-Path $env:RUNNER_TEMP 'payload'
+          $output = Join-Path $env:RUNNER_TEMP 'out'
+          New-Item -ItemType Directory -Force -Path $output | Out-Null
+
+          $isccArguments = @(
+            "/DMyAppVersion=${{ steps.version.outputs.version }}",
+            "/DMyAppVersionInfo=${{ steps.version.outputs.versioninfo }}",
+            "/DPayloadDir=$(($payload -replace '\\', '/'))",
+            "/DOutputDir=$(($output -replace '\\', '/'))"
+          )
+          if (Test-Path -LiteralPath './installer/M2ara.ico') {
+            $icon = (Resolve-Path -LiteralPath './installer/M2ara.ico').Path -replace '\\', '/'
+            $isccArguments += "/DMyIcon=$icon"
+          } else {
+            Write-Host '::warning title=No icon::Installer icon could not be generated, using the Inno Setup default.'
+          }
+          $isccArguments += './installer/M2ara.iss'
+
+          Write-Host "ISCC $($isccArguments -join ' ')"
+          & $env:ISCC @isccArguments
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed (exit code $LASTEXITCODE)" }
+
+          $installer = Join-Path $output "M2ara_${{ steps.version.outputs.version }}.exe"
+          if (-not (Test-Path -LiteralPath $installer)) { throw "expected installer not found: $installer" }
+
+          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "installer=$installer`n")
+          $sizeMb = [math]::Round((Get-Item -LiteralPath $installer).Length / 1MB, 1)
+          Write-Host "Built $installer ($sizeMb MB)"
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: M2ara-${{ steps.version.outputs.version }}-windows-x64
+          path: ${{ steps.build.outputs.installer }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Attach installer to release
+        if: github.event_name == 'release' || inputs.release_tag != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:RELEASE_TAG)) { throw 'no release tag to upload to' }
+          gh release upload $env:RELEASE_TAG "${{ steps.build.outputs.installer }}" --clobber
+          if ($LASTEXITCODE -ne 0) { throw "gh release upload failed (exit code $LASTEXITCODE)" }
+          Write-Host "Uploaded installer to release $env:RELEASE_TAG"
+
+      - name: Job summary
+        if: always()
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          INSTALLER: ${{ steps.build.outputs.installer }}
+        run: |
+          $lines = New-Object System.Collections.Generic.List[string]
+          $lines.Add("# M2ara Windows installer")
+          $lines.Add('')
+
+          if ($env:INSTALLER -and (Test-Path -LiteralPath $env:INSTALLER)) {
+            $item = Get-Item -LiteralPath $env:INSTALLER
+            $hash = (Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash.ToLower()
+            $lines.Add("- Installer: **$($item.Name)** ($([math]::Round($item.Length / 1MB, 1)) MB)")
+            $lines.Add("- Version: $($env:VERSION)")
+            $lines.Add("- SHA256: ``$hash``")
+          } else {
+            $lines.Add('- Installer: **not built**')
+          }
+
+          $chromeVersion = Join-Path $env:RUNNER_TEMP 'payload/chrome/VERSION.txt'
+          if (Test-Path -LiteralPath $chromeVersion) {
+            $lines.Add("- $(Get-Content -LiteralPath $chromeVersion -TotalCount 1)")
+          } else {
+            $lines.Add('- Chrome: not bundled (fallback to Edge / default browser)')
+          }
+
+          $manifest = Join-Path $env:RUNNER_TEMP 'payload/PACKAGES.txt'
+          if (Test-Path -LiteralPath $manifest) {
+            $lines.Add('')
+            $lines.Add('```')
+            Get-Content -LiteralPath $manifest -TotalCount 6 | ForEach-Object { $lines.Add($_) }
+            $lines.Add('```')
+          }
+
+          $lines | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

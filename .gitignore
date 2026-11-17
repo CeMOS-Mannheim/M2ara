@@ -11,3 +11,6 @@ testdata_mzML.zip
 Curve
 mzMl
 bayer_export.R
+dist/
+installer/M2ara.ico
+.posit/
