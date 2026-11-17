@@ -1,8 +1,3 @@
-source("components/mainTab.R")
-source("components/qcTab.R")
-source("components/pcaTab.R")
-source("components/clustTab.R")
-
 appMainPanel <- function(defaults) {
   m <- mainPanel(
     shiny::tabsetPanel(type = "tabs",
@@ -75,8 +70,13 @@ appMainPanel <- function(defaults) {
                                 )
                        ),
                        #### Manual tab ####
-                       tabPanel("Manual", withMathJax(htmltools::includeMarkdown("manual.md"))
-                       )
+                       tabPanel("Manual",
+                                withMathJax(htmltools::HTML(
+                                  markdown::markdownToHTML(
+                                    system.file("manual.md", package = "M2ara"),
+                                    fragment.only = TRUE
+                                  )
+                                )))
     )
   )
   return(m)

@@ -1,11 +1,8 @@
-# Sever ####
-server <- function(input, output, session, defaults = NULL) {
-  ## load ext. functions ####
-  source("functions/loadAllFunctions.R")
-  loadAllFunctions()
-
+# Server ####
+appServer <- function(input, output, session, defaults = NULL) {
   ## variables ####
-  observe_helpers(withMathJax = TRUE)
+  observe_helpers(withMathJax = TRUE,
+                  help_dir = system.file("helpfiles", package = "M2ara"))
 
   ## main ####
   appData <- emptyAppDataObject()

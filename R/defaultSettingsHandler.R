@@ -35,9 +35,6 @@ generateDefaults <- function() {
   return(defaults)
 }
 
-# source preprocessing handler once at load time
-source("functions/handlePreprocSettings.R")
-
 defaultsSettingsHandler <- function(userSavedSettings = "settings.csv") {
   stopifnot(is.character(userSavedSettings))
 

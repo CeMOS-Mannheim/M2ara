@@ -1,23 +1,14 @@
-# check if all required packages are installed
-source("functions/checkInstalledPackages.R")
-checkInstalledPackages(req_file = "req.txt")
-
-if (!getOption("shiny.testmode", FALSE)) {
-  knit("manual.Rmd", quiet = TRUE)
+# Entry point for `shiny::runApp(".")` and RStudio's "Run App" button.
+#
+# The app itself lives in the M2ara package. Install it once with
+#   pak::pkg_install(".")          (or: source("install_packages.R"))
+# and start it with `shiny::runApp(".")` or `M2ara::runApp()`.
+if (!requireNamespace("M2ara", quietly = TRUE)) {
+  stop(
+    "M2ara is not installed. Install it with pak::pkg_install(\".\") ",
+    "or run install_packages.R first.",
+    call. = FALSE
+  )
 }
 
-# load the settings once and hand them to UI and server explicitly
-# (previously the UI created a global `defaults` that the server read implicitly)
-source("functions/defaultSettingsHandler.R")
-defaults <- defaultsSettingsHandler(userSavedSettings = "settings.csv")
-
-source("components/ui.R")
-source("components/server.R")
-
-# Run the application
-shinyApp(
-  ui = appUI(defaults),
-  server = function(input, output, session) {
-    server(input, output, session, defaults = defaults)
-  }
-)
+M2ara::runApp()

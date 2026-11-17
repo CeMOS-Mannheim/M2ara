@@ -20,9 +20,6 @@ app_dir <- file.path(root_dir, "app")
 lib_dir <- file.path(root_dir, "R", "library")
 browser_profile_dir <- file.path(root_dir, "browser-profile")
 
-if (!dir.exists(app_dir)) {
-  stop("the application directory is missing: ", app_dir, call. = FALSE)
-}
 if (!dir.exists(lib_dir)) {
   stop("the bundled R library is missing: ", lib_dir, call. = FALSE)
 }
@@ -43,14 +40,23 @@ read_app_version <- function() {
 }
 
 check_packages <- function() {
-  requirement_file <- file.path(app_dir, "req.txt")
-  if (!file.exists(requirement_file)) {
-    return(invisible(TRUE))
+  installed <- installed.packages(lib.loc = lib_dir)
+  if (!"M2ara" %in% rownames(installed)) {
+    stop(
+      "this installation of M2ara is incomplete: the M2ara package is missing.\n",
+      "Please reinstall M2ara from https://github.com/CeMOS-Mannheim/M2ara/releases",
+      call. = FALSE
+    )
   }
-  required <- unique(trimws(scan(requirement_file, character(), quiet = TRUE)))
-  required <- c(required[nzchar(required)], "MALDIcellassay")
-  available <- rownames(installed.packages(lib.loc = lib_dir))
-  missing <- setdiff(required, available)
+
+  required <- tools::package_dependencies(
+    "M2ara",
+    db = installed,
+    which = c("Depends", "Imports", "LinkingTo"),
+    recursive = TRUE
+  )[[1L]]
+  missing <- setdiff(required, rownames(installed))
+
   if (length(missing) > 0L) {
     stop(
       "this installation of M2ara is incomplete.\n",
@@ -161,11 +167,11 @@ check_packages()
 
 cat("  Ready. Close the application window to stop M2ara.\n\n")
 
+# settings.csv lives in the installation directory
+setwd(root_dir)
+
 # Attach shiny before runApp loads the app: Shiny itself requires it while
 # starting up, which would print "Loading required package: shiny".
 suppressWarnings(suppressPackageStartupMessages(library(shiny)))
 
-shiny::runApp(
-  appDir = app_dir,
-  launch.browser = open_app_window
-)
+M2ara::runApp(launch.browser = open_app_window)

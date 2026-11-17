@@ -34,19 +34,26 @@ Finally, the Curve response score (CRS) combines the tree quality factors above 
 
 ### R
 
-Clone the GitHub repository to your local machine (please make sure to have R installed, tested with **R v4.3.2**) and start the app by sourcing the `app.R` file.
+M²ara is an R package. Clone the GitHub repository (please make sure to have R
+installed, tested with **R v4.4 or newer**), install the packages and the app
+itself, then start it.
 
 ``` bash
 git clone https://github.com/CeMOS-Mannheim/M2ara.git
 ```
 
 ``` r
-# install all packages needed
+# install all packages needed and the M2ara package itself
 source("install_packages.R")
 
-# run app
-source("app.R")
+# run the app
+M2ara::runApp()
 ```
+
+Alternatively, in RStudio, open the project and click "Run App" (uses `app.R`).
+
+`settings.csv` is read from and written to the working directory, so start the
+app from a directory you can write to.
 
 ### Docker
 

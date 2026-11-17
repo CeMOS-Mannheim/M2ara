@@ -1,7 +1,7 @@
 @echo off
 rem ===========================================================================
 rem  M2ara - start the bundled R/Shiny application.
-rem  Everything this script needs lives next to it (R\, app\, chrome\).
+rem  Everything this script needs lives next to it (R\, chrome\).
 rem ===========================================================================
 setlocal EnableExtensions
 

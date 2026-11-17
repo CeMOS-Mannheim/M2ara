@@ -231,7 +231,7 @@ plateMapPlot <- function(appData,
              group_by(spot) %>%
              count(cheuv) %>%
              pivot_wider(names_from = cheuv, values_from = n) %>%
-             mutate(val = `TRUE`)
+             mutate(val = .data[["TRUE"]])
          })
 
   p <- suppressWarnings(

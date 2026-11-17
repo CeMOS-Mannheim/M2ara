@@ -33,3 +33,7 @@ if (!require("MALDIcellassay", character.only = TRUE)) {
 
   library(MALDIcellassay, character.only = TRUE)
 }
+# install the app package itself
+if (!requireNamespace("M2ara", quietly = TRUE)) {
+  pak::pkg_install(".")
+}
