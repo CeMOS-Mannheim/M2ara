@@ -12,6 +12,9 @@ env:
   IMAGE_NAME: thomasenzlein/m2ara
   GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
   R_LIBS_USER: /home/runner/work/_temp/Library
+  # R 4.3.2 no longer works: packages from req.txt (e.g. sparsepca) require
+  # R >= 4.4. "release" follows the current R release, like the installer build.
+  R_VERSION: 'release'
 
 jobs:
   build:
@@ -29,7 +32,7 @@ jobs:
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.3.2'
+          r-version: ${{ env.R_VERSION }}
 
       - name: Install system dependencies
         run: |
@@ -47,9 +50,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-R-${{ hashFiles('req.txt') }}
+          key: ${{ runner.os }}-R-${{ env.R_VERSION }}-${{ hashFiles('req.txt') }}
           restore-keys: |
-            ${{ runner.os }}-R-
+            ${{ runner.os }}-R-${{ env.R_VERSION }}-
 
       - name: Ensure pak cache dir exists
         run: mkdir -p ~/.cache/R/pak
@@ -59,9 +62,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/R/pak
-          key: ${{ runner.os }}-pak-${{ hashFiles('req.txt') }}
+          key: ${{ runner.os }}-pak-${{ env.R_VERSION }}-${{ hashFiles('req.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pak-
+            ${{ runner.os }}-pak-${{ env.R_VERSION }}-
 
       - name: Install R packages from req.txt
         run: |
