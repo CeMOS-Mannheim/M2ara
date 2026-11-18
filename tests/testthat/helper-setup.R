@@ -51,3 +51,25 @@ obtain_mzml_data <- function() {
   }, error = function(e) FALSE)
   result
 }
+#' Wait until an exported test value reaches the expected state
+#'
+#' shinytest2 waits for the app to be idle before it reads values, but the
+#' background processing polls continuously, so the app is never idle while a
+#' job runs. This helper polls the exported value directly.
+wait_for_info_state <- function(app, state, timeout = 600) {
+  started <- Sys.time()
+  repeat {
+    if (identical(app$get_value(export = "infoState"), state)) {
+      return(TRUE)
+    }
+    if (as.numeric(difftime(Sys.time(), started, units = "secs")) > timeout) {
+      return(FALSE)
+    }
+    Sys.sleep(1)
+  }
+}
+
+clean_mzml_data <- function() {
+  unlink("mzML", recursive = TRUE)
+  unlink("testdata_mzML.zip")
+}

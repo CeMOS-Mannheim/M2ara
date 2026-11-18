@@ -50,33 +50,41 @@ test_that("mzML workflow: load spectra, process, export a complete archive", {
   # ------------------------------------------------------------------
   app$click("load")
 
-  app$wait_for_value(
-    export  = "infoState",
-    timeout = 120000    # 2 minutes for loading 144 mzML files
-  )
-  expect_equal(app$get_value(export = "infoState"), "loaded")
+  expect_true(wait_for_info_state(app, "loaded", timeout = 180))
 
   # ------------------------------------------------------------------
   # 6. Click "Process spectra"
   # ------------------------------------------------------------------
   app$click("process")
 
-  app$wait_for_value(
-    export  = "infoState",
-    timeout = 600000    # 10 minutes: processing runs in a background process
-  )
+  # the app polls the background job, so shinytest2's idle based helpers time
+  # out here - poll the exported state instead
+  expect_true(wait_for_info_state(app, "processed", timeout = 600))
   if (!identical(app$get_value(export = "infoState"), "processed")) {
-    message("app log:\n", paste(utils::tail(app$get_logs(), 40), collapse = "\n"))
+    print(utils::tail(app$get_logs(), 20))
   }
 
-  expect_equal(app$get_value(export = "infoState"), "processed")
-
   # ------------------------------------------------------------------
-  # 7. The results are available for the export. The archive itself is covered
-  #    by test-export.R: the download endpoint is not exercised here because
-  #    the asynchronous processing keeps the app busy in a way that
-  #    shinytest2::get_download() does not handle reliably.
+  # 7. Export the results (one ZIP with all tables)
   # ------------------------------------------------------------------
+  # the job is finished, so the app is idle again
   app$wait_for_idle(timeout = 60000)
-  expect_true(app$get_value(export = "showPlot"))
+
+  zip_path <- app$get_download("exportRun")
+  expect_true(file.exists(zip_path),
+              info = "Downloaded archive should exist on disk")
+
+  entries <- utils::unzip(zip_path, list = TRUE)$Name
+  expect_true(all(c("peak_table.csv", "fitting_parameters.csv",
+                    "intensity_matrix.csv", "run_info.json") %in% entries))
+
+  unpacked <- file.path(tempdir(), "mzml_export")
+  unlink(unpacked, recursive = TRUE)
+  dir.create(unpacked, recursive = TRUE)
+  withr::defer(unlink(unpacked, recursive = TRUE))
+  utils::unzip(zip_path, exdir = unpacked)
+
+  csv_content <- read.csv(file.path(unpacked, "peak_table.csv"))
+  expect_gt(nrow(csv_content), 0)
+  expect_gt(sum(csv_content$CRS > 0, na.rm = TRUE), 0)
 })
