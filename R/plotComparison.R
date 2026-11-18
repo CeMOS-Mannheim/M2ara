@@ -4,6 +4,13 @@
 # (colour = m/z, the concentration is the x axis) and the peak profiles as a
 # 2 x 2 grid that keeps the concentration colours.
 
+# colours for the compared features: deliberately not the viridis palette that
+# is used for the concentrations (Okabe-Ito, colour blind friendly)
+featureColours <- function(n) {
+  palette <- c("#D55E00", "#009E73", "#CC79A7", "#0072B2")
+  rep(palette, length.out = n)
+}
+
 # intensities of one m/z in the single spectra, per concentration
 singlePeakStats <- function(res, mz) {
   int <- vapply(getSinglePeaks(res), function(x) {
@@ -99,7 +106,7 @@ plotCurvesOverlay <- function(res, mzIdxs, errorbars = "none", normalize = FALSE
       ggplot2::aes(x = .data$x, y = .data$y, col = .data$mz),
       size = 2, shape = 1, stroke = 0.8
     ) +
-    ggplot2::scale_colour_viridis_d(end = 0.8, option = "C") +
+    ggplot2::scale_colour_manual(values = featureColours(length(mz_vals))) +
     ggplot2::scale_x_continuous(labels = function(b) scales::label_scientific()(10^b),
                                 breaks = unique(points$x)) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)) +
