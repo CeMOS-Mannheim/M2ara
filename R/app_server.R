@@ -461,6 +461,7 @@ appServer <- function(input, output, session, defaults = NULL) {
   exportTestValues(numSpec = length(appData$spec_all),
                    isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),
                    infoState =  appData$info_state,
+                   showPlot = appData$show_plot,
                    pca =  appData$pca,
                    clust = appData$clust)
 
