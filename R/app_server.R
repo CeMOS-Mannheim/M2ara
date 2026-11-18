@@ -212,7 +212,8 @@ appServer <- function(input, output, session, defaults = NULL) {
   output$checkRecal <- renderPlotly({
     if (appData$show_plot) {
       p <- checkRecalibration(appData$res,
-                              idx = seq_along(getAvgSpectra(appData$res)))
+                              idx = seq_along(getAvgSpectra(appData$res)),
+                              centroided = isTRUE(appData$centroided))
       ggplotly(p)
     } else {
       dummyPlot()
