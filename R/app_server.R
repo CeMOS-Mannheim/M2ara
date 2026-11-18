@@ -279,7 +279,20 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   }, ignoreNULL = TRUE)
 
+  # tint the compared features in the table with their plot colours
+  observeEvent(list(selected_features(), appData$show_plot), {
+    sel <- selected_features()
+    if (length(sel) == 0L || is.null(appData$res) || !isTRUE(appData$show_plot)) {
+      session$sendCustomMessage("m2ara_row_colours", list())
+      return()
+    }
+
+    mz <- vapply(sel, function(i) getMzFromMzIdx(appData$res, i), numeric(1))
+    session$sendCustomMessage("m2ara_row_colours", featureRowStyles(mz))
+  }, ignoreNULL = FALSE)
+
   output$curve <- renderPlotly({
+
     if (appData$show_plot) {
       sel <- selected_features()
 

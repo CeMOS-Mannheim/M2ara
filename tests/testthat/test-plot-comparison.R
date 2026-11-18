@@ -30,3 +30,13 @@ test_that("plotPeaksGrid returns a plotly grid for several features", {
   # 2 x 1 panels, each with the traces of the concentration series
   expect_true(length(g$x$data) >= 2)
 })
+test_that("featureRowStyles maps m/z to the feature colours", {
+  styles <- featureRowStyles(c(406.91, 428.00))
+
+  expect_named(styles, c("406.91", "428.00"))
+  expect_equal(vapply(styles, `[[`, "", "colour"), c("#D55E00", "#009E73"))
+  expect_true(all(grepl("^rgba\\(", vapply(styles, `[[`, "", "background"))))
+
+  # the feature colours must differ from the viridis concentration colours
+  expect_false(any(vapply(styles, `[[`, "", "colour") %in% c("#440154", "#21908C", "#FDE725")))
+})

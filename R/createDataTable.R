@@ -19,7 +19,25 @@ createDataTable <- function(stats, plot_ready) {
                  paging = TRUE,
                  pageLength = 20,
                  autoWidth = TRUE,
-                 rownames = FALSE),
+                 rownames = FALSE,
+                 # the compared features are tinted in their plot colour; the
+                 # mapping is updated by a custom message and applied on every
+                 # draw, so it survives paging and filtering
+                 rowCallback = DT::JS(
+                   "function(row, data) {
+                      var styles = window.m2araRowColours || {};
+                      var mz = parseFloat(data[0]);
+                      if (isNaN(mz)) { return; }
+                      var style = styles[mz.toFixed(2)];
+                      if (style) {
+                        row.style.backgroundColor = style.background;
+                        row.style.borderLeft = '4px solid ' + style.colour;
+                      } else {
+                        row.style.backgroundColor = '';
+                        row.style.borderLeft = '';
+                      }
+                    }")
+  ),
   selection = list(mode = "multiple",
                    selected = 1)
   )
