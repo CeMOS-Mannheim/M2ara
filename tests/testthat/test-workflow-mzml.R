@@ -77,10 +77,19 @@ test_that("mzML workflow: load spectra, process, export a complete archive", {
   # processing runs in a background process: let the app settle first
   app$wait_for_idle(timeout = 60000)
 
-  zip_path <- tryCatch(app$get_download("exportRun"), error = function(e) {
-    message("app log:\n", paste(utils::tail(app$get_logs(), 20), collapse = "\n"))
-    stop(e)
-  })
+  zip_path <- tryCatch(
+    app$get_download("exportRun"),
+    error = function(e) {
+      # the app log is the only place where a server side error is visible, so it
+      # goes into the failure message (R CMD check shows the last lines only)
+      stop(
+        conditionMessage(e),
+        " | app log: ",
+        paste(utils::tail(app$get_logs(), 6), collapse = " || "),
+        call. = FALSE
+      )
+    }
+  )
 
   expect_true(file.exists(zip_path),
               info = "Downloaded archive should exist on disk")
