@@ -327,6 +327,16 @@ appServer <- function(input, output, session, defaults = NULL) {
              tol = input$zoom,
              centroided = isTRUE(appData$centroided),
              showPeaks = isTRUE(input$showPeaks))
+  },
+  # a minimum device size avoids the transient "figure margins too large"
+  # error while the panel is still being laid out
+  width = function() {
+    w <- session$clientData[["output_peakGrid_width"]]
+    if (is.null(w) || !is.finite(w)) 640 else max(480, w)
+  },
+  height = function() {
+    rows <- ceiling(max(1, length(selected_features())) / 2)
+    if (rows == 1L) 340 else 300 * rows
   })
 
   output$peak <- renderPlotly({

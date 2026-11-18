@@ -149,17 +149,12 @@ peakGrid <- function(res, mzIdxs, tol, centroided, showPeaks, ncol = 2) {
     mz <- getMzFromMzIdx(res, idx)
     plotPeak(res, mzIdx = idx, tol = tol, centroided = centroided,
              showPeaks = showPeaks) +
-      ggplot2::labs(title = paste0("m/z ", sprintf("%.2f", mz)))
+      ggplot2::labs(title = paste0("m/z ", sprintf("%.2f", mz))) +
+      # keep the target m/z in the middle, even when the window reaches past
+      # the measured range
+      ggplot2::coord_cartesian(xlim = c(mz - tol, mz + tol))
   })
 
-  # compact layout: small margins and a small legend keep the grid renderable
-  # even in a narrow panel
-  patchwork::wrap_plots(plots, ncol = ncol, guides = "collect") &
-    ggplot2::theme(
-      plot.margin = ggplot2::margin(2, 2, 2, 2),
-      plot.title = ggplot2::element_text(size = 10),
-      legend.key.size = grid::unit(0.35, "cm"),
-      legend.text = ggplot2::element_text(size = 7),
-      legend.title = ggplot2::element_text(size = 8)
-    )
+  # the app theme (set in .onLoad) applies to all panels
+  patchwork::wrap_plots(plots, ncol = ncol, guides = "collect")
 }
