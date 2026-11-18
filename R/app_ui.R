@@ -66,8 +66,13 @@ appUI <- function(defaults) {
          max-width: 20px !important; padding: 0 !important;
        }
        #mzTable td.m2ara-check-col input { margin: 0; }
-       #mzTable th.m2ara-check-col .sorting, #mzTable th.m2ara-check-col .sorting_asc,
-       #mzTable th.m2ara-check-col .sorting_desc { display: none; }"
+       #mzTable th.m2ara-check-col.sorting,
+       #mzTable th.m2ara-check-col.sorting_asc,
+       #mzTable th.m2ara-check-col.sorting_desc {
+         background-image: none !important;
+         cursor: default !important;
+         padding-right: 0 !important;
+       }"
     )),
     # shiny sidebar layout
     sidebarLayout(
