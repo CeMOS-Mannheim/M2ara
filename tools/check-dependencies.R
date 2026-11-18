@@ -1,10 +1,12 @@
 #!/usr/bin/env Rscript
 #
-# Checks that the dependency lists of the app stay in sync:
-#   * every package in DESCRIPTION (Imports) must be installed by the installer
-#     (req.txt) - otherwise the installed app fails at start-up
-#   * packages that are only in req.txt are reported, but are allowed (test and
-#     build helpers such as shinytest2 or common)
+# Compares the dependency lists of the app:
+#   * packages in DESCRIPTION (Imports) that are not listed in req.txt
+#   * packages that are only in req.txt (test/build helpers, e.g. shinytest2)
+#
+# Informational only: since the app is an R package, R installs the Imports as
+# dependencies of M2ara anyway. The blocking checks are R CMD check,
+# tools/check-lockfile.R and the payload smoke test.
 #
 # Run from the repository root: Rscript tools/check-dependencies.R
 
@@ -28,7 +30,7 @@ cat("DESCRIPTION Imports:", length(imports), "\n")
 cat("req.txt packages:  ", length(req), "\n\n")
 
 if (length(missing) > 0) {
-  cat("missing in req.txt (imported by the app):\n  ",
+  cat("in DESCRIPTION but not in req.txt (installed as dependencies):\n  ",
       paste(missing, collapse = ", "), "\n")
 } else {
   cat("every imported package is listed in req.txt\n")
@@ -39,9 +41,4 @@ if (length(extra) > 0) {
       paste(extra, collapse = ", "), "\n")
 }
 
-if (length(missing) > 0) {
-  stop("req.txt is missing packages that the app imports: ",
-       paste(missing, collapse = ", "), call. = FALSE)
-}
-
-cat("\ndependency lists are consistent\n")
+cat("\ndependency lists compared (informational)\n")

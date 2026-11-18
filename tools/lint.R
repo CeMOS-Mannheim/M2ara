@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 #
-# Informational lint run (the app is not an R package yet, so the linters are
-# not blocking). Prints a summary of the most frequent lints and the first
-# findings, so they show up in the CI log.
+# Informational lint run. The style linters report a long backlog of cosmetic
+# findings in the app code, so the step prints a summary instead of failing CI
+# (the syntax/object checks are part of R CMD check).
 #
 # Run from the repository root: Rscript tools/lint.R
 
@@ -11,8 +11,8 @@ if (!requireNamespace("lintr", quietly = TRUE)) {
   pak::pkg_install("lintr")
 }
 
-targets <- c(list.files("functions", pattern = "\\.R$", full.names = TRUE),
-             list.files("components", pattern = "\\.R$", full.names = TRUE),
+targets <- c(list.files("R", pattern = "\\.R$", full.names = TRUE),
+             list.files("tests/testthat", pattern = "\\.R$", full.names = TRUE),
              "app.R")
 targets <- targets[file.exists(targets)]
 

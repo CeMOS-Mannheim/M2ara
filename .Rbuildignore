@@ -1,7 +1,15 @@
 ^\.github$
 ^M2ara\.Rproj$
 ^\.Rproj\.user$
+^\.posit$
 ^LICENSE\.md$
 ^Dockerfile$
 ^\.dockerignore$
 ^\.lintr$
+^installer$
+^tools$
+^req\.txt$
+^pak\.lock$
+^app\.R$
+^install_packages\.R$
+^settings\.csv$

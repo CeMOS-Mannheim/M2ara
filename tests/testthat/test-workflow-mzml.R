@@ -12,35 +12,27 @@ test_that("mzML workflow: load spectra, process, download non-empty CSV", {
   test_data_dir <- normalizePath("mzML", winslash = "/", mustWork = TRUE)
 
   # ------------------------------------------------------------------
-  # 2. Prepare a temporary settings.csv with dir pointing to test data
+  # 2. Prepare a temporary app directory with a settings.csv that points
+  #    to the test data. M2ara reads and writes settings.csv in the
+  #    working directory, so a dedicated directory keeps the test isolated.
   # ------------------------------------------------------------------
-  app_root <- dirname(find_req_txt())
+  app_dir <- file.path(tempdir(), "m2ara-mzml-workflow")
+  unlink(app_dir, recursive = TRUE)
+  dir.create(app_dir, recursive = TRUE, showWarnings = FALSE)
+
+  writeLines("M2ara::runApp()", file.path(app_dir, "app.R"))
 
   mzml_settings <- read.csv("settings_mzML_data.csv",
                             stringsAsFactors = FALSE)
   mzml_settings$dir <- test_data_dir
 
-  settings_path <- file.path(app_root, "settings.csv")
-
-  # Backup current settings.csv (if any)
-  if (file.exists(settings_path)) {
-    backup_path <- file.path(app_root, "settings.csv.bak")
-    file.copy(settings_path, backup_path, overwrite = TRUE)
-    withr::defer({
-      file.copy(backup_path, settings_path, overwrite = TRUE)
-      unlink(backup_path)
-    })
-  } else {
-    withr::defer(unlink(settings_path))
-  }
-
-  write.csv(mzml_settings, settings_path, row.names = FALSE)
+  write.csv(mzml_settings, file.path(app_dir, "settings.csv"), row.names = FALSE)
 
   # ------------------------------------------------------------------
   # 3. Launch the Shiny app
   # ------------------------------------------------------------------
   app <- AppDriver$new(
-    app_dir = app_root,
+    app_dir = app_dir,
     name   = "mzml-workflow",
     height = 1200,
     width  = 1600,

@@ -7,9 +7,8 @@
 .DESCRIPTION
     Expected payload layout afterwards:
 
-        payload\app\         M2ara Shiny application (app.R, components, functions, ...)
         payload\chrome\      Chrome for Testing (chrome.exe)
-        payload\R\           portable R runtime    (prepare-runtime.ps1)
+        payload\R\           portable R runtime incl. the M2ara package
         payload\PACKAGES.txt package manifest      (install-packages.R)
         payload\run.R        launcher script started by M2ara.bat
         payload\M2ara.bat    entry point used by the shortcuts
@@ -50,23 +49,6 @@ $ProgressPreference = 'SilentlyContinue'
 # directory so the script can also be used for local builds.
 $tempRoot = $env:RUNNER_TEMP
 if ([string]::IsNullOrWhiteSpace($tempRoot)) { $tempRoot = [System.IO.Path]::GetTempPath() }
-
-# Files and directories of the repository that are shipped inside app\.
-# DESCRIPTION and NAMESPACE are deliberately *not* copied: Shiny treats a
-# directory with a DESCRIPTION file as an R package and warns about "Loading R/
-# subdirectory for Shiny application". The version is written to VERSION.txt.
-$AppItems = @(
-    'app.R',
-    'components',
-    'functions',
-    'helpfiles',
-    'figures',        # referenced by manual.Rmd via knitr::include_graphics()
-    'manual.Rmd',
-    'manual.md',
-    'req.txt',
-    'LICENSE',
-    'LICENSE.md'
-)
 
 function Write-Section {
     param([string]$Text)
@@ -167,27 +149,15 @@ function Install-ChromeForTesting {
 $null = New-Item -ItemType Directory -Force -Path $PayloadDir
 
 # --- app --------------------------------------------------------------------
-Write-Section 'Copying the M2ara application'
-$appTarget = Join-Path $PayloadDir 'app'
-if (Test-Path -LiteralPath $appTarget) {
-    Remove-Item -LiteralPath $appTarget -Recurse -Force
+Write-Section 'Checking the M2ara package'
+$payloadLibrary = Join-Path $PayloadDir 'R/library'
+if (-not (Test-Path -LiteralPath (Join-Path $payloadLibrary 'M2ara'))) {
+    throw "the M2ara package is missing in the payload library: $payloadLibrary (run install-packages.R first)"
 }
-$null = New-Item -ItemType Directory -Force -Path $appTarget
-
-foreach ($item in $AppItems) {
-    $source = Join-Path $RepoDir $item
-    if (-not (Test-Path -LiteralPath $source)) {
-        Write-Warning "    not in the repository, skipped: $item"
-        continue
-    }
-    Copy-Item -LiteralPath $source -Destination $appTarget -Recurse -Force
-}
+Write-Host "    M2ara package found in $payloadLibrary"
 
 # settings.csv is deliberately *not* shipped: it is a local, user specific
 # configuration file (git-ignored) and the app falls back to its defaults.
-if (Test-Path -LiteralPath (Join-Path $appTarget 'settings.csv')) {
-    Remove-Item -LiteralPath (Join-Path $appTarget 'settings.csv') -Force
-}
 
 # --- launcher ---------------------------------------------------------------
 Write-Section 'Installing the launcher'
@@ -195,7 +165,7 @@ Copy-Item -LiteralPath (Join-Path $RepoDir 'installer/run.R') -Destination (Join
 Copy-Item -LiteralPath (Join-Path $RepoDir 'installer/open-browser.ps1') -Destination (Join-Path $PayloadDir 'open-browser.ps1') -Force
 
 # The version of the app is taken from DESCRIPTION and written as a plain file,
-# because DESCRIPTION must not end up in app\ (see $AppItems above).
+# the installer uses it for the window title and the shortcuts.
 $appVersion = 'unknown'
 $descriptionFile = Join-Path $RepoDir 'DESCRIPTION'
 if (Test-Path -LiteralPath $descriptionFile) {
@@ -220,10 +190,10 @@ $readme = @(
     'Everything runs locally on this computer; no data is sent anywhere.',
     '',
     'Contents',
-    '  app\         the M2ara Shiny application',
-    '  R\           bundled R runtime incl. all packages (see PACKAGES.txt)',
+    '  R\           bundled R runtime incl. the M2ara package (see PACKAGES.txt)',
     '  chrome\      bundled browser for the application window',
     '  run.R        launcher script started by M2ara.bat',
+    '  settings.csv your local settings (created by "Save settings")',
     '',
     'Documentation: https://github.com/CeMOS-Mannheim/M2ara',
     'Problems:      https://github.com/CeMOS-Mannheim/M2ara/issues',
@@ -246,7 +216,7 @@ if ($SkipChrome) {
 
 # --- summary ----------------------------------------------------------------
 Write-Section 'Payload assembled'
-foreach ($part in @('app', 'R', 'chrome')) {
+foreach ($part in @('R', 'chrome')) {
     $path = Join-Path $PayloadDir $part
     if (Test-Path -LiteralPath $path) {
         Write-Host ("    {0,-8} {1,8} MB" -f $part, (Get-DirectorySizeMb $path))

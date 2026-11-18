@@ -120,8 +120,25 @@ if (!"MALDIcellassay" %in% installed_in_payload()) {
   cat("MALDIcellassay is already present in the payload library.\n")
 }
 
+# --- M2ara itself (the app package) -----------------------------------------
+# Installed last: all dependencies above are already in place, so this is a
+# plain R CMD INSTALL of the package sources.
+m2ara_source <- file.path(repo_dir)
+if (!"M2ara" %in% installed_in_payload()) {
+  cat("Installing the M2ara package from ", m2ara_source, " ...\n", sep = "")
+  utils::install.packages(
+    m2ara_source,
+    repos = NULL,
+    type = "source",
+    lib = lib_dir,
+    INSTALL_opts = c("--no-multiarch", "--no-byte-compile")
+  )
+} else {
+  cat("M2ara is already present in the payload library.\n")
+}
+
 # --- verification -----------------------------------------------------------
-needed <- unique(c(required, extra_packages, "MALDIcellassay"))
+needed <- unique(c(required, extra_packages, "MALDIcellassay", "M2ara"))
 missing <- setdiff(needed, installed_in_payload())
 if (length(missing) > 0L) {
   stop(

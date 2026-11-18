@@ -1,8 +1,11 @@
 # set default theme
-theme_set(theme_light(base_size = 16) +
-            theme(panel.grid = element_blank(),
-                  strip.text.x = element_text(margin = margin(2,1,2,1, "mm"),
-                                              size = 10)))
+# (fully qualified so the file can also be sourced without the package imports,
+# e.g. when Shiny loads a checkout as a "package app")
+ggplot2::theme_set(ggplot2::theme_light(base_size = 16) +
+                     ggplot2::theme(panel.grid = ggplot2::element_blank(),
+                                    strip.text.x = ggplot2::element_text(
+                                      margin = ggplot2::margin(2, 1, 2, 1, "mm"),
+                                      size = 10)))
 
 pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
   xnum <- parse_number(x)
@@ -231,7 +234,7 @@ plateMapPlot <- function(appData,
              group_by(spot) %>%
              count(cheuv) %>%
              pivot_wider(names_from = cheuv, values_from = n) %>%
-             mutate(val = `TRUE`)
+             mutate(val = .data[["TRUE"]])
          })
 
   p <- suppressWarnings(

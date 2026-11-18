@@ -14,3 +14,5 @@ bayer_export.R
 dist/
 installer/M2ara.ico
 .posit/
+M2ara_*.tar.gz
+*.Rcheck/

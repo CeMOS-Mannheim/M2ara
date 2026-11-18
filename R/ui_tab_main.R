@@ -80,7 +80,7 @@ mainTab <- function(defaults) {
     fluidRow(
       column(12,
              fluidRow(
-               dataTableOutput("mzTable") %>%
+               DT::DTOutput("mzTable") %>%
                  withSpinner(color="#0dc5c1")
              ),
              fluidRow(

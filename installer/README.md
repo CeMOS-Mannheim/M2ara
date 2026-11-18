@@ -36,8 +36,7 @@ trigger, so the build can be tested without publishing a release:
 
 ```
 payload\
-  app\           app.R, components\, functions\, helpfiles\, figures\, manual.Rmd, req.txt, ...
-  R\             portable R runtime with all packages (R\library)
+  R\             portable R runtime with all packages and the M2ara package (R\library)
   chrome\        Chrome for Testing (chrome.exe)
   run.R          launcher: sets the library path, starts the app, opens the browser
   open-browser.ps1  starts the browser window, brings it to the front, falls back to Edge

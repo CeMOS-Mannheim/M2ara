@@ -92,14 +92,19 @@ jobs:
       - name: Check dependency lists
         run: Rscript tools/check-dependencies.R
 
-      # Informational for now: the app is not a package yet (see installer/README).
-      # Once the code lives in R/ this becomes a blocking check.
+      - name: Install the M2ara package
+        run: R CMD INSTALL --no-multiarch --no-byte-compile .
+
+      # Runs the test suite (including the shinytest2 workflow test) from a clean
+      # check environment, i.e. the same way a user would install the package.
+      - name: Build and check the package
+        run: |
+          R CMD build --no-build-vignettes --no-manual .
+          R CMD check --no-manual --no-vignettes M2ara_*.tar.gz
+
       - name: Lint R code (informational)
         continue-on-error: true
         run: Rscript tools/lint.R
-
-      - name: Run R tests
-        run: R -e "source('tests/testthat.R')"
 
       # --- Docker build and push (only if not PR) ---
       - name: Set up Docker Buildx

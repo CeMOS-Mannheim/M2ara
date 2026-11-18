@@ -198,7 +198,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/payload/R
-          key: payload-r-${{ runner.os }}-${{ env.R_VERSION }}-${{ env.R_SNAPSHOT }}-${{ hashFiles('req.txt', 'pak.lock') }}-${{ steps.maldicellassay.outputs.sha }}
+          key: payload-r-${{ runner.os }}-${{ env.R_VERSION }}-${{ env.R_SNAPSHOT }}-${{ hashFiles('req.txt', 'pak.lock') }}-${{ steps.maldicellassay.outputs.sha }}-${{ hashFiles('R/**', 'inst/**', 'DESCRIPTION', 'NAMESPACE', 'man/**') }}
 
       - name: Assemble portable R runtime
         if: steps.cache-runtime.outputs.cache-hit != 'true'

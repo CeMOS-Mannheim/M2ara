@@ -60,7 +60,7 @@ generateSummaryText <- function(object, smooth, rmBl, sqrtTrans, monoFil, concUn
   }
 
   # merge meta data
-  metaData <- MALDIquant:::.mergeMetaData(
+  metaData <- mergeMetaData(
     lapply(getAvgSpectra(object),
            function(x) {
              x@metaData

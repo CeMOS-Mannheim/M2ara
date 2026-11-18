@@ -1,12 +1,7 @@
-#### load UI functions
-source("components/sidebar.R")
-source("components/mainpanel.R")
-source("functions/createActionButton.R")
-
 #### UI ####
 appUI <- function(defaults) {
   fluidPage(
-    title = "M²ara",
+    title = "M\u00b2ara",
     lang = "en",
     # shiny sidebar layout
     sidebarLayout(

@@ -86,9 +86,25 @@ checkSpecNamesFormat <- function(dir, fileFormat) {
          })
 }
 
+# Merge the meta data lists of several spectra: union of the keys, unique
+# values per key. MALDIquant keeps an equivalent helper internal, the app only
+# needs the merged values for the measurement summary.
+mergeMetaData <- function(metaData) {
+  if (length(metaData) == 0L) {
+    return(list())
+  }
+
+  keys <- unique(unlist(lapply(metaData, names)))
+  merged <- lapply(keys, function(key) {
+    unique(unlist(lapply(metaData, function(x) x[[key]])))
+  })
+  names(merged) <- keys
+  merged
+}
+
 checkMetaData <- function(object) {
   # check if meta data is coming from bruker device
-  metaData <- MALDIquant:::.mergeMetaData(
+  metaData <- mergeMetaData(
     lapply(getAvgSpectra(object),
            function(x) {
              x@metaData
@@ -114,6 +130,8 @@ checkMetaData <- function(object) {
 #' @return
 #' List, containing the data used to do the fits as well as the nlpr curve fit .
 getDirectory <- function(object) {
-  MALDIcellassay:::stopIfNotIsMALDIassay(object)
+  if (!methods::is(object, "MALDIassay")) {
+    stop("object must be of class 'MALDIassay'", call. = FALSE)
+  }
   return(object@settings$dir)
 }
