@@ -18,6 +18,7 @@ Imports:
     MALDIcellassay,
     MALDIquant,
     ggplot2,
+    grid,
     dplyr,
     tidyr,
     tibble,

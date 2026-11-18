@@ -305,11 +305,14 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
-  # the peak panel grows with the number of compared features
+  # the peak panel grows with the number of compared features: two features are
+  # one row, three and four are a 2 x 2 grid
   output$peakUi <- renderUI({
     sel <- selected_features()
     if (length(sel) > 1L) {
-      plotOutput("peakGrid", height = paste0(250 * ceiling(length(sel) / 2), "px"))
+      rows <- ceiling(length(sel) / 2)
+      height <- if (rows == 1L) "340px" else paste0(300 * rows, "px")
+      plotOutput("peakGrid", height = height)
     } else {
       plotly::plotlyOutput("peak", height = "auto")
     }
