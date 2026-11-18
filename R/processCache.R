@@ -40,7 +40,7 @@ datasetFingerprint <- function(dir) {
 }
 
 # key of the cache entry, NULL when the dataset cannot be fingerprinted
-processCacheKey <- function(dir, settings, preprocessing, centroided) {
+processCacheKey <- function(dir, settings, preprocessing) {
   fingerprint <- datasetFingerprint(dir)
   if (is.null(fingerprint)) {
     return(NULL)
@@ -51,8 +51,7 @@ processCacheKey <- function(dir, settings, preprocessing, centroided) {
       dir = normalizePath(dir, winslash = "/"),
       files = fingerprint,
       settings = settings,
-      preprocessing = preprocessing,
-      centroided = isTRUE(centroided)
+      preprocessing = preprocessing
     ),
     auto_unbox = TRUE,
     null = "null"

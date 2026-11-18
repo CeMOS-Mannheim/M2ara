@@ -80,15 +80,15 @@ test_that("the queue: processCacheKey is stable and depends on settings and file
   settings <- list(SNR = 3, normMz = 760.585)
   preprocessing <- list(smooth = TRUE)
 
-  key <- processCacheKey(dir, settings, preprocessing, FALSE)
+  key <- processCacheKey(dir, settings, preprocessing)
   expect_type(key, "character")
-  expect_equal(key, processCacheKey(dir, settings, preprocessing, FALSE))
+  expect_equal(key, processCacheKey(dir, settings, preprocessing))
   expect_false(identical(key, processCacheKey(dir, list(SNR = 4, normMz = 760.585),
-                                             preprocessing, FALSE)))
+                                             preprocessing)))
 
   # a changed file invalidates the key
   Sys.setFileTime(file.path(dir, "file_a.txt"), Sys.time() + 5)
-  expect_false(identical(key, processCacheKey(dir, settings, preprocessing, FALSE)))
+  expect_false(identical(key, processCacheKey(dir, settings, preprocessing)))
 })
 
 test_that("the queue: cached results can be stored and read", {

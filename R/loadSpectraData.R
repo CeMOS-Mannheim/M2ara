@@ -48,8 +48,16 @@ loadSpectraData <- function(input, appData, mapping) {
                message("      found centroided data. Will not check for empty spectra.")
              }
 
-             spec_raw <- loadSpectraMzML(appData$selected_dir,
-                                         centroided = centroided)
+             # the mzML files may contain chromatograms, the parser warns for
+             # every one of them - that is noise and not actionable
+             spec_raw <- withCallingHandlers(
+               loadSpectraMzML(appData$selected_dir, centroided = centroided),
+               warning = function(w) {
+                 if (grepl("tag is not supported", conditionMessage(w), fixed = TRUE)) {
+                   invokeRestart("muffleWarning")
+                 }
+               }
+             )
              appData$centroided <- centroided
              checkEmpty <- FALSE
            })

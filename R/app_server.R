@@ -47,6 +47,24 @@ appServer <- function(input, output, session, defaults = NULL) {
   })
 
   observeEvent(input$load, {
+    # a cached result makes reading the spectra unnecessary
+    settings <- processingSettings(input)
+    cache_key <- processCacheKey(appData$selected_dir, settings, appData$preprocessing)
+    cached <- processCacheGet(cache_key)
+
+    if (!is.null(cached)) {
+      message(MALDIcellassay:::timeNow(), " results loaded from cache\n")
+      appData$res <- cached$res
+      appData$centroided <- cached$centroided
+      appData$settings_snapshot <- settingsDataFrame(input)
+      appData <- storeResults(appData, res = cached$res, input,
+                              stats = getStatistics(cached$res))
+      updateActionButton(inputId = "process", label = "Re-process")
+      showNotification("Results loaded from the cache, the spectra were not re-read.",
+                       type = "message", duration = 5)
+      return()
+    }
+
     appData <- loadSpectraData(input, appData, mapping = appData$mapping)
   })
 
@@ -77,11 +95,13 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       settings <- processingSettings(input)
       cache_key <- processCacheKey(appData$selected_dir, settings,
-                                   appData$preprocessing, appData$centroided)
+                                   appData$preprocessing)
       process_cache_key(cache_key)
 
-      res <- processCacheGet(cache_key)
+      cached <- processCacheGet(cache_key)
+      res <- if (is.null(cached)) NULL else cached$res
       if (!is.null(res)) {
+        appData$centroided <- cached$centroided
         message(MALDIcellassay:::timeNow(), " results loaded from cache\n")
         showNotification("Results loaded from the cache.",
                          duration = 5, type = "message")
@@ -167,7 +187,8 @@ appServer <- function(input, output, session, defaults = NULL) {
       return()
     }
 
-    processCachePut(process_cache_key(), out$res)
+    processCachePut(process_cache_key(),
+                    list(res = out$res, centroided = isTRUE(appData$centroided)))
     appData <- storeResults(appData, res = out$res, input,
                             stats = getStatistics(out$res))
     updateActionButton(inputId = "process", label = "Re-process")
