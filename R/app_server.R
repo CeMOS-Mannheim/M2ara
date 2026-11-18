@@ -71,6 +71,10 @@ appServer <- function(input, output, session, defaults = NULL) {
                        duration = 5,
                        type = "default")
       message(MALDIcellassay:::timeNow(), " start processing...\n")
+      # settings as shown in the UI, used by the export (no shiny input
+      # access in the download handler, that could block the server)
+      appData$settings_snapshot <- settingsDataFrame(input)
+
       settings <- processingSettings(input)
       cache_key <- processCacheKey(appData$selected_dir, settings,
                                    appData$preprocessing, appData$centroided)
@@ -431,9 +435,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       }
 
       settings_file <- file.path(tempdir(), "m2ara_settings_export.csv")
-      saveSettings(input,
-                   filename = settings_file,
-                   info_state = appData$info_state)
+      utils::write.csv(appData$settings_snapshot, settings_file, row.names = FALSE)
 
       exportRun(
         file = file,
