@@ -152,13 +152,36 @@ function m2araInit() {
     m2araRedrawTable();
   });
 
-  // copy a share link to the clipboard
-  Shiny.addCustomMessageHandler('m2ara_copy_link', function (msg) {
+  // show the share link; copying happens in the click handler because the
+  // clipboard API refuses writes that are not triggered by a user gesture
+  Shiny.addCustomMessageHandler('m2ara_show_link', function (msg) {
+    var box = document.getElementById('m2araLinkBox');
+    var input = document.getElementById('m2araLinkInput');
+    if (!box || !input) { return; }
+    input.value = msg.url;
+    box.style.display = 'block';
+    input.focus();
+    input.select();
+  });
+
+  jQuery(document).on('click', '#m2araLinkCopy', function () {
+    var input = document.getElementById('m2araLinkInput');
+    if (!input) { return; }
+    var url = input.value;
+    var done = function () {
+      jQuery('#m2araLinkHint').text('Link copied to the clipboard.');
+    };
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(msg.url);
-    } else if (window.prompt) {
-      window.prompt('Copy this link:', msg.url);
+      navigator.clipboard.writeText(url).then(done, function () {
+        input.focus(); input.select(); document.execCommand('copy'); done();
+      });
+    } else {
+      input.focus(); input.select(); document.execCommand('copy'); done();
     }
+  });
+
+  jQuery(document).on('click', '#m2araLinkClose', function () {
+    jQuery('#m2araLinkBox').hide();
   });
 
   jQuery(document).on('keydown', m2araKeydown);

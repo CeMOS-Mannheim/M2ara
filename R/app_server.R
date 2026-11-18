@@ -307,8 +307,8 @@ appServer <- function(input, output, session, defaults = NULL) {
     shiny::updateQueryString(paste0("?state=",
                                     utils::URLencode(encodeAppState(state), reserved = TRUE)),
                              mode = "replace", session = session)
-    session$sendCustomMessage("m2ara_copy_link", list(url = url))
-    showNotification("Link copied to the clipboard.", type = "message", duration = 5)
+    session$sendCustomMessage("m2ara_show_link", list(url = url))
+    showNotification("Share link ready - use the box in the lower right corner.", type = "message", duration = 6)
   })
 
   observeEvent(input$clearSelection, {
