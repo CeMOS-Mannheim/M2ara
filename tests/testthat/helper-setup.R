@@ -59,7 +59,9 @@ obtain_mzml_data <- function() {
 wait_for_info_state <- function(app, state, timeout = 600) {
   started <- Sys.time()
   repeat {
-    if (identical(app$get_value(export = "infoState"), state)) {
+    current <- tryCatch(app$get_value(export = "infoState"),
+                        error = function(e) NULL)
+    if (identical(current, state)) {
       return(TRUE)
     }
     if (as.numeric(difftime(Sys.time(), started, units = "secs")) > timeout) {

@@ -22,6 +22,13 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
     # prepare info massage
     appData$selected_dir <- parseDirPath(vol, input$dir)
     if (length(appData$selected_dir) > 0) {
+      # a different folder invalidates the loaded spectra and the results
+      appData$spec_all <- NULL
+      appData$spec_idx <- NULL
+      appData$res <- NULL
+      appData$stats <- NULL
+      appData$stats_original <- NULL
+      appData$show_plot <- FALSE
       appData$info_state <- "dir_set"
       # show notification only on actual user interaction, not on init
       if (userSelectedDir && !is.null(output) && is.character(appData$selected_dir)) {
@@ -34,7 +41,7 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
     if (!is.null(output) && appData$info_state == "dir_set") {
       output$info1 <- renderText("Selected:")
       output$info2 <- renderText(appData$selected_dir)
-      output$info3 <- renderText("Press load button.")
+      output$info3 <- renderText("Press the process button.")
     }
   })
 

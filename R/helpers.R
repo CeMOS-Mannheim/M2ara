@@ -1,18 +1,15 @@
+# One button: as soon as a folder is selected, "Process spectra" loads the
+# spectra (if necessary) and processes them.
 handleButtonStatus <- function(appData) {
-  # disable load button if no dir is set
-  disable("load")
-  # disable process button if no spectra are loaded
   disable("process")
 
-  # enable buttons when state is reached
   observeEvent(appData$info_state, {
-    if (appData$info_state == "dir_set") {
-      enable("load")
-    }
-    if (appData$info_state == "loaded") {
+    if (appData$info_state %in% c("dir_set", "loaded", "processed")) {
       enable("process")
+    } else {
+      disable("process")
     }
-  })
+  }, ignoreNULL = FALSE)
 }
 
 setConcentrationUnit <- function(appData, input) {

@@ -29,7 +29,9 @@ processingSettings <- function(input) {
     peakMethod = input$peakMethod,
     avgMethod = input$avgMethod,
     binTol = input$binTol,
-    VarFilterMethod = input$VarFilterMethod
+    VarFilterMethod = input$VarFilterMethod,
+    # the unit rescales the concentrations, so it changes the fitted values
+    concUnits = input$concUnits
   )
 }
 

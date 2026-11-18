@@ -48,29 +48,17 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
-  observeEvent(input$load, {
-    # a cached result makes reading the spectra unnecessary
-    settings <- processingSettings(input)
-    cache_key <- processCacheKey(appData$selected_dir, settings, appData$preprocessing)
-    cached <- processCacheGet(cache_key)
-
-    if (!is.null(cached)) {
-      message(MALDIcellassay:::timeNow(), " results loaded from cache\n")
-      appData$res <- cached$res
-      appData$centroided <- cached$centroided
-      appData$settings_snapshot <- settingsDataFrame(input)
-      appData <- storeResults(appData, res = cached$res, input,
-                              stats = getStatistics(cached$res))
-      updateActionButton(inputId = "process", label = "Re-process")
-      showNotification("Results loaded from the cache, the spectra were not re-read.",
-                       type = "message", duration = 5)
-      return()
+  # settings that are applied while the spectra are read: changing them means
+  # the spectra have to be read again on the next run
+  observeEvent(list(input$fileFormat, input$mappingFile, input$checkEmpty), {
+    if (!is.null(appData$spec_all)) {
+      appData$spec_all <- NULL
+      appData$spec_idx <- NULL
+      appData$info_state <- if (is.null(appData$selected_dir)) "initial" else "dir_set"
     }
+  }, ignoreInit = TRUE)
 
-    appData <- loadSpectraData(input, appData, mapping = appData$mapping)
-  })
-
-  ### process spectra ####
+  ### process spectra: loads the spectra if necessary and processes them ####
   observeEvent(input$process, {
     # a second job while one is running would orphan the first one
     if (!is.null(process_job())) {
@@ -82,15 +70,8 @@ appServer <- function(input, output, session, defaults = NULL) {
     req(input$SNR, input$normMz, input$normTol, input$alignTol, input$binTol, input$halfWindowSize,
         cancelOutput = FALSE)
 
-    # change concentrations according to unit
-    appData <- setConcentrationUnit(appData, input)
 
-    if (!appData$info_state %in% c("initial", "dir_set")) {
-      show_spinner()
-      showNotification("Processing started. Please wait.",
-                       duration = 5,
-                       type = "default")
-      message(MALDIcellassay:::timeNow(), " start processing...\n")
+    if (appData$info_state %in% c("dir_set", "loaded", "processed")) {
       # settings as shown in the UI, used by the export (no shiny input
       # access in the download handler, that could block the server)
       appData$settings_snapshot <- settingsDataFrame(input)
@@ -100,19 +81,40 @@ appServer <- function(input, output, session, defaults = NULL) {
                                    appData$preprocessing)
       process_cache_key(cache_key)
 
+      # 1) unchanged data and settings: the cached result is used
       cached <- processCacheGet(cache_key)
-      res <- if (is.null(cached)) NULL else cached$res
-      if (!is.null(res)) {
+      if (!is.null(cached)) {
+        appData$res <- cached$res
         appData$centroided <- cached$centroided
         message(MALDIcellassay:::timeNow(), " results loaded from cache\n")
-        showNotification("Results loaded from the cache.",
-                         duration = 5, type = "message")
-        appData <- storeResults(appData, res = res, input,
-                                stats = getStatistics(res))
+        showNotification("Results loaded from the cache.", duration = 5, type = "message")
+        appData <- storeResults(appData, res = cached$res, input,
+                                stats = getStatistics(cached$res))
         updateActionButton(inputId = "process", label = "Re-process")
-        hide_spinner()
         return()
       }
+
+      # 2) the spectra for this folder are not in memory yet: read them first
+      if (is.null(appData$spec_all)) {
+        show_spinner()
+        message(MALDIcellassay:::timeNow(), " loading spectra...\n")
+        appData <- loadSpectraData(input, appData, mapping = appData$mapping)
+        if (!identical(appData$info_state, "loaded")) {
+          hide_spinner()
+          return()
+        }
+      }
+
+      # change concentrations according to the unit of the UI
+      appData <- setConcentrationUnit(appData, input)
+
+      # 3) process in a background process
+      show_spinner()
+      showNotification("Processing started. Please wait.",
+                       duration = 5,
+                       type = "default")
+      message(MALDIcellassay:::timeNow(), " start processing...\n")
+
 
       # no cached result: run the pipeline in a background process, the poll
       # observer below reports progress and collects the result

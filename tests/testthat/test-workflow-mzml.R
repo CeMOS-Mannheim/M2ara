@@ -46,20 +46,12 @@ test_that("mzML workflow: load spectra, process, export a complete archive", {
   expect_equal(app$get_value(export = "infoState"), "dir_set")
 
   # ------------------------------------------------------------------
-  # 5. Click "Load spectra"
+  # 5./6. One button: "Process spectra" loads the spectra (if necessary) and
+  #      processes them
   # ------------------------------------------------------------------
-  app$click("load")
+  app$click("process", wait_ = FALSE)
 
-  expect_true(wait_for_info_state(app, "loaded", timeout = 180))
-
-  # ------------------------------------------------------------------
-  # 6. Click "Process spectra"
-  # ------------------------------------------------------------------
-  app$click("process")
-
-  # the app polls the background job, so shinytest2's idle based helpers time
-  # out here - poll the exported state instead
-  expect_true(wait_for_info_state(app, "processed", timeout = 600))
+  expect_true(wait_for_info_state(app, "processed", timeout = 900))
   if (!identical(app$get_value(export = "infoState"), "processed")) {
     print(utils::tail(app$get_logs(), 20))
   }

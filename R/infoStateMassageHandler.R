@@ -8,12 +8,12 @@ infoStateMassageHandler <- function(info_state, output, selected_dir = NULL) {
          "dir_set" = {
            output$info1 <- renderText("Selected:")
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Press load button.")
+           output$info3 <- renderText("Press the process button.")
          },
          "loaded" = {
            output$info1 <- renderText("Loaded:")
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Press process button.")
+           output$info3 <- renderText("Press the process button.")
            msg <- paste0("Dataset '", basename(selected_dir), "' was successfully loaded.")
            showNotification(msg, duration = 5, type = "default")
          },
