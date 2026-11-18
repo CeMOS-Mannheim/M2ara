@@ -35,8 +35,12 @@ if (is.null(sha)) {
 }
 
 snapshot <- Sys.getenv("R_SNAPSHOT", unset = "")
-if (nzchar(snapshot)) {
-  options(repos = c(CRAN = paste0("https://packagemanager.posit.co/cran/", snapshot)))
+snapshot_url <- Sys.getenv("R_SNAPSHOT_URL", unset = "")
+if (!nzchar(snapshot_url) && nzchar(snapshot)) {
+  snapshot_url <- paste0("https://packagemanager.posit.co/cran/", snapshot)
+}
+if (nzchar(snapshot_url)) {
+  options(repos = c(CRAN = snapshot_url))
   cat("CRAN snapshot:", getOption("repos")[["CRAN"]], "\n")
 }
 
