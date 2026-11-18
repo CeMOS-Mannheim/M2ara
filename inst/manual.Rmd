@@ -104,7 +104,7 @@ knitr::include_graphics("figures/interface.png")
 
 4.  Analyze your data by clicking on entries in the table on bottom left (3). The plots for the curve and the peaks will change accordingly (4). You may want to display error bars or use the slider to change the displayed *m/z*-range (aka zoom) in the plot displaying the peaks. Note, you do not need to re-upload your data if you want to play with the settings. Just click the **Process spectra**-button again to re-do the calculations and after a short time your results will be updated.
 
-5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button below the peak table to save your results as \*.csv.
+5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** below the peak table: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
 
 # Analysis pipeline
 
@@ -299,6 +299,16 @@ If such a file is found at the start-up of the app, the parameters will be loade
 
 As processing is typically fast, this is a more efficient (time & disk-space) process then to save the complete app-state including spectra and calculated values.
 
+## Export of the results
+
+**Export results (ZIP)** (below the peak table) writes one archive with
+
+- `peak_table.csv` - the table from the app,
+- `fitting_parameters.csv` and `intensity_matrix.csv`,
+- `settings.csv` - the settings used for this run,
+- `run_info.json` - versions, session information and checksums,
+- `README.md` - description of the archive.
+
 ## Save fitting parameters
 
 The curve fitting in the app is internally performed by the [nplr-package](https://github.com/fredcommo/nplr) that used the Richardson Formula for Logistic regression:
@@ -307,4 +317,5 @@ $$
 y=\frac{B+(T-B)}{(1+10^{scal*(xmid-x)})^s}
 $$
 
-The parameters used for each single *m/z* can be downloaded from the app under `Settings` -\> `Save fitting param.`.
+The parameters used for each single *m/z* are part of the ZIP archive from **Export results (ZIP)** (`fitting_parameters.csv`).
+

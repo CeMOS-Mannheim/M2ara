@@ -1,7 +1,7 @@
 library(shinytest2)
 library(testthat)
 
-test_that("mzML workflow: load spectra, process, download non-empty CSV", {
+test_that("mzML workflow: load spectra, process, export a complete archive", {
   # ------------------------------------------------------------------
   # 1. Obtain test data (figshare download, cached in mzML/)
   # ------------------------------------------------------------------
@@ -68,14 +68,24 @@ test_that("mzML workflow: load spectra, process, download non-empty CSV", {
   expect_equal(app$get_value(export = "infoState"), "processed")
 
   # ------------------------------------------------------------------
-  # 7. Download the peak table CSV
+  # 7. Export the results (one ZIP with all tables)
   # ------------------------------------------------------------------
-  csv_path <- app$get_download("downloadTable")
+  zip_path <- app$get_download("exportRun")
 
-  expect_true(file.exists(csv_path),
-              info = "Downloaded CSV should exist on disk")
+  expect_true(file.exists(zip_path),
+              info = "Downloaded archive should exist on disk")
 
-  csv_content <- read.csv(csv_path)
+  entries <- utils::unzip(zip_path, list = TRUE)$Name
+  expect_true(all(c("peak_table.csv", "fitting_parameters.csv",
+                    "intensity_matrix.csv", "run_info.json") %in% entries))
+
+  unpacked <- file.path(tempdir(), "mzml_export")
+  unlink(unpacked, recursive = TRUE)
+  dir.create(unpacked, recursive = TRUE)
+  withr::defer(unlink(unpacked, recursive = TRUE))
+  utils::unzip(zip_path, exdir = unpacked)
+
+  csv_content <- read.csv(file.path(unpacked, "peak_table.csv"))
   expect_gt(nrow(csv_content), 0)
   expect_gt(sum(csv_content$CRS > 0, na.rm = TRUE), 0)
 })

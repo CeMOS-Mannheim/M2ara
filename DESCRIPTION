@@ -7,6 +7,8 @@ Authors@R:
 Description: M2ara is a shiny based GUI for MALDIcellassay and allows for interactive exploration of MALDI-based concentration-response assays.
 License: MIT + file LICENSE
 Imports:
+    jsonlite,
+    zip,
     methods,
     scales,
     proxy,

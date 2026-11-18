@@ -84,8 +84,8 @@ mainTab <- function(defaults) {
                  withSpinner(color="#0dc5c1")
              ),
              fluidRow(
-               downloadButton(outputId = "downloadTable",
-                              label = "Save as CSV",
+               downloadButton(outputId = "exportRun",
+                              label = "Export results (ZIP)",
                               icon = icon("download"),
                               style = 'padding:6px; font-size:80%')
              )

@@ -25,21 +25,21 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### download buttons (disabled until data is ready) ####
   shinyjs::disable("downloadPlot")
-  shinyjs::disable("downloadTable")
-  shinyjs::disable("downloadFittingParameter")
-  shinyjs::disable("downloadIntensityMatrix")
+  shinyjs::disable("exportRun")
+  
+  
 
   observeEvent(appData$show_plot, {
     if (appData$show_plot) {
       shinyjs::enable("downloadPlot")
-      shinyjs::enable("downloadTable")
-      shinyjs::enable("downloadFittingParameter")
-      shinyjs::enable("downloadIntensityMatrix")
+      shinyjs::enable("exportRun")
+      
+      
     } else {
       shinyjs::disable("downloadPlot")
-      shinyjs::disable("downloadTable")
-      shinyjs::disable("downloadFittingParameter")
-      shinyjs::disable("downloadIntensityMatrix")
+      shinyjs::disable("exportRun")
+      
+      
     }
   })
 
@@ -388,23 +388,35 @@ appServer <- function(input, output, session, defaults = NULL) {
                                               showPeaks = isTRUE(input$showPeaks),
                                               plot_ready = appData$show_plot)
 
-  output$downloadTable <- downloadHandlerTable(res = appData$res,
-                                               stats = appData$stats,
-                                               plot_ready = appData$show_plot,
-                                               name = "peakTable")
+  # one archive with the tables, the settings, run information and an overview
+  # figure of the top ranked features
+  output$exportRun <- downloadHandler(
+    filename = function() {
+      if (isTRUE(appData$show_plot)) {
+        paste0(basename(getDirectory(appData$res)), "_M2ara_export.zip")
+      }
+    },
+    content = function(file) {
+      if (!isTRUE(appData$show_plot)) {
+        warning("Nothing to export. Load and process data.")
+        return(invisible(NULL))
+      }
 
-  output$downloadFittingParameter <- downloadHandlerTable(res = appData$res,
-                                                          stats = getFittingParameters(appData$res),
-                                                          plot_ready = appData$show_plot,
-                                                          name = "fittingParam")
-  
-  output$downloadIntensityMatrix <- downloadHandlerTable(res = appData$res,
-                                                         stats = getIntensityMatrix(appData$res) %>%
-                                                           as_tibble() %>%
-                                                           mutate(conc = getConc(appData$res)) %>%
-                                                           relocate(conc),
-                                                         plot_ready = appData$show_plot,
-                                                         name = "intensityMatrix")
+      settings_file <- file.path(tempdir(), "m2ara_settings_export.csv")
+      saveSettings(input,
+                   filename = settings_file,
+                   info_state = appData$info_state)
+
+      exportRun(
+        file = file,
+        res = appData$res,
+        stats = appData$stats,
+        settings = settings_file,
+        centroided = isTRUE(appData$centroided),
+        plot_ready = appData$show_plot
+      )
+    }
+  )
 
   # mappig of concentrations by external txt
   observeEvent(input$mappingFile, {
