@@ -62,9 +62,12 @@ appUI <- function(defaults) {
     ))),
     tags$style(HTML(
       "#mzTable td.m2ara-check-col, #mzTable th.m2ara-check-col {
-         width: 18px; min-width: 18px; max-width: 18px; padding: 0 2px;
+         width: 20px !important; min-width: 20px !important;
+         max-width: 20px !important; padding: 0 !important;
        }
-       #mzTable td.m2ara-check-col input { margin: 0; }"
+       #mzTable td.m2ara-check-col input { margin: 0; }
+       #mzTable th.m2ara-check-col .sorting, #mzTable th.m2ara-check-col .sorting_asc,
+       #mzTable th.m2ara-check-col .sorting_desc { display: none; }"
     )),
     # shiny sidebar layout
     sidebarLayout(

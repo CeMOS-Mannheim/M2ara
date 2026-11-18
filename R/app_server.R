@@ -271,6 +271,10 @@ appServer <- function(input, output, session, defaults = NULL) {
     utils::head(sel, 4)
   })
 
+  observeEvent(input$clearSelection, {
+    session$sendCustomMessage("m2ara_reset_selection", list())
+  })
+
   output$curve <- renderPlotly({
 
     if (appData$show_plot) {

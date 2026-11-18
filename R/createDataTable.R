@@ -34,12 +34,12 @@ createDataTable <- function(stats, plot_ready) {
         orderable = FALSE,
         searchable = FALSE,
         className = "dt-center m2ara-check-col",
-        width = "18px",
+        width = "20px",
         render = DT::JS(
           "function(data, type, row) {
              if (type !== 'display') { return data; }
              var sel = window.m2araSelected || [];
-             var idx = row[2];
+             var idx = parseInt(row[2], 10);
              var checked = sel.indexOf(idx) >= 0;
              var full = sel.length >= 4;
              var dis = (!checked && full) ? ' disabled' : '';
@@ -50,11 +50,11 @@ createDataTable <- function(stats, plot_ready) {
         )
       )
     ),
-    # tint the rows of the compared features with their plot colour
+    # tint the rows (feature colour when comparing, neutral for a single one)
     rowCallback = DT::JS(
       "function(row, data) {
          var sel = window.m2araSelected || [];
-         var pos = sel.indexOf(data[2]);
+         var pos = sel.indexOf(parseInt(data[2], 10));
          var colours = ['#D55E00', '#009E73', '#CC79A7', '#0072B2'];
          if (pos >= 0 && sel.length === 1) {
            row.style.backgroundColor = 'rgba(0, 0, 0, 0.06)';
@@ -69,6 +69,18 @@ createDataTable <- function(stats, plot_ready) {
          } else {
            row.style.backgroundColor = '';
            row.style.borderLeft = '';
+         }
+       }"
+    ),
+    # after every draw (paging, sorting, filtering, re-render) restore the
+    # checkboxes from the browser state and keep the server in sync
+    drawCallback = DT::JS(
+      "function(settings) {
+         if (window.m2araUpdateCheckboxes) { window.m2araUpdateCheckboxes(); }
+         if (window.Shiny) {
+           Shiny.setInputValue('mzTable_selected',
+                               (window.m2araSelected || []).slice(),
+                               {priority: 'event'});
          }
        }"
     )

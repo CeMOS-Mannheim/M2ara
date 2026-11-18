@@ -88,6 +88,14 @@ mainTab <- function(defaults) {
     fluidRow(
       column(12,
              fluidRow(
+               column(12, style = "padding: 4px 0;",
+                      actionButton(inputId = "clearSelection",
+                                   label = "Deselect all",
+                                   icon = icon("square-check"),
+                                   style = 'padding:2px 8px; font-size:75%')
+               )
+             ),
+             fluidRow(
                DT::DTOutput("mzTable") %>%
                  withSpinner(color="#0dc5c1")
              ),
