@@ -90,6 +90,7 @@ appServer <- function(input, output, session, defaults = NULL) {
         showNotification("Results loaded from the cache.", duration = 5, type = "message")
         appData <- storeResults(appData, res = cached$res, input,
                                 stats = getStatistics(cached$res))
+        session$sendCustomMessage("m2ara_reset_selection", list())
         updateActionButton(inputId = "process", label = "Re-process")
         return()
       }
@@ -224,6 +225,7 @@ appServer <- function(input, output, session, defaults = NULL) {
                     list(res = out$res, centroided = isTRUE(appData$centroided)))
     appData <- storeResults(appData, res = out$res, input,
                             stats = getStatistics(out$res))
+    session$sendCustomMessage("m2ara_reset_selection", list())
     updateActionButton(inputId = "process", label = "Re-process")
     showNotification("Processing finished.", type = "message", duration = 3)
   })
@@ -262,15 +264,39 @@ appServer <- function(input, output, session, defaults = NULL) {
   })
 
   ### curve and peak plots ####
+  # at most 4 features can be compared
+  selected_features <- reactive({
+    sel <- input$mzTable_selected
+    sel <- sel[!is.na(sel)]
+    utils::head(sel, 4)
+  })
+
+  observeEvent(input$clearSelection, {
+    session$sendCustomMessage("m2ara_reset_selection", list())
+  })
+
   output$curve <- renderPlotly({
+
     if (appData$show_plot) {
+      sel <- selected_features()
+
+      if (length(sel) == 0L) {
+        return(dummyPlot("Select a feature\nin the table"))
+      }
+
+      if (length(sel) > 1L) {
+        return(ggplotly(plotCurvesOverlay(appData$res, sel,
+                                          errorbars = input$errorbars,
+                                          normalize = isTRUE(input$normalizeCompare))))
+      }
+
       p_curve <- plotCurves(appData$res,
-                            mzIdx = input$mzTable_rows_selected[1],
+                            mzIdx = selected_features()[1],
                             errorbars = input$errorbars) +
         labs(title = paste0("m/z = ",
                             round(
                               getMzFromMzIdx(appData$res,
-                                             input$mzTable_rows_selected[1]),
+                                             selected_features()[1]),
                               2)))
 
       ggplotly(p_curve)
@@ -279,10 +305,48 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
+  # the peak panel grows with the number of compared features: two features are
+  # one row, three and four are a 2 x 2 grid
+  output$peakUi <- renderUI({
+    sel <- selected_features()
+    if (length(sel) > 1L) {
+      rows <- ceiling(length(sel) / 2)
+      height <- if (rows == 1L) "340px" else paste0(300 * rows, "px")
+      plotOutput("peakGrid", height = height)
+    } else {
+      plotly::plotlyOutput("peak", height = "auto")
+    }
+  })
+
+  output$peakGrid <- renderPlot({
+    sel <- selected_features()
+    if (!appData$show_plot || length(sel) < 2L) {
+      return(NULL)
+    }
+    peakGrid(appData$res, sel,
+             tol = input$zoom,
+             centroided = isTRUE(appData$centroided),
+             showPeaks = isTRUE(input$showPeaks))
+  },
+  # a minimum device size avoids the transient "figure margins too large"
+  # error while the panel is still being laid out
+  width = function() {
+    w <- session$clientData[["output_peakGrid_width"]]
+    if (is.null(w) || !is.finite(w)) 640 else max(480, w)
+  },
+  height = function() {
+    rows <- ceiling(max(1, length(selected_features())) / 2)
+    if (rows == 1L) 340 else 300 * rows
+  })
+
   output$peak <- renderPlotly({
     if (appData$show_plot) {
+      if (length(selected_features()) == 0L) {
+        return(dummyPlot("Select a feature\nin the table"))
+      }
+
       p_peak <- plotPeak(appData$res,
-                         mzIdx = input$mzTable_rows_selected[1],
+                         mzIdx = selected_features()[1],
                          tol = input$zoom,
                          centroided = isTRUE(appData$centroided),
                          showPeaks = isTRUE(input$showPeaks)) +
@@ -324,7 +388,7 @@ appServer <- function(input, output, session, defaults = NULL) {
                    stat = input$plateStat,
                    PCs = c(input$pcaX, input$pcaY),
                    log10 = input$plateScale,
-                   mz_idx = input$mzTable_rows_selected[1])
+                   mz_idx = selected_features()[1])
     } else {
       shinyjs::hide(id = "plateStat")
       shinyjs::hide(id = "plateScale")
@@ -477,7 +541,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### download handler ####
   output$downloadPlot <- downloadHandlerPlots(res = appData$res,
-                                              mzIdx = input$mzTable_rows_selected[1],
+                                              mzIdx = selected_features()[1],
                                               errorbars = input$errorbars,
                                               zoom = input$zoom,
                                               centroided = isTRUE(appData$centroided),

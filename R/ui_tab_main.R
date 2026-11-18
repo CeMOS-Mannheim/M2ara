@@ -38,6 +38,14 @@ mainTab <- function(defaults) {
                                     style = "margin-top: 28px"
                                   )
                            ),
+                           column(3,
+                                  div(
+                                    checkboxInput(inputId = "normalizeCompare",
+                                                  label = "Normalize curves",
+                                                  value = FALSE),
+                                    style = "margin-top: 28px"
+                                  )
+                           ),
                            column(2,
                                   sliderInput(inputId = "zoom",
                                               label = "m/z range",
@@ -50,7 +58,7 @@ mainTab <- function(defaults) {
                                 plotlyOutput('curve') %>%
                                   withSpinner(color="#0dc5c1")),
                          column(6,
-                                plotlyOutput('peak') %>%
+                                uiOutput('peakUi') %>%
                                   withSpinner(color="#0dc5c1")),
                 ),
                 tabPanel("Metrics",
@@ -79,6 +87,14 @@ mainTab <- function(defaults) {
     hr(),
     fluidRow(
       column(12,
+             fluidRow(
+               column(12, style = "padding: 4px 0;",
+                      actionButton(inputId = "clearSelection",
+                                   label = "Deselect all",
+                                   icon = icon("square-check"),
+                                   style = 'padding:2px 8px; font-size:75%')
+               )
+             ),
              fluidRow(
                DT::DTOutput("mzTable") %>%
                  withSpinner(color="#0dc5c1")
