@@ -90,14 +90,30 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       # no cached result: run the pipeline in a background process, the poll
       # observer below reports progress and collects the result
-      process_job(processRunAsync(
-        spec_all = appData$spec_all,
-        spec_idx = appData$spec_idx,
-        centroided = appData$centroided,
-        preprocessing = appData$preprocessing,
-        settings = settings,
-        dir = appData$selected_dir
-      ))
+      job <- tryCatch(
+        processRunAsync(
+          spec_all = appData$spec_all,
+          spec_idx = appData$spec_idx,
+          centroided = appData$centroided,
+          preprocessing = appData$preprocessing,
+          settings = settings,
+          dir = appData$selected_dir
+        ),
+        error = function(e) {
+          message("could not start the processing job: ", conditionMessage(e))
+          NULL
+        }
+      )
+
+      if (is.null(job)) {
+        appData$info_state <- "fitErrorOther"
+        hide_spinner()
+        showNotification("Processing could not be started.",
+                         type = "error", duration = 10)
+        return()
+      }
+
+      process_job(job)
     }
   })
 

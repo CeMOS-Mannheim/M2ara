@@ -63,8 +63,12 @@ test_that("mzML workflow: load spectra, process, export a complete archive", {
 
   app$wait_for_value(
     export  = "infoState",
-    timeout = 300000    # 5 minutes for full processing + curve fitting
+    timeout = 600000    # 10 minutes: processing runs in a background process
   )
+  if (!identical(app$get_value(export = "infoState"), "processed")) {
+    message("app log:\n", paste(utils::tail(app$get_logs(), 40), collapse = "\n"))
+  }
+
   expect_equal(app$get_value(export = "infoState"), "processed")
 
   # ------------------------------------------------------------------

@@ -50,6 +50,9 @@ processRunAsync <- function(spec_all, spec_idx, centroided, preprocessing,
       progress_file = progress_file,
       result_file = result_file
     ),
+    # R CMD check exports R_TESTS; a child process that inherits it would try to
+    # run the test suite again (callr::rcmd_safe_env() unsets it)
+    env = callr::rcmd_safe_env(),
     supervise = TRUE,
     stdout = tempfile(pattern = "m2ara_stdout_", fileext = ".log"),
     stderr = tempfile(pattern = "m2ara_stderr_", fileext = ".log")
