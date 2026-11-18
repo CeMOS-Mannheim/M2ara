@@ -34,3 +34,9 @@ utils::globalVariables(c(
   "val", "xax", "yax", "spot", "cheuv", "value", "direction", "Z", "V", "SSMD",
   "spectrum", "V'", "Z'"
 ))
+# Side effects have to be set when the namespace is loaded: top level code in R/
+# runs at install time only.
+.onLoad <- function(libname, pkgname) {
+  ggplot2::theme_set(m2araTheme())
+  invisible(NULL)
+}
