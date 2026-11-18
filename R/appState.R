@@ -24,7 +24,8 @@ decodeAppState <- function(txt) {
 
 # merge the state of an URL into the defaults the app starts with
 appDefaultsFromUrl <- function(defaults, query_string) {
-  result <- list(defaults = defaults, features = integer(0), active = FALSE)
+  result <- list(defaults = defaults, features = integer(0), active = FALSE,
+                 dir_missing = NULL)
 
   if (is.null(query_string) || !nzchar(query_string)) {
     return(result)
@@ -50,8 +51,13 @@ appDefaultsFromUrl <- function(defaults, query_string) {
     }
   }
 
+  # the folder path of the link is only useful when it exists on this machine
   if (!is.null(state[["dir"]]) && nzchar(state[["dir"]])) {
-    defaults[["dir"]] <- state[["dir"]]
+    if (dir.exists(state[["dir"]])) {
+      defaults[["dir"]] <- state[["dir"]]
+    } else {
+      result$dir_missing <- state[["dir"]]
+    }
   }
 
   if (!is.null(state[["features"]])) {
