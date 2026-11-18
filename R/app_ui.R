@@ -53,7 +53,7 @@ appUI <- function(defaults) {
          window.m2araUpdateCheckboxes();
          Shiny.setInputValue('mzTable_selected', sel.slice(), {priority: 'event'});
          // refresh the sort key so a sorted table re-orders, keeping the page
-         var tbl = jQuery('#mzTable').DataTable();
+         var tbl = jQuery('#mzTable table').DataTable();
          if (tbl && tbl.rows) { tbl.rows().invalidate('data').draw(false); }
        });
 
