@@ -16,7 +16,7 @@ createDataTable <- function(stats, plot_ready) {
     cbind(tibble(" " = rep("", nrow(stats))), stats)
 
   },
-  server = TRUE,
+  server = FALSE,
   filter = "bottom",
   options = list(
     searching = TRUE,
@@ -31,15 +31,17 @@ createDataTable <- function(stats, plot_ready) {
     columnDefs = list(
       list(
         targets = 0,
-        orderable = FALSE,
+        orderable = TRUE,
         searchable = FALSE,
         className = "dt-center m2ara-check-col",
         width = "20px",
         render = DT::JS(
           "function(data, type, row) {
-             if (type !== 'display') { return data; }
              var sel = window.m2araSelected || [];
              var idx = parseInt(row[2], 10);
+             // sorting puts the selected features first
+             if (type === 'sort') { return sel.indexOf(idx) >= 0 ? '0' : '1'; }
+             if (type !== 'display') { return data; }
              var checked = sel.indexOf(idx) >= 0;
              var full = sel.length >= 4;
              var dis = (!checked && full) ? ' disabled' : '';

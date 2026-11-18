@@ -52,6 +52,9 @@ appUI <- function(defaults) {
          window.m2araSelected = sel;
          window.m2araUpdateCheckboxes();
          Shiny.setInputValue('mzTable_selected', sel.slice(), {priority: 'event'});
+         // refresh the sort key so a sorted table re-orders, keeping the page
+         var tbl = jQuery('#mzTable').DataTable();
+         if (tbl && tbl.rows) { tbl.rows().invalidate('data').draw(false); }
        });
 
        Shiny.addCustomMessageHandler('m2ara_reset_selection', function(msg) {
@@ -66,13 +69,7 @@ appUI <- function(defaults) {
          max-width: 20px !important; padding: 0 !important;
        }
        #mzTable td.m2ara-check-col input { margin: 0; }
-       #mzTable th.m2ara-check-col.sorting,
-       #mzTable th.m2ara-check-col.sorting_asc,
-       #mzTable th.m2ara-check-col.sorting_desc {
-         background-image: none !important;
-         cursor: default !important;
-         padding-right: 0 !important;
-       }"
+       #mzTable th.m2ara-check-col { padding-right: 0 !important; }"
     )),
     # shiny sidebar layout
     sidebarLayout(
