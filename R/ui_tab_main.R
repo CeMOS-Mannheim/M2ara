@@ -58,7 +58,7 @@ mainTab <- function(defaults) {
                                 plotlyOutput('curve') %>%
                                   withSpinner(color="#0dc5c1")),
                          column(6,
-                                plotlyOutput('peak') %>%
+                                uiOutput('peakUi') %>%
                                   withSpinner(color="#0dc5c1")),
                 ),
                 tabPanel("Metrics",
