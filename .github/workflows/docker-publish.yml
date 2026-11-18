@@ -20,9 +20,15 @@ env:
   # versions match the lockfile.
   R_SNAPSHOT: '2026-11-17'
 
+# superseded runs are cancelled: only the newest commit matters
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
 
     permissions:
       contents: read
@@ -72,7 +78,10 @@ jobs:
 
       - name: Install R packages (pinned by pak.lock)
         run: |
-          export R_SNAPSHOT_URL="https://packagemanager.posit.co/cran/${R_SNAPSHOT}"
+          # the __linux__ repository serves precompiled binaries for the
+          # runner's Ubuntu release - otherwise every package is built from source
+          CODENAME=$(lsb_release -cs 2>/dev/null || ( . /etc/os-release && echo "$VERSION_CODENAME" ))
+          export R_SNAPSHOT_URL="https://packagemanager.posit.co/cran/__linux__/${CODENAME}/${R_SNAPSHOT}"
           echo "CRAN snapshot: ${R_SNAPSHOT_URL}"
           R -e "install.packages('pak', repos = Sys.getenv('R_SNAPSHOT_URL'))"
           R -e "options(repos = c(CRAN = Sys.getenv('R_SNAPSHOT_URL'))); pak::pkg_install(readLines('req.txt'))"

@@ -9,24 +9,31 @@ RUN apt-get update && apt-get install -y \
 
 # Frozen CRAN snapshot, matches pak.lock (see installer/README.md)
 ENV R_SNAPSHOT=2026-11-17
-
-# Copy the repository; the app is installed as the M2ara package
-COPY ./ /src
 WORKDIR /src
 
-# Install pak
-RUN R -e "install.packages('pak', repos = paste0('https://packagemanager.posit.co/cran/', Sys.getenv('R_SNAPSHOT')))"
+# --- dependencies ------------------------------------------------------------
+# This layer only changes when the lockfile changes, so a code change does not
+# reinstall the ~150 R packages (that took most of the image build time).
+COPY req.txt pak.lock ./
+COPY tools/ ./tools/
 
-# Install reshape2 as it lead to errors with pak
-RUN R -e "install.packages('reshape2', repos = paste0('https://packagemanager.posit.co/cran/', Sys.getenv('R_SNAPSHOT')))"
-
-# Install R packages from req.txt (pinned versions)
-RUN R -e "options(repos = c(CRAN = paste0('https://packagemanager.posit.co/cran/', Sys.getenv('R_SNAPSHOT')))); pak::pkg_install(readLines('req.txt'))"
+# The __linux__ repository serves precompiled binaries for the image's Ubuntu
+# release; without it every package would be built from source.
+RUN CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME") \
+ && export R_SNAPSHOT_URL="https://packagemanager.posit.co/cran/__linux__/${CODENAME}/${R_SNAPSHOT}" \
+ && echo "CRAN snapshot: ${R_SNAPSHOT_URL}" \
+ && R -e "install.packages('pak', repos = Sys.getenv('R_SNAPSHOT_URL'))" \
+ && R -e "install.packages('reshape2', repos = Sys.getenv('R_SNAPSHOT_URL'))" \
+ && R -e "options(repos = c(CRAN = Sys.getenv('R_SNAPSHOT_URL'))); pak::pkg_install(readLines('req.txt'))"
 
 # Install MALDIcellassay from the commit pinned in pak.lock
-RUN Rscript tools/install-maldi-from-lock.R
+RUN CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME") \
+ && export R_SNAPSHOT_URL="https://packagemanager.posit.co/cran/__linux__/${CODENAME}/${R_SNAPSHOT}" \
+ && Rscript tools/install-maldi-from-lock.R
 
-# Install the M2ara package itself
+# --- the app package ---------------------------------------------------------
+# Everything else (sources, tests, ...) changes often, so it is copied last.
+COPY ./ /src
 RUN R CMD INSTALL --no-multiarch .
 
 # The app reads and writes settings.csv in the working directory
