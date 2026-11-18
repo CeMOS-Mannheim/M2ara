@@ -32,3 +32,4 @@ purrr
 markdown
 zip
 jsonlite
+callr

@@ -101,6 +101,16 @@ appSidebar <- function(defaults) {
     createActionButton(inputId = "process",
                        label = "Process spectra",
                        icon = "redo"),
+    conditionalPanel(
+      condition = "output.processRunning",
+      div(style = "margin-bottom: 8px;",
+          strong(textOutput("processStatus", inline = TRUE)),
+          actionButton("cancelProcess", "Cancel",
+                       icon = icon("stop"),
+                       class = "btn-sm",
+                       style = "margin-top: 4px;")
+      )
+    ),
     textOutput("info1", inline = FALSE),
     textOutput("info2", inline = FALSE),
     textOutput("info3", inline = FALSE),

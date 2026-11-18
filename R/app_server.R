@@ -6,6 +6,9 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ## main ####
   appData <- emptyAppDataObject()
+  # background processing job and its cache key
+  process_job <- reactiveVal(NULL)
+  process_cache_key <- reactiveVal(NULL)
 
   appData <- selectDir(appData, input, output, defaults = defaults)
 
@@ -49,6 +52,12 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### process spectra ####
   observeEvent(input$process, {
+    # a second job while one is running would orphan the first one
+    if (!is.null(process_job())) {
+      showNotification("Processing is already running.", type = "warning", duration = 4)
+      return()
+    }
+
     # guard against missing/empty numeric inputs
     req(input$SNR, input$normMz, input$normTol, input$alignTol, input$binTol, input$halfWindowSize,
         cancelOutput = FALSE)
@@ -62,100 +71,102 @@ appServer <- function(input, output, session, defaults = NULL) {
                        duration = 5,
                        type = "default")
       message(MALDIcellassay:::timeNow(), " start processing...\n")
-      appData$spec_all <- MALDIcellassay:::.repairMetaData(appData$spec_all)
-      prc <- preprocess(spectra = appData$spec_all[appData$spec_idx],
-                        sqrtTransform = appData$preprocessing$sqrtTrans,
-                        smooth = appData$preprocessing$smooth,
-                        rmBaseline = appData$preprocessing$rmBl,
-                        SNR = input$SNR,
-                        singlePointRecal = input$SinglePointRecal,
-                        normMz = input$normMz,
-                        normTol = input$normTol,
-                        normMeth = input$normMeth,
-                        smoothHalfWindowSize = 3,
-                        alignTol = input$alignTol * 1e-3,
-                        halfWindowSize = input$halfWindowSize,
-                        peakMethod = input$peakMethod,
-                        centroided = appData$centroided)
+      settings <- processingSettings(input)
+      cache_key <- processCacheKey(appData$selected_dir, settings,
+                                   appData$preprocessing, appData$centroided)
+      process_cache_key(cache_key)
 
-      if(!fitCurveErrorHandler(appData = appData,
-                               prc = prc,
-                               input = input)) {
+      res <- processCacheGet(cache_key)
+      if (!is.null(res)) {
+        message(MALDIcellassay:::timeNow(), " results loaded from cache\n")
+        showNotification("Results loaded from the cache.",
+                         duration = 5, type = "message")
+        appData <- storeResults(appData, res = res, input,
+                                stats = getStatistics(res))
+        updateActionButton(inputId = "process", label = "Re-process")
+        hide_spinner()
         return()
       }
 
-      #### average spectra ####
-      message(MALDIcellassay:::timeNow(), " calculating ", input$avgMethod, " spectra... \n")
-
-      avg <- MALDIcellassay:::.aggregateSpectra(spec = prc$spec,
-                                                averageMethod = input$avgMethod,
-                                                SNR = input$SNR,
-                                                monoisotopicFilter = isTruthy(appData$preprocessing$monoisotopicFilter),
-                                                binTol = input$binTol * 1e-6,
-                                                normMz = input$normMz,
-                                                normTol = input$normTol,
-                                                halfWindowSize = input$halfWindowSize,
-                                                peakMethod = input$peakMethod)
-      ### single spectra data
-      # this is the single spectra data but based on the same signals as in the
-      # avg spectra
-      # doing it like this gives us greater sensitivity (signal detection on
-      # avg spectra) while still enabling statistics on single spectra
-      singlePeaks <- extractIntensity(mz = as.numeric(colnames(avg$intmat)),
-                                      peaks = prc$singlePeaks,
-                                      spec = prc$spec,
-                                      tol = input$normTol)
-
-      # fit curves
-      message(MALDIcellassay:::timeNow(), " fitting curves... \n")
-      fits <- calculateCurveFit(intmat = avg$intmat,
-                                idx = filterVariance(apply(avg$intmat, 2, var),
-                                                     method = input$VarFilterMethod))
-
-      # peak statistics
-      stat_df <- MALDIcellassay:::calculatePeakStatistics(curveFits = fits,
-                                                          singlePeaks = singlePeaks,
-                                                          spec = prc$spec)
-
-      appData$res <- new("MALDIassay",
-                         avgSpectra = avg$avgSpec,
-                         avgPeaks = avg$avgPeaksBinned,
-                         singlePeaks = singlePeaks,
-                         singleSpecSpots = extractSpots(prc$spec),
-                         normFactors = prc$normFac,
-                         mzShifts = prc$mzShift,
-                         fits = fits,
-                         stats = stat_df,
-                         included_specIdx = prc$idx,
-                         settings = list(
-                           Conc = as.numeric(names(singlePeaks)),
-                           normMz = input$normMz,
-                           normTol = input$normTol,
-                           varFilterMethod = input$VarFilterMethod,
-                           monoisotopicFilter = handlePreprocSettings(input$preproc_settings,
-                                                                      "monoisotopicFilter"),
-                           alignTol = input$alignTol * 1e-3,
-                           SNR = input$SNR,
-                           normMeth = input$normMeth,
-                           binTol = input$binTol * 1e-6,
-                           SinglePointRecal = input$SinglePointRecal,
-                           dir = appData$selected_dir
-                         )
-      )
-      message(MALDIcellassay:::timeNow(),  " processing done\n")
-
-      # write everything needed into appData
-      appData <- storeResults(appData,
-                              res = appData$res,
-                              input,
-                              stats = getStatistics(appData$res))
-
-      updateActionButton(inputId = "process", label = "Re-process")
-      hide_spinner()
+      # no cached result: run the pipeline in a background process, the poll
+      # observer below reports progress and collects the result
+      process_job(processRunAsync(
+        spec_all = appData$spec_all,
+        spec_idx = appData$spec_idx,
+        centroided = appData$centroided,
+        preprocessing = appData$preprocessing,
+        settings = settings,
+        dir = appData$selected_dir
+      ))
     }
   })
 
+  ### processing job: progress, result and cancel ####
+  output$processRunning <- reactive({ !is.null(process_job()) })
+  outputOptions(output, "processRunning", suspendWhenHidden = FALSE)
+
+  output$processStatus <- renderText({
+    job <- process_job()
+    if (is.null(job)) "" else processStageLabel(processJobProgress(job))
+  })
+
+  observe({
+    job <- process_job()
+    if (is.null(job)) return()
+
+    if (!processJobDone(job)) {
+      invalidateLater(500)
+      return()
+    }
+
+    out <- processJobResult(job)
+    processJobCleanup(job)
+    process_job(NULL)
+    hide_spinner()
+
+    if (is.null(out)) {
+      appData$info_state <- "fitErrorOther"
+      showNotification("Processing failed. Please check the settings.",
+                       type = "error", duration = 10)
+      return()
+    }
+
+    if (!isTRUE(out$ok)) {
+      appData$info_state <- switch(out$error,
+                                   recal = "fitErrorRecal",
+                                   norm = "fitErrorNorm",
+                                   "fitErrorOther")
+      return()
+    }
+
+    processCachePut(process_cache_key(), out$res)
+    appData <- storeResults(appData, res = out$res, input,
+                            stats = getStatistics(out$res))
+    updateActionButton(inputId = "process", label = "Re-process")
+    showNotification("Processing finished.", type = "message", duration = 3)
+  })
+
+  observeEvent(input$cancelProcess, {
+    job <- process_job()
+    if (is.null(job)) return()
+
+    processJobCancel(job)
+    processJobCleanup(job)
+    process_job(NULL)
+    hide_spinner()
+    showNotification("Processing cancelled.", type = "warning", duration = 5)
+  })
+
   ### Peak table ####
+
+  observeEvent(input$clearCache, {
+    removed <- clearProcessCache()
+    showNotification(
+      sprintf("Removed %d cached result(s) (%.1f MB).",
+              removed, processCacheSize() / 1024^2),
+      type = "message", duration = 5
+    )
+  })
   # first initialization
   output$mzTable <- createDataTable(appData$stats,
                                     plot_ready = appData$show_plot)
