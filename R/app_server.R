@@ -8,6 +8,8 @@ appServer <- function(input, output, session, defaults = NULL) {
   appData <- emptyAppDataObject()
   # background processing job and its cache key
   process_job <- reactiveVal(NULL)
+  process_status <- reactiveVal(NULL)
+  process_console_bucket <- reactiveVal(-1L)
   process_cache_key <- reactiveVal(NULL)
 
   appData <- selectDir(appData, input, output, defaults = defaults)
@@ -137,6 +139,8 @@ appServer <- function(input, output, session, defaults = NULL) {
         return()
       }
 
+      process_status(list(percent = 0, label = "Starting ..."))
+      process_console_bucket(-1L)
       process_job(job)
     }
   })
@@ -145,9 +149,20 @@ appServer <- function(input, output, session, defaults = NULL) {
   output$processRunning <- reactive({ !is.null(process_job()) })
   outputOptions(output, "processRunning", suspendWhenHidden = FALSE)
 
-  output$processStatus <- renderText({
-    job <- process_job()
-    if (is.null(job)) "" else processStageLabel(processJobProgress(job))
+  output$processStatus <- renderUI({
+    status <- process_status()
+    if (is.null(status)) {
+      return(NULL)
+    }
+
+    tagList(
+      div(class = "progress", style = "height: 16px; margin-bottom: 4px;",
+          div(class = "progress-bar progress-bar-striped active",
+              role = "progressbar",
+              style = sprintf("width: %d%%;", max(2, status$percent)),
+              sprintf("%d%%", status$percent))),
+      tags$small(status$label)
+    )
   })
 
   observe({
@@ -155,6 +170,20 @@ appServer <- function(input, output, session, defaults = NULL) {
     if (is.null(job)) return()
 
     if (!processJobDone(job)) {
+      status <- processJobStatus(job)
+      label <- processStageLabel(status$stage)
+      if (!is.na(status$total) && status$total > 0) {
+        label <- sprintf("%s %d/%d", label, status$done, status$total)
+      }
+      process_status(list(percent = status$percent, label = label))
+
+      # console output, but only every 10 percent
+      bucket <- as.integer(status$percent / 10)
+      if (bucket > process_console_bucket()) {
+        process_console_bucket(bucket)
+        message(sprintf("  %s (%d%%)", label, status$percent))
+      }
+
       invalidateLater(500)
       return()
     }
@@ -163,6 +192,8 @@ appServer <- function(input, output, session, defaults = NULL) {
     job_log <- processJobLog(job)
     processJobCleanup(job)
     process_job(NULL)
+    process_status(NULL)
+    process_console_bucket(-1L)
     hide_spinner()
 
     if (is.null(out)) {
@@ -202,6 +233,8 @@ appServer <- function(input, output, session, defaults = NULL) {
     processJobCancel(job)
     processJobCleanup(job)
     process_job(NULL)
+    process_status(NULL)
+    process_console_bucket(-1L)
     hide_spinner()
     showNotification("Processing cancelled.", type = "warning", duration = 5)
   })

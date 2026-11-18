@@ -104,7 +104,7 @@ appSidebar <- function(defaults) {
     conditionalPanel(
       condition = "output.processRunning",
       div(style = "margin-bottom: 8px;",
-          strong(textOutput("processStatus", inline = TRUE)),
+          uiOutput("processStatus"),
           actionButton("cancelProcess", "Cancel",
                        icon = icon("stop"),
                        class = "btn-sm",

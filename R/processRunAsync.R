@@ -174,3 +174,49 @@ processStageLabel <- function(stage) {
     stage
   )
 }
+# percentage range of the overall progress for each stage
+processStageRange <- function(stage) {
+  switch(
+    stage,
+    queued = c(0, 2),
+    start = c(2, 5),
+    preprocess = c(5, 20),
+    aggregate = c(20, 45),
+    intensity = c(45, 50),
+    fit = c(50, 90),
+    statistics = c(90, 100),
+    done = c(100, 100),
+    c(0, 100)
+  )
+}
+
+# counters of the running child ("fitting <mz> (12/377)" on stdout)
+processJobCounters <- function(job) {
+  lines <- tryCatch(readLines(job$stdout_file, warn = FALSE), error = function(e) character())
+  hits <- regmatches(lines, regexec("\\(([0-9]+)/([0-9]+)\\)", lines))
+  hits <- hits[lengths(hits) == 3L]
+  if (length(hits) == 0L) {
+    return(list(done = NA_integer_, total = NA_integer_))
+  }
+  last <- hits[[length(hits)]]
+  list(done = as.integer(last[2]), total = as.integer(last[3]))
+}
+
+# current progress: stage, counters and the overall percentage
+processJobStatus <- function(job) {
+  stage <- processJobProgress(job)
+  counters <- processJobCounters(job)
+  range <- processStageRange(stage)
+
+  fraction <- 0
+  if (identical(stage, "fit") && !is.na(counters$total) && counters$total > 0) {
+    fraction <- min(1, counters$done / counters$total)
+  }
+
+  list(
+    stage = stage,
+    done = counters$done,
+    total = counters$total,
+    percent = round(range[1] + (range[2] - range[1]) * fraction)
+  )
+}
