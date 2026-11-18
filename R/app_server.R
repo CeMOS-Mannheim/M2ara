@@ -300,25 +300,26 @@ appServer <- function(input, output, session, defaults = NULL) {
   # the peak panel grows with the number of compared features
   output$peakUi <- renderUI({
     sel <- selected_features()
-    height <- if (length(sel) > 1L) {
-      paste0(250 * ceiling(length(sel) / 2), "px")
+    if (length(sel) > 1L) {
+      plotOutput("peakGrid", height = paste0(250 * ceiling(length(sel) / 2), "px"))
     } else {
-      "auto"
+      plotly::plotlyOutput("peak", height = "auto")
     }
-    plotly::plotlyOutput("peak", height = height)
+  })
+
+  output$peakGrid <- renderPlot({
+    sel <- selected_features()
+    if (!appData$show_plot || length(sel) < 2L) {
+      return(NULL)
+    }
+    peakGrid(appData$res, sel,
+             tol = input$zoom,
+             centroided = isTRUE(appData$centroided),
+             showPeaks = isTRUE(input$showPeaks))
   })
 
   output$peak <- renderPlotly({
     if (appData$show_plot) {
-      sel <- selected_features()
-
-      if (length(sel) > 1L) {
-        return(plotPeaksGrid(appData$res, sel,
-                             tol = input$zoom,
-                             centroided = isTRUE(appData$centroided),
-                             showPeaks = isTRUE(input$showPeaks)))
-      }
-
       p_peak <- plotPeak(appData$res,
                          mzIdx = selected_features()[1],
                          tol = input$zoom,

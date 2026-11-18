@@ -21,12 +21,13 @@ test_that("plotCurvesOverlay validates its input", {
   expect_error(plotCurvesOverlay(res, 1, errorbars = "nope"), "arg")
 })
 
-test_that("plotPeaksGrid returns a plotly grid for several features", {
+test_that("peakGrid combines the peak profiles of several features", {
   res <- MALDIcellassay::Blank2022res
 
-  g <- plotPeaksGrid(res, 1:2, tol = 0.8, centroided = FALSE, showPeaks = TRUE)
-  expect_s3_class(g, "plotly")
+  g <- peakGrid(res, 1:2, tol = 0.8, centroided = FALSE, showPeaks = TRUE)
+  expect_s3_class(g, "patchwork")
+  expect_equal(length(g$patches$plots) + 1L, 2L)
 
-  # 2 x 1 panels, each with the traces of the concentration series
-  expect_true(length(g$x$data) >= 2)
+  expect_error(peakGrid(res, integer(0), tol = 0.8, centroided = FALSE,
+                        showPeaks = TRUE), "no feature selected")
 })

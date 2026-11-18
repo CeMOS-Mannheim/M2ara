@@ -137,24 +137,20 @@ plotCurvesOverlay <- function(res, mzIdxs, errorbars = "none", normalize = FALSE
 
   p
 }
-
-# peak plots of several features as plotly subplot grid
-plotPeaksGrid <- function(res, mzIdxs, tol, centroided, showPeaks, ncol = 2) {
+# peak profiles of several features as a grid (2 columns by default); every
+# panel keeps its own axes, which a plotly subplot does not
+peakGrid <- function(res, mzIdxs, tol, centroided, showPeaks, ncol = 2) {
   mzIdxs <- mzIdxs[!is.na(mzIdxs)]
   if (length(mzIdxs) == 0L) {
     stop("no feature selected", call. = FALSE)
   }
 
-  plots <- lapply(seq_along(mzIdxs), function(i) {
-    mz <- getMzFromMzIdx(res, mzIdxs[i])
-    p <- plotPeak(res, mzIdx = mzIdxs[i], tol = tol,
-                  centroided = centroided, showPeaks = showPeaks) +
-      ggplot2::labs(title = paste0("m/z ", round(mz, 2)))
-
-    plotly::ggplotly(p) %>%
-      plotly::layout(showlegend = i == 1)
+  plots <- lapply(mzIdxs, function(idx) {
+    mz <- getMzFromMzIdx(res, idx)
+    plotPeak(res, mzIdx = idx, tol = tol, centroided = centroided,
+             showPeaks = showPeaks) +
+      ggplot2::labs(title = paste0("m/z ", sprintf("%.2f", mz)))
   })
 
-  rows <- ceiling(length(plots) / ncol)
-  plotly::subplot(plots, nrows = rows, shareY = TRUE, margin = 0.04)
+  patchwork::wrap_plots(plots, ncol = ncol, guides = "collect")
 }
