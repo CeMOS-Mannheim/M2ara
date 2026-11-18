@@ -38,6 +38,14 @@ mainTab <- function(defaults) {
                                     style = "margin-top: 28px"
                                   )
                            ),
+                           column(3,
+                                  div(
+                                    checkboxInput(inputId = "normalizeCompare",
+                                                  label = "Normalize curves",
+                                                  value = FALSE),
+                                    style = "margin-top: 28px"
+                                  )
+                           ),
                            column(2,
                                   sliderInput(inputId = "zoom",
                                               label = "m/z range",

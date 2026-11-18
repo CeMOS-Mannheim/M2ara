@@ -262,8 +262,33 @@ appServer <- function(input, output, session, defaults = NULL) {
   })
 
   ### curve and peak plots ####
+  # at most 4 features can be compared
+  selected_features <- reactive({
+    sel <- input$mzTable_rows_selected
+    sel <- sel[!is.na(sel)]
+    utils::head(sel, 4)
+  })
+
+  observeEvent(input$mzTable_rows_selected, {
+    sel <- input$mzTable_rows_selected
+    if (length(sel) > 4L) {
+      keep <- utils::head(sel, 4)
+      DT::selectRows(DT::dataTableProxy("mzTable", session = session), keep)
+      showNotification("At most 4 features can be compared - kept the first 4.",
+                       type = "warning", duration = 5)
+    }
+  }, ignoreNULL = TRUE)
+
   output$curve <- renderPlotly({
     if (appData$show_plot) {
+      sel <- selected_features()
+
+      if (length(sel) > 1L) {
+        return(ggplotly(plotCurvesOverlay(appData$res, sel,
+                                          errorbars = input$errorbars,
+                                          normalize = isTRUE(input$normalizeCompare))))
+      }
+
       p_curve <- plotCurves(appData$res,
                             mzIdx = input$mzTable_rows_selected[1],
                             errorbars = input$errorbars) +
@@ -279,10 +304,30 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
+  # the peak panel grows with the number of compared features
+  output$peakUi <- renderUI({
+    sel <- selected_features()
+    height <- if (length(sel) > 1L) {
+      paste0(250 * ceiling(length(sel) / 2), "px")
+    } else {
+      "auto"
+    }
+    plotly::plotlyOutput("peak", height = height)
+  })
+
   output$peak <- renderPlotly({
     if (appData$show_plot) {
+      sel <- selected_features()
+
+      if (length(sel) > 1L) {
+        return(plotPeaksGrid(appData$res, sel,
+                             tol = input$zoom,
+                             centroided = isTRUE(appData$centroided),
+                             showPeaks = isTRUE(input$showPeaks)))
+      }
+
       p_peak <- plotPeak(appData$res,
-                         mzIdx = input$mzTable_rows_selected[1],
+                         mzIdx = selected_features()[1],
                          tol = input$zoom,
                          centroided = isTRUE(appData$centroided),
                          showPeaks = isTRUE(input$showPeaks)) +

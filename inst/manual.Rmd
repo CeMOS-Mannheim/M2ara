@@ -104,6 +104,8 @@ knitr::include_graphics("figures/interface.png")
 
 4.  Analyze your data by clicking on entries in the table on bottom left (3). The plots for the curve and the peaks will change accordingly (4). You may want to display error bars or use the slider to change the displayed *m/z*-range (aka zoom) in the plot displaying the peaks. Note, you do not need to re-upload your data if you want to play with the settings. Just click the **Process spectra**-button again to re-do the calculations and after a short time your results will be updated.
 
+
+   Several features can be selected in the table (click adds a feature, a second click removes it, up to 4): the curves are then drawn as one overlay (colour = *m/z*, tick **Normalize curves** to scale every curve to its own range) and the peak profiles as a 2 x 2 grid - each with the same order and colours.
 The spectra are read once per folder: changing settings and pressing **Process spectra** again only redoes the calculations, the files are not read again. A different folder starts from scratch. Results are cached per dataset and settings, so pressing **Process spectra** with unchanged settings and unchanged files returns the previous result immediately - without reading the spectra. The cache lives in the user cache directory (`tools::R_user_dir("M2ara")`) and can be cleared in the `Settings` tab.
 
 5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** below the peak table: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.

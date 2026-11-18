@@ -20,7 +20,7 @@ createDataTable <- function(stats, plot_ready) {
                  pageLength = 20,
                  autoWidth = TRUE,
                  rownames = FALSE),
-  selection = list(mode = "single",
+  selection = list(mode = "multiple",
                    selected = 1)
   )
 }
