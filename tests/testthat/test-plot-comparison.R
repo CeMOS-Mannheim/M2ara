@@ -33,7 +33,7 @@ test_that("plotPeaksGrid returns a plotly grid for several features", {
 test_that("featureRowStyles maps m/z to the feature colours", {
   styles <- featureRowStyles(c(406.91, 428.00))
 
-  expect_named(styles, c("406.91", "428.00"))
+  expect_equal(names(styles), c("406.91", "428.00"))
   expect_equal(vapply(styles, `[[`, "", "colour"), c("#D55E00", "#009E73"))
   expect_true(all(grepl("^rgba\\(", vapply(styles, `[[`, "", "background"))))
 
