@@ -92,8 +92,14 @@ jobs:
       - name: Verify packages against pak.lock
         run: Rscript tools/check-lockfile.R "$R_LIBS_USER"
 
-      - name: Install Chromium for shinytest2
-        run: sudo apt-get install -y chromium-browser
+      # chromium-browser on recent Ubuntu is a snap stub, which fails when the
+      # snap store is unreachable; use a Chrome build instead
+      - name: Install Chrome for shinytest2
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Point chromote to Chrome
+        run: echo "CHROMOTE_CHROME=${{ steps.setup-chrome.outputs.chrome-path }}" >> $GITHUB_ENV
 
       - name: Ensure testthat installed
         run: R -e "if (!require('testthat')) pak::pkg_install('testthat')"
