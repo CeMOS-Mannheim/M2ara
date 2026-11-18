@@ -307,7 +307,9 @@ appServer <- function(input, output, session, defaults = NULL) {
     shiny::updateQueryString(paste0("?state=",
                                     utils::URLencode(encodeAppState(state), reserved = TRUE)),
                              mode = "replace", session = session)
-    session$sendCustomMessage("m2ara_show_link", list(url = url))
+    local_host <- shiny::isolate(session$clientData$url_hostname) %in%
+      c("127.0.0.1", "localhost", "::1")
+    session$sendCustomMessage("m2ara_show_link", list(url = url, local = local_host))
     showNotification("Share link ready - use the box in the lower right corner.", type = "message", duration = 6)
   })
 

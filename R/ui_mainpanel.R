@@ -24,6 +24,18 @@ appMainPanel <- function(defaults) {
                                                       "Copy link to this view",
                                                       icon = icon("link"),
                                                       style = 'padding:6px; font-size:80%')
+                                  ),
+                                  column(3,
+                                         tags$div(
+                                           tags$label("Open shared view", `for` = "m2araOpenInput",
+                                                      style = "font-weight: normal; font-size: 80%;"),
+                                           tags$div(style = "display: flex; gap: 4px;",
+                                                    tags$input(id = "m2araOpenInput", type = "text",
+                                                               placeholder = "paste a share link",
+                                                               style = "flex: 1; font-size: 80%;"),
+                                                    tags$button(id = "m2araOpenButton", type = "button",
+                                                                class = "btn btn-default btn-sm", "Open"))
+                                         )
                                   )
                                 ),
                                 fluidRow(

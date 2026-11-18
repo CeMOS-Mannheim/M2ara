@@ -6,7 +6,7 @@ settingsDataFrame <- function(input) {
   # filter inputs
   classes <- vapply(inputList, function(x) class(x)[1], character(1))
   sel_class <- "mzTable|shiny"
-  sel_name <-  "mzTable|shiny|plotly|dir|preproc_settings|mapping"
+  sel_name <-  "mzTable|shiny|plotly|dir|preproc_settings|mapping|m2ara"
 
   fil_inputList <- inputList[!grepl(sel_class, classes)]
   fil_inputList <- fil_inputList[!grepl(sel_name, names(fil_inputList))]

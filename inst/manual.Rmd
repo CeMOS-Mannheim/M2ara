@@ -111,7 +111,7 @@ The spectra are read once per folder: changing settings and pressing **Process s
 5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** below the peak table: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
 
 
-**Share a view.** In the `Settings` tab, **Copy link to this view** puts a link with all settings, the folder and the compared features into the clipboard and into the address bar. Opening the link restores them; the run itself still has to be started with **Process spectra**. The link stores the absolute path of the folder, so on another computer it is only used when that folder exists there - otherwise the settings are restored and a note asks for the local folder.
+**Share a view.** In the `Settings` tab, **Copy link to this view** puts a link with all settings, the folder and the compared features into the clipboard and into the address bar. Opening the link restores them; the run itself still has to be started with **Process spectra**. The link stores the absolute path of the folder, so on another computer it is only used when that folder exists there - otherwise the settings are restored and a note asks for the local folder. Because the link contains the host and port of the machine where it was created, a link from a local installation only works locally: paste it into **Open shared view** in the `Settings` tab of the app on the other machine, which applies the settings there regardless of address and port.
 
 **Keyboard shortcuts.**
 

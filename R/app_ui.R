@@ -44,7 +44,9 @@ appUI <- function(defaults) {
                  tags$button(id = "m2araLinkClose", type = "button",
                              class = "btn btn-default btn-sm", "\u00d7")),
         tags$div(id = "m2araLinkHint", style = "font-size: 75%; color: #777;",
-                 "Select the text and press Ctrl+C if the copy button does nothing.")),
+                 "Select the text and press Ctrl+C if the copy button does nothing."),
+        tags$div(id = "m2araLinkLocal", style = "font-size: 75%; color: #b36b00; display: none;",
+                 "This link points to this computer (localhost). To use it on another machine, open 'Open shared view' there and paste it.")),
     # shortcut overview, toggled with Ctrl+/
     div(id = "m2araShortcuts",
         tags$b("Keyboard shortcuts"),

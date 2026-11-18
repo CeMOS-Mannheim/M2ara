@@ -160,6 +160,8 @@ function m2araInit() {
     if (!box || !input) { return; }
     input.value = msg.url;
     box.style.display = 'block';
+    var local = document.getElementById('m2araLinkLocal');
+    if (local) { local.style.display = msg.local ? 'block' : 'none'; }
     input.focus();
     input.select();
   });
@@ -182,6 +184,23 @@ function m2araInit() {
 
   jQuery(document).on('click', '#m2araLinkClose', function () {
     jQuery('#m2araLinkBox').hide();
+  });
+
+  // open a shared view inside this installation: only the state matters, so a
+  // link from another computer (different host/port) still works
+  jQuery(document).on('click', '#m2araOpenButton', function () {
+    var input = document.getElementById('m2araOpenInput');
+    if (!input) { return; }
+    var text = (input.value || '').trim();
+    if (!text) { return; }
+
+    var state = text;
+    var match = /[?&]state=([^&]+)/.exec(text);
+    if (match) { state = decodeURIComponent(match[1]); }
+    state = state.replace(/[?#].*$/, '');
+
+    var base = window.location.pathname || '';
+    window.location.href = base + '?state=' + encodeURIComponent(state);
   });
 
   jQuery(document).on('keydown', m2araKeydown);
