@@ -109,6 +109,21 @@ The spectra are read once per folder: changing settings and pressing **Process s
 
 5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** below the peak table: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
 
+
+**Share a view.** In the `Settings` tab, **Copy link to this view** puts a link with all settings, the folder and the compared features into the clipboard and into the address bar. Opening the link restores them; the run itself still has to be started with **Process spectra**.
+
+**Keyboard shortcuts.**
+
+| Key | Action |
+| --- | --- |
+| `Ctrl+Enter` | Process spectra |
+| `Ctrl+F` | Focus the *m/z* search of the table |
+| `Ctrl+S` | Save plot |
+| `Ctrl+E` | Export results (ZIP) |
+| `Ctrl+D` | Deselect all |
+| `Ctrl+Shift+1` … `Ctrl+Shift+4` | Toggle feature 1–4 |
+| `Ctrl+/` | Show this overview in the app |
+| `Esc` | Deselect all |
 # Analysis pipeline
 
 The analysis pipeline consist of the following steps (see figure below for a graphical overview):

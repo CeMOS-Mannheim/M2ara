@@ -18,6 +18,12 @@ appMainPanel <- function(defaults) {
                                                       "Clear result cache",
                                                       icon = icon("trash"),
                                                       style = 'padding:6px; font-size:80%')
+                                  ),
+                                  column(3,
+                                         actionButton("copyLink",
+                                                      "Copy link to this view",
+                                                      icon = icon("link"),
+                                                      style = 'padding:6px; font-size:80%')
                                   )
                                 ),
                                 fluidRow(

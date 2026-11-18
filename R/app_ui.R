@@ -3,74 +3,44 @@ appUI <- function(defaults) {
   fluidPage(
     title = "M\u00b2ara",
     lang = "en",
-    # selection state of the feature comparison: lives in the browser, keyed by
-    # mzIdx, so paging/filtering does not lose it and the table is never
-    # re-rendered by the server when a checkbox is clicked
-    tags$script(HTML(paste0(
-      "window.m2araSelected = window.m2araSelected || [];
-       window.m2araColours = ['", paste(featureColours(4), collapse = "', '"), "'];
-
-       window.m2araUpdateCheckboxes = function() {
-         var sel = window.m2araSelected || [];
-         var full = sel.length >= 4;
-         jQuery('#mzTable input.m2ara-check').each(function() {
-           var idx = parseInt(this.value, 10);
-           var checked = sel.indexOf(idx) >= 0;
-           this.checked = checked;
-           this.disabled = (!checked && full);
-         });
-         jQuery('#mzTable tbody tr').each(function() {
-           var boxes = jQuery(this).find('input.m2ara-check');
-           if (boxes.length === 0) { return; }
-           var pos = sel.indexOf(parseInt(boxes.val(), 10));
-           if (pos >= 0 && sel.length === 1) {
-             this.style.backgroundColor = 'rgba(0, 0, 0, 0.06)';
-             this.style.borderLeft = '4px solid #999999';
-           } else if (pos >= 0) {
-             var hex = window.m2araColours[pos];
-             var r = parseInt(hex.substr(1, 2), 16);
-             var g = parseInt(hex.substr(3, 2), 16);
-             var b = parseInt(hex.substr(5, 2), 16);
-             this.style.backgroundColor = 'rgba(' + r + ',' + g + ',' + b + ',0.18)';
-             this.style.borderLeft = '4px solid ' + hex;
-           } else {
-             this.style.backgroundColor = '';
-             this.style.borderLeft = '';
-           }
-         });
-       };
-
-       jQuery(document).on('change', '#mzTable input.m2ara-check', function() {
-         var idx = parseInt(this.value, 10);
-         var sel = window.m2araSelected || [];
-         if (this.checked) {
-           if (sel.length >= 4) { this.checked = false; return; }
-           if (sel.indexOf(idx) < 0) { sel.push(idx); }
-         } else {
-           sel = sel.filter(function(v) { return v !== idx; });
-         }
-         window.m2araSelected = sel;
-         window.m2araUpdateCheckboxes();
-         Shiny.setInputValue('mzTable_selected', sel.slice(), {priority: 'event'});
-         // refresh the sort key so a sorted table re-orders, keeping the page
-         var tbl = jQuery('#mzTable table').DataTable();
-         if (tbl && tbl.rows) { tbl.rows().invalidate('data').draw(false); }
-       });
-
-       Shiny.addCustomMessageHandler('m2ara_reset_selection', function(msg) {
-         window.m2araSelected = [];
-         window.m2araUpdateCheckboxes();
-         Shiny.setInputValue('mzTable_selected', [], {priority: 'event'});
-       });"
-    ))),
+    # feature colours and the UI logic (selection, shortcuts, share links)
+    tags$head(
+      tags$script(HTML(paste0(
+        "window.m2araColours = ['", paste(featureColours(4), collapse = "', '"), "'];"
+      ))),
+      tags$script(src = "m2ara/app.js")
+    ),
     tags$style(HTML(
       "#mzTable td.m2ara-check-col, #mzTable th.m2ara-check-col {
          width: 20px !important; min-width: 20px !important;
          max-width: 20px !important; padding: 0 !important;
        }
        #mzTable td.m2ara-check-col input { margin: 0; }
-       #mzTable th.m2ara-check-col { padding-right: 0 !important; }"
+       #mzTable th.m2ara-check-col { padding-right: 0 !important; }
+       #m2araShortcuts {
+         display: none; position: fixed; z-index: 10000; right: 40px; top: 40px;
+         background: #ffffff; border: 1px solid #cccccc; border-radius: 4px;
+         padding: 10px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+         font-size: 80%;
+       }
+       #m2araShortcuts table td { padding: 1px 8px 1px 0; }
+       #m2araShortcuts kbd { background: #f7f7f7; border: 1px solid #cccccc;
+         border-radius: 3px; padding: 0 4px; font-size: 90%; }"
     )),
+    # shortcut overview, toggled with Ctrl+/
+    div(id = "m2araShortcuts",
+        tags$b("Keyboard shortcuts"),
+        tags$table(
+          tags$tr(tags$td(tags$kbd("Ctrl+Enter")), tags$td("Process spectra")),
+          tags$tr(tags$td(tags$kbd("Ctrl+F")), tags$td("Focus the m/z search")),
+          tags$tr(tags$td(tags$kbd("Ctrl+S")), tags$td("Save plot")),
+          tags$tr(tags$td(tags$kbd("Ctrl+E")), tags$td("Export results (ZIP)")),
+          tags$tr(tags$td(tags$kbd("Ctrl+D")), tags$td("Deselect all")),
+          tags$tr(tags$td(tags$kbd("Ctrl+Shift+1-4")), tags$td("Toggle feature 1-4")),
+          tags$tr(tags$td(tags$kbd("Ctrl+/")), tags$td("This overview")),
+          tags$tr(tags$td(tags$kbd("Esc")), tags$td("Deselect all"))
+        )
+    ),
     # shiny sidebar layout
     sidebarLayout(
       #### Sidebar ####

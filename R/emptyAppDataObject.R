@@ -17,5 +17,6 @@ emptyAppDataObject <- function(){
                  show_plot = FALSE,
                  mapping = NULL,
                  centroided = NULL,
-                 settings_snapshot = NULL) # settings of the last run (export)
+                 settings_snapshot = NULL, # settings of the last run (export)
+                 pending_selection = integer(0)) # features from a share link
 }

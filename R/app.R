@@ -19,8 +19,17 @@ app <- function(defaults = NULL) {
     shiny::addResourcePath("figures", figures)
   }
 
+  # javascript of the app (selection, shortcuts, share links)
+  www <- system.file("www", package = "M2ara")
+  if (nzchar(www)) {
+    shiny::addResourcePath("m2ara", www)
+  }
+
   shiny::shinyApp(
-    ui = appUI(defaults),
+    # the settings of a share link are read per request
+    ui = function(request) {
+      appUI(appDefaultsFromUrl(defaults, request$QUERY_STRING)$defaults)
+    },
     server = function(input, output, session) {
       appServer(input, output, session, defaults = defaults)
     }

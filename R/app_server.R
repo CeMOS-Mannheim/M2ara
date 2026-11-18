@@ -6,6 +6,15 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ## main ####
   appData <- emptyAppDataObject()
+  # settings and features of a share link (if the app was opened with one)
+  url_state <- appDefaultsFromUrl(defaults, shiny::isolate(session$clientData$url_search))
+  appData$pending_selection <- url_state$features
+  if (isTRUE(url_state$active)) {
+    # the merged defaults also provide the folder of the link
+    defaults <- url_state$defaults
+    showNotification("Settings restored from the link.", duration = 8, type = "message")
+  }
+
   # background processing job and its cache key
   process_job <- reactiveVal(NULL)
   process_status <- reactiveVal(NULL)
@@ -91,6 +100,7 @@ appServer <- function(input, output, session, defaults = NULL) {
         appData <- storeResults(appData, res = cached$res, input,
                                 stats = getStatistics(cached$res))
         session$sendCustomMessage("m2ara_reset_selection", list())
+        applyPendingSelection()
         updateActionButton(inputId = "process", label = "Re-process")
         return()
       }
@@ -226,6 +236,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     appData <- storeResults(appData, res = out$res, input,
                             stats = getStatistics(out$res))
     session$sendCustomMessage("m2ara_reset_selection", list())
+    applyPendingSelection()
     updateActionButton(inputId = "process", label = "Re-process")
     showNotification("Processing finished.", type = "message", duration = 3)
   })
@@ -269,6 +280,35 @@ appServer <- function(input, output, session, defaults = NULL) {
     sel <- input$mzTable_selected
     sel <- sel[!is.na(sel)]
     utils::head(sel, 4)
+  })
+  # a share link may carry the compared features; apply them once results
+  # are available
+  applyPendingSelection <- function() {
+    pending <- appData$pending_selection
+    if (length(pending) == 0L) {
+      return(invisible(NULL))
+    }
+    appData$pending_selection <- integer(0)
+    keep <- pending[pending >= 1L & pending <= nrow(appData$stats)]
+    if (length(keep) > 0L) {
+      session$sendCustomMessage("m2ara_set_selection",
+                                as.list(utils::head(keep, 4)))
+    }
+    invisible(NULL)
+  }
+
+
+  # share link: current settings, folder and compared features in the URL
+  observeEvent(input$copyLink, {
+    state <- appStateFromInput(input,
+                                dir = appData$selected_dir,
+                                features = selected_features())
+    url <- appShareUrl(session, state)
+    shiny::updateQueryString(paste0("?state=",
+                                    utils::URLencode(encodeAppState(state), reserved = TRUE)),
+                             mode = "replace", session = session)
+    session$sendCustomMessage("m2ara_copy_link", list(url = url))
+    showNotification("Link copied to the clipboard.", type = "message", duration = 5)
   })
 
   observeEvent(input$clearSelection, {
