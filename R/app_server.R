@@ -276,6 +276,10 @@ appServer <- function(input, output, session, defaults = NULL) {
     if (appData$show_plot) {
       sel <- selected_features()
 
+      if (length(sel) == 0L) {
+        return(dummyPlot("Select a feature\nin the table"))
+      }
+
       if (length(sel) > 1L) {
         return(ggplotly(plotCurvesOverlay(appData$res, sel,
                                           errorbars = input$errorbars,
@@ -320,6 +324,10 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   output$peak <- renderPlotly({
     if (appData$show_plot) {
+      if (length(selected_features()) == 0L) {
+        return(dummyPlot("Select a feature\nin the table"))
+      }
+
       p_peak <- plotPeak(appData$res,
                          mzIdx = selected_features()[1],
                          tol = input$zoom,

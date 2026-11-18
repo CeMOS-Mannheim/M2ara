@@ -4,7 +4,7 @@ createDataTable <- function(stats, plot_ready) {
     if (plot_ready == "FALSE") {
       #dummy data
       return(cbind(
-        tibble(m2ara_select = rep("", 10)),
+        tibble(" " = rep("", 10)),
         tibble(mz = c("load", rep("", 9)),
                mzIdx = c("data", rep("", 9)),
                pEC50 = c("to display", rep("", 9)),
@@ -13,7 +13,7 @@ createDataTable <- function(stats, plot_ready) {
       ))
     }
 
-    cbind(tibble(m2ara_select = rep("", nrow(stats))), stats)
+    cbind(tibble(" " = rep("", nrow(stats))), stats)
 
   },
   server = TRUE,
@@ -23,7 +23,7 @@ createDataTable <- function(stats, plot_ready) {
     lengthChange = FALSE,
     paging = TRUE,
     pageLength = 20,
-    autoWidth = TRUE,
+    autoWidth = FALSE,
     rownames = FALSE,
     # column 0 is the checkbox for the feature comparison; the state lives in
     # the browser (window.m2araSelected, keyed by mzIdx), so paging/filtering
@@ -33,8 +33,8 @@ createDataTable <- function(stats, plot_ready) {
         targets = 0,
         orderable = FALSE,
         searchable = FALSE,
-        className = "dt-center",
-        width = "30px",
+        className = "dt-center m2ara-check-col",
+        width = "18px",
         render = DT::JS(
           "function(data, type, row) {
              if (type !== 'display') { return data; }
@@ -56,7 +56,10 @@ createDataTable <- function(stats, plot_ready) {
          var sel = window.m2araSelected || [];
          var pos = sel.indexOf(data[2]);
          var colours = ['#D55E00', '#009E73', '#CC79A7', '#0072B2'];
-         if (pos >= 0) {
+         if (pos >= 0 && sel.length === 1) {
+           row.style.backgroundColor = 'rgba(0, 0, 0, 0.06)';
+           row.style.borderLeft = '4px solid #999999';
+         } else if (pos >= 0) {
            var hex = colours[pos];
            var r = parseInt(hex.substr(1, 2), 16);
            var g = parseInt(hex.substr(3, 2), 16);

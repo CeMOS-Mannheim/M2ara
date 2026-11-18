@@ -23,7 +23,10 @@ appUI <- function(defaults) {
            var boxes = jQuery(this).find('input.m2ara-check');
            if (boxes.length === 0) { return; }
            var pos = sel.indexOf(parseInt(boxes.val(), 10));
-           if (pos >= 0) {
+           if (pos >= 0 && sel.length === 1) {
+             this.style.backgroundColor = 'rgba(0, 0, 0, 0.06)';
+             this.style.borderLeft = '4px solid #999999';
+           } else if (pos >= 0) {
              var hex = window.m2araColours[pos];
              var r = parseInt(hex.substr(1, 2), 16);
              var g = parseInt(hex.substr(3, 2), 16);
@@ -57,6 +60,12 @@ appUI <- function(defaults) {
          Shiny.setInputValue('mzTable_selected', [], {priority: 'event'});
        });"
     ))),
+    tags$style(HTML(
+      "#mzTable td.m2ara-check-col, #mzTable th.m2ara-check-col {
+         width: 18px; min-width: 18px; max-width: 18px; padding: 0 2px;
+       }
+       #mzTable td.m2ara-check-col input { margin: 0; }"
+    )),
     # shiny sidebar layout
     sidebarLayout(
       #### Sidebar ####
