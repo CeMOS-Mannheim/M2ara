@@ -11,7 +11,13 @@ appMainPanel <- function(defaults) {
                                   column(3,
                                          createActionButton(inputId = "saveSettings",
                                                             label = "Save settings",
-                                                            icon = "floppy-disk")                                                            
+                                                            icon = "floppy-disk")
+                                  ),
+                                  column(3,
+                                         actionButton("clearCache",
+                                                      "Clear result cache",
+                                                      icon = icon("trash"),
+                                                      style = 'padding:6px; font-size:80%')
                                   )
                                 ),
                                 fluidRow(

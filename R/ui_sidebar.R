@@ -10,9 +10,6 @@ appSidebar <- function(defaults) {
                      icon = icon("search"),
                      style='padding:6px; font-size:80%',
                      class = "btn-default"),
-      createActionButton(inputId = "load",
-                         label = "  Load spectra ",
-                         icon = "upload"),
       use_busy_spinner(spin = "half-circle",
                        position = "top-left",
                        height = "100px", width = "100px",
@@ -101,6 +98,16 @@ appSidebar <- function(defaults) {
     createActionButton(inputId = "process",
                        label = "Process spectra",
                        icon = "redo"),
+    conditionalPanel(
+      condition = "output.processRunning",
+      div(style = "margin-bottom: 8px;",
+          uiOutput("processStatus"),
+          actionButton("cancelProcess", "Cancel",
+                       icon = icon("stop"),
+                       class = "btn-sm",
+                       style = "margin-top: 4px;")
+      )
+    ),
     textOutput("info1", inline = FALSE),
     textOutput("info2", inline = FALSE),
     textOutput("info3", inline = FALSE),

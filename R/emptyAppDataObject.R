@@ -16,5 +16,6 @@ emptyAppDataObject <- function(){
                  info_state = "initial",
                  show_plot = FALSE,
                  mapping = NULL,
-                 centroided = NULL)
+                 centroided = NULL,
+                 settings_snapshot = NULL) # settings of the last run (export)
 }

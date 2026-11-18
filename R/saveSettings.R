@@ -1,5 +1,7 @@
-saveSettings <- function(input, filename = "settings.csv", info_state) {
-  inputList <- reactiveValuesToList(input)
+# the settings as a data frame (one row); pure function so it can also run in
+# a download handler or a background process
+settingsDataFrame <- function(input) {
+  inputList <- shiny::reactiveValuesToList(input)
 
   # filter inputs
   classes <- vapply(inputList, function(x) class(x)[1], character(1))
@@ -33,10 +35,18 @@ saveSettings <- function(input, filename = "settings.csv", info_state) {
     }
   }
 
+  fil_inputList
+}
+
+saveSettings <- function(input, filename = "settings.csv", info_state = NULL) {
+  settings <- settingsDataFrame(input)
+
   tryCatch({
-    write.csv(fil_inputList, file = filename, row.names = FALSE)
+    utils::write.csv(settings, file = filename, row.names = FALSE)
     message("Inputs written to ", file.path(getwd(), filename))
   }, error = function(e) {
     warning("Failed to save settings: ", conditionMessage(e))
   })
+
+  invisible(filename)
 }

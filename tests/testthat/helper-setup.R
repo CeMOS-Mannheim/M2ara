@@ -1,4 +1,10 @@
-#' Obtain mzML test data from figshare
+#' Obtain mzML test data
+#'
+#' The data comes from figshare and is cached next to the tests. In environments
+#' where the download is blocked (e.g. behind a WAF), point the environment
+#' variable M2ARA_TESTDATA_DIR to a directory that contains either the extracted
+#' folder (mzML/) or the archive (testdata_mzML.zip).
+#'
 #' Returns TRUE if data was successfully extracted
 obtain_mzml_data <- function() {
   zip_file <- "testdata_mzML.zip"
@@ -7,6 +13,22 @@ obtain_mzml_data <- function() {
 
   # Already extracted?
   if (dir.exists(data_dir)) return(TRUE)
+
+  # A prepared test data directory (e.g. from a manual download)
+  external <- Sys.getenv("M2ARA_TESTDATA_DIR", unset = "")
+  if (nzchar(external)) {
+    external_dir <- file.path(external, data_dir)
+    if (dir.exists(external_dir)) {
+      file.copy(external_dir, ".", recursive = TRUE)
+      return(dir.exists(data_dir))
+    }
+
+    external_zip <- file.path(external, zip_file)
+    if (file.exists(external_zip)) {
+      utils::unzip(external_zip, exdir = ".")
+      return(dir.exists(data_dir))
+    }
+  }
 
   # Already downloaded but not extracted?
   if (file.exists(zip_file)) {
@@ -29,7 +51,25 @@ obtain_mzml_data <- function() {
   }, error = function(e) FALSE)
   result
 }
-
+#' Wait until an exported test value reaches the expected state
+#'
+#' shinytest2 waits for the app to be idle before it reads values, but the
+#' background processing polls continuously, so the app is never idle while a
+#' job runs. This helper polls the exported value directly.
+wait_for_info_state <- function(app, state, timeout = 600) {
+  started <- Sys.time()
+  repeat {
+    current <- tryCatch(app$get_value(export = "infoState"),
+                        error = function(e) NULL)
+    if (identical(current, state)) {
+      return(TRUE)
+    }
+    if (as.numeric(difftime(Sys.time(), started, units = "secs")) > timeout) {
+      return(FALSE)
+    }
+    Sys.sleep(1)
+  }
+}
 
 clean_mzml_data <- function() {
   unlink("mzML", recursive = TRUE)

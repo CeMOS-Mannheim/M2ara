@@ -46,32 +46,23 @@ test_that("mzML workflow: load spectra, process, export a complete archive", {
   expect_equal(app$get_value(export = "infoState"), "dir_set")
 
   # ------------------------------------------------------------------
-  # 5. Click "Load spectra"
+  # 5./6. One button: "Process spectra" loads the spectra (if necessary) and
+  #      processes them
   # ------------------------------------------------------------------
-  app$click("load")
+  app$click("process", wait_ = FALSE)
 
-  app$wait_for_value(
-    export  = "infoState",
-    timeout = 120000    # 2 minutes for loading 144 mzML files
-  )
-  expect_equal(app$get_value(export = "infoState"), "loaded")
-
-  # ------------------------------------------------------------------
-  # 6. Click "Process spectra"
-  # ------------------------------------------------------------------
-  app$click("process")
-
-  app$wait_for_value(
-    export  = "infoState",
-    timeout = 300000    # 5 minutes for full processing + curve fitting
-  )
-  expect_equal(app$get_value(export = "infoState"), "processed")
+  expect_true(wait_for_info_state(app, "processed", timeout = 900))
+  if (!identical(app$get_value(export = "infoState"), "processed")) {
+    print(utils::tail(app$get_logs(), 20))
+  }
 
   # ------------------------------------------------------------------
   # 7. Export the results (one ZIP with all tables)
   # ------------------------------------------------------------------
-  zip_path <- app$get_download("exportRun")
+  # the job is finished, so the app is idle again
+  app$wait_for_idle(timeout = 60000)
 
+  zip_path <- app$get_download("exportRun")
   expect_true(file.exists(zip_path),
               info = "Downloaded archive should exist on disk")
 
