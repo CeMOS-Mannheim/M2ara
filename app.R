@@ -17,3 +17,4 @@ if (is_checkout && requireNamespace("pkgload", quietly = TRUE)) {
 }
 
 M2ara::app()
+

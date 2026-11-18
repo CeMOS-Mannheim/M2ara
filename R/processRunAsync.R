@@ -11,6 +11,8 @@ processRunAsync <- function(spec_all, spec_idx, centroided, preprocessing,
   data_file <- tempfile(pattern = "m2ara_process_", fileext = ".rds")
   result_file <- tempfile(pattern = "m2ara_result_", fileext = ".rds")
   progress_file <- tempfile(pattern = "m2ara_progress_", fileext = ".txt")
+  stdout_file <- tempfile(pattern = "m2ara_stdout_", fileext = ".log")
+  stderr_file <- tempfile(pattern = "m2ara_stderr_", fileext = ".log")
 
   saveRDS(
     list(
@@ -26,7 +28,16 @@ processRunAsync <- function(spec_all, spec_idx, centroided, preprocessing,
   writeLines("queued", progress_file)
 
   job <- callr::r_bg(
-    function(data_file, progress_file, result_file) {
+    function(data_file, progress_file, result_file, dev_path) {
+      # In development the app runs from a source checkout (pkgload) while the
+      # installed package may be missing or outdated: load the sources then.
+      if (!is.null(dev_path) && nzchar(dev_path)) {
+        if (!requireNamespace("pkgload", quietly = TRUE)) {
+          stop("M2ara is not installed and pkgload is not available")
+        }
+        pkgload::load_all(dev_path, quiet = TRUE)
+      }
+
       args <- readRDS(data_file)
 
       process <- utils::getFromNamespace("processRun", "M2ara")
@@ -48,14 +59,15 @@ processRunAsync <- function(spec_all, spec_idx, centroided, preprocessing,
     args = list(
       data_file = data_file,
       progress_file = progress_file,
-      result_file = result_file
+      result_file = result_file,
+      dev_path = processDevelopmentPath()
     ),
     # R CMD check exports R_TESTS; a child process that inherits it would try to
     # run the test suite again (callr::rcmd_safe_env() unsets it)
     env = callr::rcmd_safe_env(),
     supervise = TRUE,
-    stdout = tempfile(pattern = "m2ara_stdout_", fileext = ".log"),
-    stderr = tempfile(pattern = "m2ara_stderr_", fileext = ".log")
+    stdout = stdout_file,
+    stderr = stderr_file
   )
 
   structure(
@@ -63,10 +75,53 @@ processRunAsync <- function(spec_all, spec_idx, centroided, preprocessing,
       job = job,
       data_file = data_file,
       result_file = result_file,
-      progress_file = progress_file
+      progress_file = progress_file,
+      stdout_file = stdout_file,
+      stderr_file = stderr_file
     ),
     class = "m2ara_process_job"
   )
+}
+
+# Path of the sources when M2ara is loaded from a checkout (development), NULL
+# for an installed package: the child then uses the installed one.
+processDevelopmentPath <- function() {
+  ns <- tryCatch(asNamespace("M2ara"), error = function(e) NULL)
+  if (is.null(ns)) {
+    return(NULL)
+  }
+
+  path <- tryCatch(getNamespaceInfo(ns, "path"), error = function(e) NULL)
+  if (is.null(path) || !dir.exists(path)) {
+    return(NULL)
+  }
+
+  # an installed package has R/M2ara.rdb, a checkout has R/*.R sources
+  r_dir <- file.path(path, "R")
+  is_source <- dir.exists(r_dir) && length(list.files(r_dir, pattern = "\\.R$")) > 0L
+  if (!is_source) {
+    return(NULL)
+  }
+
+  normalizePath(path, winslash = "/")
+}
+
+# output of the child process (for error messages)
+processJobLog <- function(job) {
+  read_log <- function(file) {
+    if (!file.exists(file)) {
+      return(character())
+    }
+    tryCatch(readLines(file, warn = FALSE), error = function(e) character())
+  }
+
+  lines <- c(read_log(job$stdout_file), read_log(job$stderr_file))
+  lines <- trimws(lines)
+  lines <- lines[nzchar(lines)]
+  if (length(lines) == 0L) {
+    return("")
+  }
+  paste(utils::tail(lines, 8), collapse = "\n")
 }
 
 # last reported stage ("queued", "preprocess", ..., "done")
@@ -99,7 +154,8 @@ processJobCancel <- function(job) {
 }
 
 processJobCleanup <- function(job) {
-  unlink(c(job$data_file, job$result_file, job$progress_file))
+  unlink(c(job$data_file, job$result_file, job$progress_file,
+           job$stdout_file, job$stderr_file))
   invisible(NULL)
 }
 

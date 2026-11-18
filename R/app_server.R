@@ -140,14 +140,22 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
 
     out <- processJobResult(job)
+    job_log <- processJobLog(job)
     processJobCleanup(job)
     process_job(NULL)
     hide_spinner()
 
     if (is.null(out)) {
       appData$info_state <- "fitErrorOther"
-      showNotification("Processing failed. Please check the settings.",
-                       type = "error", duration = 10)
+      if (nzchar(job_log)) {
+        message("processing failed:\n", job_log)
+        showNotification(paste0("Processing failed: ",
+                                strsplit(job_log, "\n")[[1]][1]),
+                         type = "error", duration = 15)
+      } else {
+        showNotification("Processing failed. Please check the settings.",
+                         type = "error", duration = 15)
+      }
       return()
     }
 
