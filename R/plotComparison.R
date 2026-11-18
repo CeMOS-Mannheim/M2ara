@@ -11,21 +11,6 @@ featureColours <- function(n) {
   rep(palette, length.out = n)
 }
 
-# CSS styles for the selected rows in the table (light tint of the feature
-# colour plus a coloured bar on the left)
-featureRowStyles <- function(mz) {
-  colours <- featureColours(length(mz))
-  styles <- lapply(seq_along(mz), function(i) {
-    rgb <- grDevices::col2rgb(colours[i])
-    list(
-      colour = colours[i],
-      background = sprintf("rgba(%d, %d, %d, 0.18)", rgb[1], rgb[2], rgb[3])
-    )
-  })
-  names(styles) <- sprintf("%.2f", mz)
-  styles
-}
-
 # intensities of one m/z in the single spectra, per concentration
 singlePeakStats <- function(res, mz) {
   int <- vapply(getSinglePeaks(res), function(x) {

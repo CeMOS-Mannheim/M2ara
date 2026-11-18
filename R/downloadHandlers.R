@@ -10,6 +10,10 @@ downloadHandlerPlots <- function(res, mzIdx, errorbars, zoom, centroided = FALSE
       }
     },
     content = function(file) {
+      if (length(mzIdx) == 0L || is.na(mzIdx)) {
+        warning("Select a feature first.")
+        return(invisible(NULL))
+      }
       if (plot_ready) {
         # generate plots at download time (avoids out-of-scope variable issues)
         p_curve <- plotCurves(res,

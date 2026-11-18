@@ -90,6 +90,7 @@ appServer <- function(input, output, session, defaults = NULL) {
         showNotification("Results loaded from the cache.", duration = 5, type = "message")
         appData <- storeResults(appData, res = cached$res, input,
                                 stats = getStatistics(cached$res))
+        session$sendCustomMessage("m2ara_reset_selection", list())
         updateActionButton(inputId = "process", label = "Re-process")
         return()
       }
@@ -224,6 +225,7 @@ appServer <- function(input, output, session, defaults = NULL) {
                     list(res = out$res, centroided = isTRUE(appData$centroided)))
     appData <- storeResults(appData, res = out$res, input,
                             stats = getStatistics(out$res))
+    session$sendCustomMessage("m2ara_reset_selection", list())
     updateActionButton(inputId = "process", label = "Re-process")
     showNotification("Processing finished.", type = "message", duration = 3)
   })
@@ -264,32 +266,10 @@ appServer <- function(input, output, session, defaults = NULL) {
   ### curve and peak plots ####
   # at most 4 features can be compared
   selected_features <- reactive({
-    sel <- input$mzTable_rows_selected
+    sel <- input$mzTable_selected
     sel <- sel[!is.na(sel)]
     utils::head(sel, 4)
   })
-
-  observeEvent(input$mzTable_rows_selected, {
-    sel <- input$mzTable_rows_selected
-    if (length(sel) > 4L) {
-      keep <- utils::head(sel, 4)
-      DT::selectRows(DT::dataTableProxy("mzTable", session = session), keep)
-      showNotification("At most 4 features can be compared - kept the first 4.",
-                       type = "warning", duration = 5)
-    }
-  }, ignoreNULL = TRUE)
-
-  # tint the compared features in the table with their plot colours
-  observeEvent(list(selected_features(), appData$show_plot), {
-    sel <- selected_features()
-    if (length(sel) == 0L || is.null(appData$res) || !isTRUE(appData$show_plot)) {
-      session$sendCustomMessage("m2ara_row_colours", list())
-      return()
-    }
-
-    mz <- vapply(sel, function(i) getMzFromMzIdx(appData$res, i), numeric(1))
-    session$sendCustomMessage("m2ara_row_colours", featureRowStyles(mz))
-  }, ignoreNULL = FALSE)
 
   output$curve <- renderPlotly({
 
@@ -303,12 +283,12 @@ appServer <- function(input, output, session, defaults = NULL) {
       }
 
       p_curve <- plotCurves(appData$res,
-                            mzIdx = input$mzTable_rows_selected[1],
+                            mzIdx = selected_features()[1],
                             errorbars = input$errorbars) +
         labs(title = paste0("m/z = ",
                             round(
                               getMzFromMzIdx(appData$res,
-                                             input$mzTable_rows_selected[1]),
+                                             selected_features()[1]),
                               2)))
 
       ggplotly(p_curve)
@@ -382,7 +362,7 @@ appServer <- function(input, output, session, defaults = NULL) {
                    stat = input$plateStat,
                    PCs = c(input$pcaX, input$pcaY),
                    log10 = input$plateScale,
-                   mz_idx = input$mzTable_rows_selected[1])
+                   mz_idx = selected_features()[1])
     } else {
       shinyjs::hide(id = "plateStat")
       shinyjs::hide(id = "plateScale")
@@ -535,7 +515,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### download handler ####
   output$downloadPlot <- downloadHandlerPlots(res = appData$res,
-                                              mzIdx = input$mzTable_rows_selected[1],
+                                              mzIdx = selected_features()[1],
                                               errorbars = input$errorbars,
                                               zoom = input$zoom,
                                               centroided = isTRUE(appData$centroided),
