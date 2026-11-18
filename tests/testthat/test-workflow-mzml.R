@@ -70,7 +70,13 @@ test_that("mzML workflow: load spectra, process, export a complete archive", {
   # ------------------------------------------------------------------
   # 7. Export the results (one ZIP with all tables)
   # ------------------------------------------------------------------
-  zip_path <- app$get_download("exportRun")
+  # processing runs in a background process: let the app settle first
+  app$wait_for_idle(timeout = 60000)
+
+  zip_path <- tryCatch(app$get_download("exportRun"), error = function(e) {
+    message("app log:\n", paste(utils::tail(app$get_logs(), 20), collapse = "\n"))
+    stop(e)
+  })
 
   expect_true(file.exists(zip_path),
               info = "Downloaded archive should exist on disk")
