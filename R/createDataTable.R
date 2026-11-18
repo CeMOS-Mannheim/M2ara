@@ -18,13 +18,13 @@ createDataTable <- function(stats, plot_ready) {
   },
   server = FALSE,
   filter = "bottom",
+  rownames = FALSE,
   options = list(
     searching = TRUE,
     lengthChange = FALSE,
     paging = TRUE,
     pageLength = 20,
     autoWidth = FALSE,
-    rownames = FALSE,
     # column 0 is the checkbox for the feature comparison; the state lives in
     # the browser (window.m2araSelected, keyed by mzIdx), so paging/filtering
     # re-applies it without a server round trip
