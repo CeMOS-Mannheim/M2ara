@@ -635,8 +635,10 @@ appServer <- function(input, output, session, defaults = NULL) {
                    pca =  appData$pca,
                    clust = appData$clust)
 
+  # shut down when the browser is gone, but not on a page reload
+  registerSession()
   session$onSessionEnded(function() {
-    stopApp()
+    unregisterSession(function() shiny::stopApp())
   })
 
 }

@@ -29,6 +29,7 @@ Imports:
     DT,
     plotly,
     shiny,
+    later,
     shinyjs,
     shinyFiles,
     shinycssloaders,
