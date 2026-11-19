@@ -539,11 +539,22 @@ appServer <- function(input, output, session, defaults = NULL) {
         type = "warning", duration = 10)
     }
 
+    # the axes have to differ; a run with only one component must not leave the
+    # y axis on PC1 forever
     keep <- nonEmptyComponents(pca)
-    updateSelectInput(session, "pcaX", choices = keep,
-                      selected = if (input$pcaX %in% keep) input$pcaX else keep[1])
-    updateSelectInput(session, "pcaY", choices = keep,
-                      selected = if (input$pcaY %in% keep) input$pcaY else keep[min(2, length(keep))])
+    sel_x <- if (input$pcaX %in% keep) input$pcaX else keep[1]
+    others <- setdiff(keep, sel_x)
+
+    if (length(others) == 0L) {
+      sel_y <- sel_x
+      showNotification("Only one component contains features - reduce the L1 penalty to get more.",
+                       type = "warning", duration = 8)
+    } else {
+      sel_y <- if (input$pcaY %in% others) input$pcaY else others[1]
+    }
+
+    updateSelectInput(session, "pcaX", choices = keep, selected = sel_x)
+    updateSelectInput(session, "pcaY", choices = keep, selected = sel_y)
   })
 
   output$pcaSparsity <- renderText({
