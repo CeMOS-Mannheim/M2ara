@@ -60,3 +60,11 @@ test_that("generatePCA needs more spectra than components", {
 
   expect_error(generatePCA(res, num_PC = n), "More spectra than components")
 })
+test_that("generatePCA reports the parameters of the run", {
+  res <- MALDIcellassay::Blank2022res
+  pca <- generatePCA(res, num_PC = 3, alpha = 1e-2, beta = 5e-3)
+
+  expect_equal(pca$alpha, 1e-2)
+  expect_equal(pca$beta, 5e-3)
+  expect_equal(pca$transform, "as_processed")
+})

@@ -94,7 +94,9 @@ generatePCA <- function(res, num_PC, alpha = 1e-2, beta = 1e-3,
        active = active,
        dropped = sum(!keep),
        naReplaced = naReplaced,
-       transform = transform)
+       transform = transform,
+       alpha = alpha,
+       beta = beta)
 }
 
 # loadings of the given components, joined to the curves by feature index

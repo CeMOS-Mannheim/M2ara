@@ -547,14 +547,27 @@ appServer <- function(input, output, session, defaults = NULL) {
   })
 
   output$pcaSparsity <- renderText({
-    if (is.null(appData$pca)) {
+    pca <- appData$pca
+    if (is.null(pca)) {
       return("")
     }
-    active <- appData$pca$active
-    total <- length(appData$pca$mzIdx)
-    paste0("active features: ",
-           paste(names(active), paste0(active, "/", total), sep = " ", collapse = " \u00b7 "),
-           "  (L1 = ", signif(10^input$pcaAlpha, 2), ")")
+
+    total <- length(pca$mzIdx)
+    counts <- paste(names(pca$active),
+                    paste0(pca$active, "/", total),
+                    sep = " ", collapse = " \u00b7 ")
+
+    # the numbers belong to the last run, the sliders may already differ
+    changed <- !isTRUE(all.equal(pca$alpha, 10^input$pcaAlpha))
+    hint <- if (changed) {
+      "  - settings changed, press 'Perform PCA' again"
+    } else {
+      ""
+    }
+
+    paste0("last run: ", counts,
+           "  (L1 = ", signif(pca$alpha, 2),
+           ", ", pca$transform, ")", hint)
   })
 
   observeEvent(input$doPca, {
