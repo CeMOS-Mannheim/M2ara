@@ -106,14 +106,9 @@ loadingsPlot <- function(pca, pc, simple = TRUE, maxBars = 20, perSide = 10) {
   if (simple) {
     df_red <- activeLoadings(pca, pc, maxBars = maxBars, perSide = perSide)
     nShown <- nrow(df_red)
-    plural <- if (nShown == 1L) "feature" else "features"
 
-    title <- if (nShown < nActive) {
-      sprintf("Top-Features for %s (%d of %d active %s)",
-              pc, nShown, nActive, plural)
-    } else {
-      sprintf("Top-Features for %s (%d active %s)", pc, nShown, plural)
-    }
+    title <- sprintf("Top-Features for %s (%d/%d active features)",
+                     pc, nShown, nActive)
 
     df_red <- df_red %>%
       mutate(sign = ifelse(.data$val > 0, "pos", "neg")) %>%
@@ -144,7 +139,7 @@ loadingsPlot <- function(pca, pc, simple = TRUE, maxBars = 20, perSide = 10) {
       geom_linerange(aes(ymin = 0, ymax = val), show.legend = FALSE) +
       labs(x = "m/z [Da]",
            y = paste0(pc, " Loading"),
-           title = sprintf("Feature importance for %s (%d of %d features active)",
+           title = sprintf("Feature importance for %s (%d/%d features active)",
                            pc, nActive, length(vals))) +
       theme(legend.position = "none")
   }
