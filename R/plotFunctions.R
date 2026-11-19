@@ -13,6 +13,14 @@ m2araTheme <- function() {
 }
 
 pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
+  # the same component on both axes would draw the identity line
+  if (identical(parse_number(x), parse_number(y))) {
+    return(ggplotly(plateMessage(paste0(
+      "x and y show the same component (", x, ").\n",
+      "Pick another component for one of the axes."
+    ))))
+  }
+
   xnum <- parse_number(x)
   ynum <- parse_number(y)
   conc <- as.numeric(as.character(conc))
@@ -32,7 +40,10 @@ pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
                col = c,
                text = spot)) +
     geom_point() +
-    stat_ellipse(aes(group = c), level = ellipseLevel) +
+    # own mapping so the ellipse does not inherit the plotly only `text`
+    stat_ellipse(mapping = aes(x = xax, y = yax, group = c, col = c),
+                 inherit.aes = FALSE,
+                 level = ellipseLevel) +
     scale_color_viridis_d(end = 0.75, option = "C") +
     labs(col = "Conc. [M]",
          x = paste0(x, " (", exp[xnum], "% expl. var.)"),
@@ -43,19 +54,66 @@ pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
   return(p)
 }
 
-loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
-  pcnum <- parse_number(pc)
+# loadings of the active features of one component, weakest to strongest
+# loadings of the active features of one component, weakest to strongest
+#
+# At most perSide features per sign, and never more than maxBars in total: when
+# one sign has fewer features the other one may use the free slots.
+activeLoadings <- function(pca, pc, maxBars = 20, perSide = 10) {
+  vals <- pca$loadings[[as.character(pc)]]
+  active <- abs(vals) >= 0.01 * max(abs(vals))
 
-  df <- tibble(mz = rownames(pca[[2]]),
-               val = pca[[2]] %>% pull(pcnum)) %>%
-    mutate(mz = round(as.numeric(mz), 2)) %>%
-    arrange(desc(val)) %>%
-    mutate(sign = ifelse(val > 0, "pos", "neg"))
-  if(simple) {
-    df_red <- slice_head(df, n = n) %>%
-      bind_rows(slice_tail(df, n = n)) %>%
-      mutate(mz = factor(mz)) %>%
-      mutate(mz = fct_reorder(mz, .x = val))
+  df <- tibble(mz = as.numeric(rownames(pca$loadings)),
+               val = vals,
+               active = active) %>%
+    filter(.data$active)
+
+  pos <- df %>% filter(.data$val > 0) %>% arrange(desc(.data$val))
+  neg <- df %>% filter(.data$val < 0) %>% arrange(.data$val)
+
+  nPos <- min(nrow(pos), perSide)
+  nNeg <- min(nrow(neg), perSide)
+
+  # a sign with fewer features than perSide lets the other one use the rest,
+  # but never more than maxBars in total
+  free <- maxBars - (nPos + nNeg)
+  if (free > 0 && nrow(pos) > nPos) {
+    nPos <- min(nrow(pos), nPos + free)
+  } else if (free > 0 && nrow(neg) > nNeg) {
+    nNeg <- min(nrow(neg), nNeg + free)
+  }
+
+  while (nPos + nNeg > maxBars) {
+    if (nPos >= nNeg && nPos > 0L) {
+      nPos <- nPos - 1L
+    } else if (nNeg > 0L) {
+      nNeg <- nNeg - 1L
+    } else {
+      break
+    }
+  }
+
+  bind_rows(slice_head(pos, n = nPos),
+            slice_head(neg, n = nNeg)) %>%
+    arrange(.data$val)
+}
+
+loadingsPlot <- function(pca, pc, simple = TRUE, maxBars = 20, perSide = 10) {
+  vals <- pca$loadings[[as.character(pc)]]
+  # same definition as the active feature count above the plot
+  nActive <- sum(abs(vals) >= 0.01 * max(abs(vals)))
+
+  if (simple) {
+    df_red <- activeLoadings(pca, pc, maxBars = maxBars, perSide = perSide)
+    nShown <- nrow(df_red)
+
+    title <- sprintf("Top-Features for %s (%d/%d active features)",
+                     pc, nShown, nActive)
+
+    df_red <- df_red %>%
+      mutate(sign = ifelse(.data$val > 0, "pos", "neg")) %>%
+      mutate(mz = factor(.data$mz)) %>%
+      mutate(mz = fct_reorder(.data$mz, .x = .data$val))
 
     p <- df_red %>%
       ggplot(aes(x = mz,
@@ -66,10 +124,14 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
       coord_flip() +
       labs(x = "m/z [Da]",
            y = paste0(pc, " Loading"),
-           title = paste("Top-Features for", pc)) +
+           title = title) +
       theme(legend.position = "none")
 
   } else {
+    df <- tibble(mz = as.numeric(rownames(pca$loadings)),
+                 val = vals) %>%
+      mutate(sign = ifelse(.data$val > 0, "pos", "neg"))
+
     p <- df %>%
       ggplot(aes(x = mz,
                  y = val,
@@ -77,12 +139,12 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
       geom_linerange(aes(ymin = 0, ymax = val), show.legend = FALSE) +
       labs(x = "m/z [Da]",
            y = paste0(pc, " Loading"),
-           title = paste("Feature importance for", pc)) +
+           title = sprintf("Feature importance for %s (%d/%d features active)",
+                           pc, nActive, length(vals))) +
       theme(legend.position = "none")
   }
-  p <- ggplotly(p)
 
-  return(p)
+  ggplotly(p)
 }
 
 # short message instead of an empty plate (no m/z selected, no PCA data, ...)

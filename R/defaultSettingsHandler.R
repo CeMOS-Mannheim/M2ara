@@ -19,7 +19,7 @@ generateDefaults <- function() {
                      zoom = 4,
                      plateStat = "Recal-shift",
                      plateScale = FALSE,
-                     pcaAlpha = -3,
+                     pcaAlpha = -2,
                      pcaBeta = -3,
                      pcaX = "PC1",
                      pcaY = "PC2",

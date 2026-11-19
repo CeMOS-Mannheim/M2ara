@@ -480,18 +480,128 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### PCA tab ####
   # default plot for PCA
+  # the two axes must show different components
+  pcaComponents <- reactive({
+    if (is.null(appData$pca)) {
+      return(paste0("PC", 1:5))
+    }
+    nonEmptyComponents(appData$pca)
+  })
+
+  observeEvent(input$pcaX, {
+    keep <- pcaComponents()
+    if (!is.null(input$pcaY) && identical(input$pcaY, input$pcaX) && length(keep) > 1L) {
+      updateSelectInput(session, "pcaY", selected = setdiff(keep, input$pcaX)[1])
+    }
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$pcaY, {
+    keep <- pcaComponents()
+    if (!is.null(input$pcaX) && identical(input$pcaX, input$pcaY) && length(keep) > 1L) {
+      updateSelectInput(session, "pcaX", selected = setdiff(keep, input$pcaY)[1])
+    }
+  }, ignoreInit = TRUE)
+
   output$pca <- renderPlotly({
     dummyPlot()
   })
 
-  observeEvent(input$doPca, {
-    if (!is.null(appData$res)) {
-      appData$pca <- generatePCA(appData$res,
-                                 num_PC = 5,
-                                 alpha = 10^input$pcaAlpha,
-                                 beta = 10^input$pcaBeta,
-                                 verbose = FALSE)
+  # the preprocessing may already apply a sqrt transform; a log transform on
+  # top of it would be a double transform, so it is only offered without it
+  pcaTransformChoices <- reactive({
+    if (isTRUE(handlePreprocSettings(input$preproc_settings, "sqrtTrans"))) {
+      return(c("as processed (sqrt)" = "as_processed"))
     }
+    c("as processed" = "as_processed", "log10(x + 1)" = "log10")
+  })
+
+  observeEvent(input$doPca, {
+    if (is.null(appData$res)) {
+      return()
+    }
+
+    choices <- pcaTransformChoices()
+    updateSelectInput(session, "pcaTransform",
+                      choices = choices,
+                      selected = if (input$pcaTransform %in% unname(choices)) input$pcaTransform else choices[[1]])
+
+    withProgress(message = "Performing sparse PCA", value = 0.5, {
+      pca <- tryCatch(
+        generatePCA(appData$res,
+                    num_PC = 5,
+                    alpha = 10^input$pcaAlpha,
+                    beta = 10^input$pcaBeta,
+                    transform = if (length(choices) == 1L) "as_processed" else input$pcaTransform,
+                    verbose = FALSE),
+        error = function(e) e
+      )
+    })
+
+    if (inherits(pca, "error")) {
+      showNotification(paste("PCA failed:", conditionMessage(pca)),
+                       type = "error", duration = 10)
+      return()
+    }
+
+    appData$pca <- pca
+
+    if (pca$dropped > 0L) {
+      showNotification(sprintf("%d constant feature(s) were dropped for the PCA.",
+                               pca$dropped), type = "message", duration = 6)
+    }
+    if (pca$naReplaced > 0L) {
+      showNotification(sprintf("%d missing intensity value(s) were treated as 0.",
+                               pca$naReplaced), type = "message", duration = 6)
+    }
+    if (any(pca$active == 0L)) {
+      empty <- names(pca$active)[pca$active == 0L]
+      showNotification(
+        paste0("Component(s) ", paste(empty, collapse = ", "),
+               " have no active feature - the L1 penalty is too high."),
+        type = "warning", duration = 10)
+    }
+
+    # the axes have to differ; a run with only one component must not leave the
+    # y axis on PC1 forever
+    keep <- nonEmptyComponents(pca)
+    sel_x <- if (input$pcaX %in% keep) input$pcaX else keep[1]
+    others <- setdiff(keep, sel_x)
+
+    if (length(others) == 0L) {
+      sel_y <- sel_x
+      showNotification("Only one component contains features - reduce the L1 penalty to get more.",
+                       type = "warning", duration = 8)
+    } else {
+      sel_y <- if (input$pcaY %in% others) input$pcaY else others[1]
+    }
+
+    updateSelectInput(session, "pcaX", choices = keep, selected = sel_x)
+    updateSelectInput(session, "pcaY", choices = keep, selected = sel_y)
+  })
+
+  output$pcaSparsity <- renderText({
+    pca <- appData$pca
+    if (is.null(pca)) {
+      return("")
+    }
+
+    total <- length(pca$mzIdx)
+    counts <- paste(names(pca$active),
+                    paste0(pca$active, "/", total),
+                    sep = " ", collapse = " \u00b7 ")
+
+    # the numbers belong to the last run, the sliders may already differ
+    changed <- !isTRUE(all.equal(pca$alpha, 10^input$pcaAlpha))
+    hint <- if (changed) {
+      "  - settings changed, press 'Perform PCA' again"
+    } else {
+      ""
+    }
+
+    paste0("last run: ", counts,
+           "  (L1 = ", signif(pca$alpha, 2),
+           ", ", pca$transform,
+           "; active = |loading| \u2265 1 % of the component max)", hint)
   })
 
   observeEvent(input$doPca, {

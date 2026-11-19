@@ -24,6 +24,13 @@ pcaTab <- function(defaults) {
                                 max = 0,
                                 value = defaults$pcaBeta,
                                 step = 0.1)),
+             column(2,
+                    selectInput(inputId = "pcaTransform",
+                                label = "Transform",
+                                choices = c("as processed" = "as_processed",
+                                            "log10(x + 1)" = "log10"),
+                                selected = "as_processed")
+             ),
              column(1,
                     selectInput(inputId = "pcaX",
                                 label = "x-axis",
@@ -53,6 +60,11 @@ pcaTab <- function(defaults) {
                     createActionButton(inputId = "pca2peaksTable",
                                        label = "Send to Peak Table",
                                        icon = "share-from-square"))
+           ),
+           fluidRow(
+             column(12,
+                    tags$small(textOutput("pcaSparsity"))
+             )
            ),
            fluidRow(
              column(6,
