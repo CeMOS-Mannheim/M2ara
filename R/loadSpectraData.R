@@ -165,7 +165,8 @@ loadSpectraData <- function(input, appData, mapping) {
       groups <- unname(sheetGroups[tolower(stripDataExtension(files))])
     }
 
-    appData$samples <- sampleSheet(files, concentrations, spots, groups)
+    appData$samples <- sampleSheet(sheetFiles(files, appData$selected_dir, input$fileFormat),
+                                   concentrations, spots, groups)
     appData$mapping_source <- if (is.null(mapping)) {
       "file names"
     } else if (identical(mapping$kind, "list")) {

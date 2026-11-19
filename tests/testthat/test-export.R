@@ -65,7 +65,7 @@ test_that("the export contains the effective sample sheet", {
   utils::unzip(zip_file, exdir = unpacked)
 
   sheet <- utils::read.csv(file.path(unpacked, "sample_sheet.csv"))
-  expect_equal(sheet$file, c("a", "b"))
+  expect_equal(sheet$file, c("a.mzML", "b.mzML"))
   expect_equal(sheet$n_spectra, c(2L, 1L))
   expect_equal(sheet$spots, c("K11;L11", "K9"))
 

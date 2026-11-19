@@ -82,7 +82,7 @@ test_that("the effective sample sheet summarises files and spots", {
                        concentrations = c(1, 1, 2),
                        spots = c("K11", "L11", "K9"))
 
-  expect_equal(sheet$file, c("a", "b"))
+  expect_equal(sheet$file, c("a", "b"))  # names without extension stay as they are
   expect_equal(sheet$concentration, c(1, 2))
   expect_equal(sheet$n_spectra, c(2L, 1L))
   expect_equal(sheet$spots, c("K11;L11", "K9"))
@@ -119,4 +119,15 @@ test_that("a sample sheet in the data folder is found", {
   bad <- findSampleSheet(broken)
   expect_null(bad$mapping)
   expect_match(bad$error, "no rows")
+})
+test_that("the exported sheet names the file on disk", {
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "0.mzML"))
+  writeLines("x", file.path(dir, "0.0032.mzML"))
+
+  # the loader knows the names without extension
+  expect_equal(sheetFiles(c("0", "0.0032"), dir), c("0.mzML", "0.0032.mzML"))
+  # unknown names are kept, Bruker folders have no extension anyway
+  expect_equal(sheetFiles(c("0", "other"), dir), c("0.mzML", "other"))
+  expect_equal(sheetFiles(c("0_O13"), dir, "bruker"), "0_O13")
 })

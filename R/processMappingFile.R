@@ -144,7 +144,9 @@ sampleSheet <- function(files, concentrations, spots = NULL, groups = NULL) {
   hasSpots <- !is.null(spots)
   hasGroups <- !is.null(groups)
 
-  df <- tibble::tibble(file = stripDataExtension(basename(files)),
+  # the exported sheet keeps the full file name (with extension), so a file can
+  # be found again from the archive
+  df <- tibble::tibble(file = basename(files),
                        concentration = as.numeric(concentrations),
                        spot = if (hasSpots) as.character(spots) else NA_character_,
                        group = if (hasGroups) as.character(groups) else NA_character_)
@@ -191,4 +193,27 @@ findSampleSheet <- function(dir) {
   }
 
   list(mapping = mapping, error = NULL, file = basename(file))
+}
+# the loader only knows the file names without their extension (the spectra are
+# named after the file). For the exported sheet the file on disk is restored, so
+# it can be found again.
+sheetFiles <- function(specNames, dir, fileFormat = "mzml") {
+  specNames <- as.character(specNames)
+
+  if (identical(fileFormat, "bruker")) {
+    return(basename(specNames))
+  }
+
+  onDisk <- list.files(dir, pattern = "[.]mzml$", ignore.case = TRUE)
+  if (length(onDisk) == 0L) {
+    return(basename(specNames))
+  }
+
+  lookup <- stats::setNames(onDisk, tolower(stripDataExtension(onDisk)))
+  mapped <- unname(lookup[tolower(stripDataExtension(specNames))])
+
+  out <- basename(specNames)
+  found <- !is.na(mapped)
+  out[found] <- mapped[found]
+  out
 }
