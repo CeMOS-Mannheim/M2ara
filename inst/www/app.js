@@ -137,6 +137,22 @@ function m2araInit() {
     m2araRedrawTable();
   });
 
+  // a click on a row selects exactly that feature (the behaviour before the
+  // comparison existed); the checkboxes are needed only for several features
+  jQuery(document).on('click', '#mzTable tbody tr', function (e) {
+    if (jQuery(e.target).is('input')) { return; }
+    var sel = window.m2araSelected || [];
+    if (sel.length > 1) { return; }  // keep an explicit comparison
+
+    var box = jQuery(this).find('input.m2ara-check');
+    if (box.length === 0 || box.prop('disabled')) { return; }
+
+    window.m2araSelected = [parseInt(box.val(), 10)];
+    window.m2araUpdateCheckboxes();
+    m2araSendSelection();
+    m2araRedrawTable();
+  });
+
   // server side control of the selection
   Shiny.addCustomMessageHandler('m2ara_reset_selection', function (msg) {
     window.m2araSelected = [];
