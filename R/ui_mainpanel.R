@@ -20,6 +20,12 @@ appMainPanel <- function(defaults) {
                                                       style = 'padding:6px; font-size:80%')
                                   ),
                                   column(3,
+                                         actionButton("forceProcess",
+                                                      "Re-process from scratch",
+                                                      icon = icon("rotate"),
+                                                      style = 'padding:6px; font-size:80%')
+                                  ),
+                                  column(3,
                                          actionButton("copyLink",
                                                       "Copy link to this view",
                                                       icon = icon("link"),

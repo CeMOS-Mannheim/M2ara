@@ -85,6 +85,18 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
   return(p)
 }
 
+# short message instead of an empty plate (no m/z selected, no PCA data, ...)
+# only metrics with a wide, strictly positive range make sense on a log scale
+plateLogMetrics <- function() {
+  c("Concentration", "Total Peak Intensity", "Normalization factor", "Selected-mz")
+}
+
+plateMessage <- function(label) {
+  ggplot() +
+    annotate("text", x = 0, y = 0, size = 5, colour = "grey35", label = label) +
+    theme_void()
+}
+
 plateMapPlot <- function(appData,
                          stat = c("Concentration",
                                   "Total Peak Intensity",
@@ -104,12 +116,30 @@ plateMapPlot <- function(appData,
 
   spots <- getSpots(res)
 
+
+  # these metrics need a selected feature; without one the plate would fail
+  # deep inside the plot with an obscure error
+  needsMz <- stat %in% c("Selected-mz", "Outlier-mz")
+  if (needsMz && (length(mz_idx) == 0L || is.na(mz_idx))) {
+    return(plateMessage(paste0("This metric needs a selected feature.\n",
+                               "Click a row in the table to choose one.")))
+  }
+  # the log scale is offered only for metrics where it is meaningful
+  useLog <- isTRUE(log10) && stat %in% plateLogMetrics()
+
   switch(stat,
          "Concentration" = {
            lab <- "Conc."
            conc <- as.numeric(names(spots))
-           df <- tibble(spot = spots,
-                        val = fct_reorder(scales::scientific(conc), conc))
+           if (useLog) {
+             # same transformation as the curve plot: log10 of the
+             # concentration, zeros one decade below the lowest value
+             df <- tibble(spot = spots,
+                          val = MALDIcellassay::transformConc2Log(conc))
+           } else {
+             df <- tibble(spot = spots,
+                          val = fct_reorder(scales::scientific(conc), conc))
+           }
          },
          "Total Peak Intensity" = {
            lab <- "Total peak int."
@@ -150,12 +180,6 @@ plateMapPlot <- function(appData,
            lab <- "Recal-shift"
            df <- tibble(spot = spots,
                         val = getAppliedMzShift(res))
-           if(log10) {
-             # log will lead to NA for negative values, display abs. shift
-             lab <- "Abs. Recal-shift"
-             df <- df %>%
-               mutate(val = abs(val))
-           }
          },
          "Selected-mz" = {
            if(!is.null(mz_idx)) {
@@ -171,20 +195,12 @@ plateMapPlot <- function(appData,
          "PC-x" = {
            if(!is.null(appData$pca)) {
              xnum <- parse_number(PCs[1])
-             if(log10) {
-               lab <- paste("Abs.", PCs[1])
-               df <- tibble(
-                 val = appData$pca[[1]] %>% pull(xnum),
-                 spot = spots) %>%
-                 mutate(val = (val-min(val))/(max(val)-min(val))*100)
-             } else {
-               lab <- PCs[1]
-               df <- tibble(
-                 val = appData$pca[[1]] %>% pull(xnum),
-                 spot = spots)
-             }
+             lab <- PCs[1]
+             df <- tibble(
+               val = appData$pca[[1]] %>% pull(xnum),
+               spot = spots)
            } else {
-             lab <- "No PCA data"
+             lab <- "No PCA data yet.\nCalculate it in the PCA tab."
              df <- tibble(
                val = rep(NA_integer_, length(spots)),
                spot = spots)
@@ -193,20 +209,12 @@ plateMapPlot <- function(appData,
          "PC-y" = {
            if(!is.null(appData$pca)) {
              ynum <- parse_number(PCs[2])
-             if(log10) {
-               lab <- paste("Abs.", PCs[2])
-               df <- tibble(
-                 val = appData$pca[[1]] %>% pull(ynum),
-                 spot = spots) %>%
-                 mutate(val = (val-min(val))/(max(val)-min(val))*100)
-             } else {
-               lab <- PCs[2]
-               df <- tibble(
-                 val = appData$pca[[1]] %>% pull(ynum),
-                 spot = spots)
-             }
+             lab <- PCs[2]
+             df <- tibble(
+               val = appData$pca[[1]] %>% pull(ynum),
+               spot = spots)
            } else {
-             lab <- "No PCA data"
+               lab <- "No PCA data yet.\nCalculate it in the PCA tab."
              df <- tibble(
                val = rep(NA_integer_, length(spots)),
                spot = spots)
@@ -227,7 +235,7 @@ plateMapPlot <- function(appData,
          "Outlier-all" = {
            lab <- paste0("Chauvenet\nCriterion\n",
                          "n(m/z)")
-           df <- getIntensityMatrix(res) %>%
+           wide <- getIntensityMatrix(res) %>%
              as_tibble() %>%
              mutate(conc = getConc(res),
                     spot = getSpots(res)) %>%
@@ -238,9 +246,22 @@ plateMapPlot <- function(appData,
              mutate(cheuv = MALDIcellassay::calculateChauvenetCriterion(intensity)) %>%
              group_by(spot) %>%
              count(cheuv) %>%
-             pivot_wider(names_from = cheuv, values_from = n) %>%
-             mutate(val = .data[["TRUE"]])
+             pivot_wider(names_from = cheuv, values_from = n)
+
+           # a dataset without any outlier has no TRUE column
+           if (!"TRUE" %in% names(wide)) {
+             wide[["TRUE"]] <- 0L
+           }
+           df <- wide %>%
+             # spots without any outlier have no TRUE count
+             mutate(val = ifelse(is.na(.data[["TRUE"]]), 0L, .data[["TRUE"]]))
          })
+
+  # nothing to show (e.g. no PCA computed yet): a hint is nicer than an
+  # empty plate
+  if (all(is.na(df$val))) {
+    return(plateMessage(lab))
+  }
 
   p <- suppressWarnings(
     platetools::raw_map(data = df$val, well = df$spot, plate = format) +
@@ -256,18 +277,23 @@ plateMapPlot <- function(appData,
   }
 
   if(stat == "Concentration") {
-    p <- p  +
-      scale_fill_viridis_d()
+    if (useLog) {
+      # the values are log10 concentrations, label them like the curve plot
+      p <- p + scale_fill_viridis_c(labels = function(b) scales::scientific(10^b))
+    } else {
+      p <- p + scale_fill_viridis_d()
+    }
     return(p)
   }
 
-  if(log10 & !stat == "Outlier-mz") {
+
+  if (useLog) {
     p <- p  +
       scale_fill_viridis_c(trans = "log10")
     return(p)
   }
 
-  if(!stat == "Outlier-mz") {
+  if (stat != "Outlier-mz") {
     p <- p +
       scale_fill_viridis_c()
   }

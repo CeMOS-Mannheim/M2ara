@@ -131,3 +131,15 @@ test_that("processRunAsync runs the pipeline in a background process", {
   expect_true(isTRUE(out$ok))
   expect_s4_class(out$res, "MALDIassay")
 })
+test_that("the cache key depends on the pipeline version", {
+  dir <- withr::local_tempdir()
+  writeLines("a", file.path(dir, "1.mzML"))
+
+  settings <- list(SNR = 3, concUnits = "uM")
+  preprocessing <- list(smooth = TRUE)
+
+  key <- processCacheKey(dir, settings, preprocessing)
+  expect_true(nzchar(key))
+  expect_true(grepl(utils::packageVersion("M2ara"), processPipelineVersion(),
+                    fixed = TRUE))
+})

@@ -31,3 +31,50 @@ test_that("peakGrid combines the peak profiles of several features", {
   expect_error(peakGrid(res, integer(0), tol = 0.8, centroided = FALSE,
                         showPeaks = TRUE), "no feature selected")
 })
+test_that("the plate map renders every metric and hints without a feature", {
+  res <- MALDIcellassay::Blank2022res
+  appData <- list(res = res, pca = NULL)
+
+  # metrics that need a selected feature show a hint instead of an error
+  for (stat in c("Selected-mz", "Outlier-mz")) {
+    p <- plateMapPlot(appData, stat = stat, PCs = c("PC1", "PC2"))
+    expect_s3_class(p, "ggplot")
+    expect_s3_class(p$data, "waiver")
+  }
+
+  # the remaining metrics render a plate
+  for (stat in c("Concentration", "Total Peak Intensity", "Recal-shift", "Outlier-all")) {
+    p <- plateMapPlot(appData, stat = stat, PCs = c("PC1", "PC2"), mz_idx = 2)
+    expect_s3_class(p, "ggplot")
+    expect_s3_class(p$data, "data.frame")
+  }
+})
+test_that("the plate map explains a missing PCA and missing outliers", {
+  res <- MALDIcellassay::Blank2022res
+  appData <- list(res = res, pca = NULL)
+
+  # without PCA the PC metrics show a message instead of an empty plate
+  for (stat in c("PC-x", "PC-y")) {
+    p <- plateMapPlot(appData, stat = stat, PCs = c("PC1", "PC2"))
+    expect_s3_class(p$data, "waiver")
+  }
+
+  # Outlier-all renders a plate even when a dataset has no outlier at all
+  p <- plateMapPlot(appData, stat = "Outlier-all", PCs = c("PC1", "PC2"), mz_idx = 2)
+  expect_s3_class(p$data, "data.frame")
+})
+
+test_that("the plate map switches to a log scale", {
+  res <- MALDIcellassay::Blank2022res
+  appData <- list(res = res, pca = NULL)
+
+  lin <- plateMapPlot(appData, stat = "Total Peak Intensity", PCs = c("PC1", "PC2"),
+                      log10 = FALSE)
+  log <- plateMapPlot(appData, stat = "Total Peak Intensity", PCs = c("PC1", "PC2"),
+                      log10 = TRUE)
+
+  expect_s3_class(lin, "ggplot")
+  expect_s3_class(log, "ggplot")
+  # the transformed scale is applied (the scales differ)
+  expect_false(identical(lin$scales$scales, log$scales$scales))
+})

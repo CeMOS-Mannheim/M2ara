@@ -39,6 +39,20 @@ datasetFingerprint <- function(dir) {
   paste(sort(entries), collapse = "\n")
 }
 
+# Bump this when the structure of a cached result changes; it is part of the
+# cache key, so old entries are ignored after an update of the app.
+processCacheSchema <- 2L
+
+# versions of the packages that produce a result
+processPipelineVersion <- function() {
+  versions <- tryCatch(
+    c(as.character(utils::packageVersion("M2ara")),
+      as.character(utils::packageVersion("MALDIcellassay"))),
+    error = function(e) "unknown"
+  )
+  paste(c(processCacheSchema, versions), collapse = "-")
+}
+
 # key of the cache entry, NULL when the dataset cannot be fingerprinted
 processCacheKey <- function(dir, settings, preprocessing) {
   fingerprint <- datasetFingerprint(dir)
@@ -51,7 +65,8 @@ processCacheKey <- function(dir, settings, preprocessing) {
       dir = normalizePath(dir, winslash = "/"),
       files = fingerprint,
       settings = settings,
-      preprocessing = preprocessing
+      preprocessing = preprocessing,
+      pipeline = processPipelineVersion()
     ),
     auto_unbox = TRUE,
     null = "null"

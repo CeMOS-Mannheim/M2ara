@@ -105,7 +105,7 @@ etc.
 
 
    A click on a row shows that feature alone; for a comparison tick the checkboxes in the first column of the table (up to 4; the remaining boxes are disabled once four are ticked, and clicking a row does not change an explicit comparison): the curves are then drawn as one overlay (colour = *m/z*, tick **Normalize curves** to scale every curve to its own range) and the peak profiles as a 2 x 2 grid - each with the same order and colours.
-The spectra are read once per folder: changing settings and pressing **Process spectra** again only redoes the calculations, the files are not read again. A different folder starts from scratch. Results are cached per dataset and settings, so pressing **Process spectra** with unchanged settings and unchanged files returns the previous result immediately - without reading the spectra. The cache lives in the user cache directory (`tools::R_user_dir("M2ara")`) and can be cleared in the `Settings` tab.
+The spectra are read once per folder: changing settings and pressing **Process spectra** again only redoes the calculations, the files are not read again. A different folder starts from scratch. Results are cached per dataset and settings, so pressing **Process spectra** with unchanged settings and unchanged files returns the previous result immediately - without reading the spectra. The cache lives in the user cache directory (`tools::R_user_dir("M2ara")`) and can be cleared in the `Settings` tab. It is keyed by the data, the settings and the version of M2ara/MALDIcellassay, so results of an older version are never reused; **Re-process from scratch** in the `Settings` tab reads the files and processes them again regardless of the cache.
 
 5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** below the peak table: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
 
@@ -252,7 +252,7 @@ The metrics screen enables to visualize different metrics (*FZ*, *FV*, *FS*, *lo
 
 The top part of the OC tab focuses on the (potential) peak used for re-calibration and enables the user to inspect the alignment of the (average) spectra per concentration.
 
-The lower left part shows different metrics (both assay quality metrics like *FZ*, *FV*, *CRS* and MALDI parameters like total ion current as well as re-calibration shifts and PCA loadings) per spot in a target plate view. **This functionality is currently only featured for Bruker raw data. And wont be visible with the `mzML` input file format selected.**
+The lower left part shows different metrics (both assay quality metrics like *FZ*, *FV*, *CRS* and MALDI parameters like total ion current as well as re-calibration shifts and PCA loadings) per spot in a target plate view. The spot coordinates are taken from the Bruker flex folders or, for `mzML` files, from the spectrum ids (`spotID`, e.g. `chip=0 spot=K11`). If a file contains no spot information, the plate view stays hidden.
 
 The lower right shows processing (and in case of Bruker data also some measurement meta data) as a summary.
 

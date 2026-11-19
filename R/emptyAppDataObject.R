@@ -18,5 +18,6 @@ emptyAppDataObject <- function(){
                  mapping = NULL,
                  centroided = NULL,
                  settings_snapshot = NULL, # settings of the last run (export)
-                 pending_selection = integer(0)) # features from a share link
+                 pending_selection = integer(0), # features from a share link
+                 force_reprocess = FALSE) # next run ignores the cache
 }

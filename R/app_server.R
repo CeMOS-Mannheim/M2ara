@@ -90,8 +90,10 @@ appServer <- function(input, output, session, defaults = NULL) {
                                    appData$preprocessing)
       process_cache_key(cache_key)
 
-      # 1) unchanged data and settings: the cached result is used
-      cached <- processCacheGet(cache_key)
+      # 1) unchanged data and settings: the cached result is used (unless a
+      # forced run was requested)
+      cached <- if (isTRUE(appData$force_reprocess)) NULL else processCacheGet(cache_key)
+      appData$force_reprocess <- FALSE
       if (!is.null(cached)) {
         appData$res <- cached$res
         appData$centroided <- cached$centroided
@@ -255,6 +257,22 @@ appServer <- function(input, output, session, defaults = NULL) {
   })
 
   ### Peak table ####
+
+  # read the files again and ignore the cache, e.g. after an update of M2ara
+  observeEvent(input$forceProcess, {
+    if (is.null(appData$selected_dir) || length(appData$selected_dir) == 0L) {
+      showNotification("Select a folder first.", type = "warning", duration = 5)
+      return()
+    }
+
+    appData$spec_all <- NULL
+    appData$spec_idx <- NULL
+    appData$force_reprocess <- TRUE
+
+    showNotification("Cache bypassed - the spectra are read and processed again.",
+                     type = "message", duration = 6)
+    shinyjs::click("process")
+  })
 
   observeEvent(input$clearCache, {
     removed <- clearProcessCache()
@@ -421,11 +439,20 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
-  # platemap
+  # spots come from Bruker flex folders and from the mzML spectrum ids
+  spotsAvailable <- reactive({
+    if (is.null(appData$res)) {
+      return(FALSE)
+    }
+    spots <- getSpots(appData$res)
+    length(spots) > 0L && any(!is.na(spots) & nzchar(spots))
+  })
+
   output$platemap <- renderPlot({
-    if (appData$show_plot & input$fileFormat == "bruker") {
+    if (isTRUE(appData$show_plot) && isTRUE(spotsAvailable())) {
       shinyjs::show(id = "plateStat")
-      shinyjs::show(id = "plateScale")
+      shinyjs::toggle(id = "plateScale",
+                      condition = input$plateStat %in% plateLogMetrics())
       plateMapPlot(appData,
                    stat = input$plateStat,
                    PCs = c(input$pcaX, input$pcaY),
