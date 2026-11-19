@@ -65,7 +65,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     if (!is.null(appData$spec_all)) {
       appData$spec_all <- NULL
       appData$spec_idx <- NULL
-      appData$info_state <- if (is.null(appData$selected_dir)) "initial" else "dir_set"
+      setInfoState(appData, if (is.null(appData$selected_dir)) "initial" else "dir_set")
     }
   }, ignoreInit = TRUE)
 
@@ -88,6 +88,14 @@ appServer <- function(input, output, session, defaults = NULL) {
       appData$settings_snapshot <- settingsDataFrame(input)
 
       settings <- processingSettings(input)
+
+      # a value the widgets accept can still break the pipeline
+      problems <- validateProcessingSettings(settings)
+      if (length(problems) > 0L) {
+        showNotification(paste(problems, collapse = " "), type = "error",
+                         duration = 20)
+        return()
+      }
       cache_key <- processCacheKey(appData$selected_dir, settings,
                                    appData$preprocessing,
                                    mapping = appData$mapping)
@@ -134,6 +142,20 @@ appServer <- function(input, output, session, defaults = NULL) {
       # change concentrations according to the unit of the UI
       appData <- setConcentrationUnit(appData, input)
 
+      # the normalization m/z has to be inside the measured range
+      if (is.null(appData$mz_range)) {
+        appData$mz_range <- spectraMassRange(appData$spec_all)
+      }
+      mzRange <- appData$mz_range
+      if (!is.null(mzRange) &&
+          (settings$normMz < mzRange[1L] || settings$normMz > mzRange[2L])) {
+        showNotification(
+          sprintf(paste("The normalization m/z (%.2f) is outside the measured range",
+                        "(%.1f - %.1f Da). The run continues, but check the setting."),
+                  settings$normMz, mzRange[1L], mzRange[2L]),
+          type = "warning", duration = 15)
+      }
+
       # 3) process in a background process
       show_spinner()
       showNotification("Processing started. Please wait.",
@@ -160,7 +182,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       )
 
       if (is.null(job)) {
-        appData$info_state <- "fitErrorOther"
+        setInfoState(appData, "fitErrorOther")
         hide_spinner()
         showNotification("Processing could not be started.",
                          type = "error", duration = 10)
@@ -229,7 +251,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     hide_spinner()
 
     if (is.null(out)) {
-      appData$info_state <- "fitErrorOther"
+      setInfoState(appData, "fitErrorOther")
       if (nzchar(job_log)) {
         message("processing failed:\n", job_log)
         showNotification(paste0("Processing failed: ",
@@ -243,10 +265,10 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
 
     if (!isTRUE(out$ok)) {
-      appData$info_state <- switch(out$error,
+      setInfoState(appData, switch(out$error,
                                    recal = "fitErrorRecal",
                                    norm = "fitErrorNorm",
-                                   "fitErrorOther")
+                                   "fitErrorOther"))
       return()
     }
 
@@ -797,7 +819,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
     if (inherits(mapping, "error")) {
       appData$mapping <- NULL
-      appData$info_state <- "errorMapping"
+      setInfoState(appData, "errorMapping")
       appData$load_problem <- conditionMessage(mapping)
       showNotification(conditionMessage(mapping), type = "error", duration = 12)
       return()

@@ -23,7 +23,7 @@ loadSpectraData <- function(input, appData, mapping) {
       if (!checkSpecNamesNumeric(appData$selected_dir, input$fileFormat)) {
         warning("Found folder names that could not be converted to numeric and no mapping file found.
                 All folders/spectra need to have concentrations as names or mapping file with conc. needed.\n")
-        appData$info_state <- "loadErrorNum"
+        setInfoState(appData, "loadErrorNum")
         hide_spinner()
         return()
       }
@@ -31,7 +31,7 @@ loadSpectraData <- function(input, appData, mapping) {
 
     if (!checkSpecNamesFormat(appData$selected_dir, input$fileFormat)) {
       warning("Could not find data with '", input$fileFormat, "' file format.\n")
-      appData$info_state <- "loadErrorFormat"
+      setInfoState(appData, "loadErrorFormat")
       hide_spinner()
       return()
     }
@@ -110,7 +110,7 @@ loadSpectraData <- function(input, appData, mapping) {
 
     if(any(!unique_mz)) {
       warning("Not all mz are unique. Did you use tims resolved data?\n")
-        appData$info_state <- "loadErrorUniqueMz"
+        setInfoState(appData, "loadErrorUniqueMz")
         hide_spinner()
         return()
     }
@@ -129,7 +129,7 @@ loadSpectraData <- function(input, appData, mapping) {
       problem <- attr(concentrations, "problem")
       if (is.null(concentrations) || !is.null(problem)) {
         appData$load_problem <- problem
-        appData$info_state <- "loadErrorMapping"
+        setInfoState(appData, "loadErrorMapping")
         hide_spinner()
         return()
       }
@@ -147,7 +147,7 @@ loadSpectraData <- function(input, appData, mapping) {
           "These names are not numeric concentrations: ",
           paste(unique(files[is.na(concentrations)]), collapse = ", "),
           ". Provide a sample sheet with file names and concentrations.")
-        appData$info_state <- "loadErrorNum"
+        setInfoState(appData, "loadErrorNum")
         hide_spinner()
         return()
       }
@@ -176,7 +176,7 @@ loadSpectraData <- function(input, appData, mapping) {
     }
 
 
-    appData$info_state <- "loaded"
+    setInfoState(appData, "loaded")
 
     # make sure that the concentrations are in acending order
     spec_raw <- spec_raw[order(as.numeric(names(spec_raw)))]

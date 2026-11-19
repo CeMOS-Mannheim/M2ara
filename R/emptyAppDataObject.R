@@ -23,5 +23,6 @@ emptyAppDataObject <- function(){
                  samples = NULL, # effective concentration sheet
                  load_problem = NULL, # reason when loading failed
                  skipped = character(0), # entries that are no dataset
-                 mapping_source = NULL) # 'file names', 'uploaded' or the sheet file
+                 mapping_source = NULL, # 'file names', 'uploaded' or the sheet file
+                 mz_range = NULL) # mass range of the loaded spectra
 }
