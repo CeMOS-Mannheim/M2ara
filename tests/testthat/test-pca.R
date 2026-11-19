@@ -87,3 +87,14 @@ test_that("the PCA plot refuses the same component on both axes", {
                     spots = MALDIcellassay::getSpots(res))
   expect_gt(length(normal$x$data), 1)
 })
+test_that("active features use a threshold relative to the component", {
+  res <- MALDIcellassay::Blank2022res
+  pca <- generatePCA(res, num_PC = 5, alpha = 1e-2, transform = "log10")
+
+  absLoadings <- abs(as.matrix(pca$loadings))
+  expected <- colSums(absLoadings >= 0.01 * apply(absLoadings, 2, max))
+
+  expect_equal(as.integer(pca$active), as.integer(expected))
+  # far fewer features than non-zero values would suggest
+  expect_true(all(pca$active > 0))
+})

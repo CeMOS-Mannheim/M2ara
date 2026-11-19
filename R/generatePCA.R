@@ -79,8 +79,15 @@ generatePCA <- function(res, num_PC, alpha = 1e-2, beta = 1e-3,
   vars[is.na(vars)] <- 0
   explainedVar <- pmin(vars / totalVar * 100, 100)
 
-  # a component without any active feature carries no information
-  active <- colSums(abs(as.matrix(loadings)) > 1e-8)
+  # a feature counts as active when its loading is noticeable relative to the
+  # largest one; the sparsity penalty can leave many tiny non-zero values
+  absLoadings <- abs(as.matrix(loadings))
+  maxAbs <- apply(absLoadings, 2, max)
+  # relative threshold per component ...
+  active <- colSums(sweep(absLoadings, 2, maxAbs * 0.01, ">="))
+  # ... but a component that is numerically zero is empty, no matter how the
+  # relative threshold would scale it
+  active[maxAbs < 1e-8] <- 0L
 
   if (verbose) {
     cat("Active features per component:",

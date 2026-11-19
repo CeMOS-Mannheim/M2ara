@@ -600,7 +600,8 @@ appServer <- function(input, output, session, defaults = NULL) {
 
     paste0("last run: ", counts,
            "  (L1 = ", signif(pca$alpha, 2),
-           ", ", pca$transform, ")", hint)
+           ", ", pca$transform,
+           "; active = |loading| \u2265 1 % of the component max)", hint)
   })
 
   observeEvent(input$doPca, {
