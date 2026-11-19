@@ -31,3 +31,21 @@ test_that("peakGrid combines the peak profiles of several features", {
   expect_error(peakGrid(res, integer(0), tol = 0.8, centroided = FALSE,
                         showPeaks = TRUE), "no feature selected")
 })
+test_that("the plate map renders every metric and hints without a feature", {
+  res <- MALDIcellassay::Blank2022res
+  appData <- list(res = res, pca = NULL)
+
+  # metrics that need a selected feature show a hint instead of an error
+  for (stat in c("Selected-mz", "Outlier-mz")) {
+    p <- plateMapPlot(appData, stat = stat, PCs = c("PC1", "PC2"))
+    expect_s3_class(p, "ggplot")
+    expect_s3_class(p$data, "waiver")
+  }
+
+  # the remaining metrics render a plate
+  for (stat in c("Concentration", "Total Peak Intensity", "Recal-shift", "Outlier-all")) {
+    p <- plateMapPlot(appData, stat = stat, PCs = c("PC1", "PC2"), mz_idx = 2)
+    expect_s3_class(p, "ggplot")
+    expect_s3_class(p$data, "data.frame")
+  }
+})

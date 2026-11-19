@@ -104,6 +104,19 @@ plateMapPlot <- function(appData,
 
   spots <- getSpots(res)
 
+
+  # these metrics need a selected feature; without one the plate would fail
+  # deep inside the plot with an obscure error
+  needsMz <- stat %in% c("Selected-mz", "Outlier-mz")
+  if (needsMz && (length(mz_idx) == 0L || is.na(mz_idx))) {
+    return(
+      ggplot() +
+        annotate("text", x = 0, y = 0, size = 5, colour = "grey35",
+                 label = paste0("This metric needs a selected feature.\n",
+                                "Click a row in the table to choose one.")) +
+        theme_void()
+    )
+  }
   switch(stat,
          "Concentration" = {
            lab <- "Conc."
@@ -239,7 +252,8 @@ plateMapPlot <- function(appData,
              group_by(spot) %>%
              count(cheuv) %>%
              pivot_wider(names_from = cheuv, values_from = n) %>%
-             mutate(val = .data[["TRUE"]])
+             # no outliers at all means no TRUE column
+             mutate(val = if ("TRUE" %in% names(.)) .data[["TRUE"]] else 0L)
          })
 
   p <- suppressWarnings(
