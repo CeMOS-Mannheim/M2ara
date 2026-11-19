@@ -104,11 +104,26 @@ etc.
 4.  Analyze your data by clicking on entries in the table on bottom left (3). The plots for the curve and the peaks will change accordingly (4). You may want to display error bars or use the slider to change the displayed *m/z*-range (aka zoom) in the plot displaying the peaks. Note, you do not need to re-upload your data if you want to play with the settings. Just click the **Process spectra**-button again to re-do the calculations and after a short time your results will be updated.
 
 
-   Several features can be selected with the checkboxes in the first column of the table (up to 4; the remaining boxes are disabled once four are ticked): the curves are then drawn as one overlay (colour = *m/z*, tick **Normalize curves** to scale every curve to its own range) and the peak profiles as a 2 x 2 grid - each with the same order and colours.
+   A click on a row shows that feature alone; for a comparison tick the checkboxes in the first column of the table (up to 4; the remaining boxes are disabled once four are ticked, and clicking a row does not change an explicit comparison): the curves are then drawn as one overlay (colour = *m/z*, tick **Normalize curves** to scale every curve to its own range) and the peak profiles as a 2 x 2 grid - each with the same order and colours.
 The spectra are read once per folder: changing settings and pressing **Process spectra** again only redoes the calculations, the files are not read again. A different folder starts from scratch. Results are cached per dataset and settings, so pressing **Process spectra** with unchanged settings and unchanged files returns the previous result immediately - without reading the spectra. The cache lives in the user cache directory (`tools::R_user_dir("M2ara")`) and can be cleared in the `Settings` tab.
 
 5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** below the peak table: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
 
+
+**Share a view.** In the `Settings` tab, **Copy link to this view** puts a link with all settings, the folder and the compared features into the clipboard and into the address bar. Opening the link restores them; the run itself still has to be started with **Process spectra**. The link stores the absolute path of the folder, so on another computer it is only used when that folder exists there - otherwise the settings are restored and a note asks for the local folder. Because the link contains the host and port of the machine where it was created, a link from a local installation only works locally: paste it into **Open shared view** in the `Settings` tab of the app on the other machine, which applies the settings there regardless of address and port.
+
+**Keyboard shortcuts.**
+
+| Key | Action |
+| --- | --- |
+| `Ctrl+Enter` | Process spectra |
+| `Ctrl+F` | Focus the *m/z* search of the table |
+| `Ctrl+S` | Save plot |
+| `Ctrl+E` | Export results (ZIP) |
+| `Ctrl+D` | Deselect all |
+| `Ctrl+Shift+1` … `Ctrl+Shift+4` | Toggle feature 1–4 |
+| `Ctrl+/` | Show this overview in the app |
+| `Esc` | Deselect all |
 # Analysis pipeline
 
 The analysis pipeline consist of the following steps (see figure below for a graphical overview):
