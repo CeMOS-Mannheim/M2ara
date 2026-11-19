@@ -274,6 +274,9 @@ The drop down menu's adjust the PC (Principle component) shown on the x- and y-a
 
 The loading's can used to identify peaks that have a high influence to the scores of the PCA.
 
+Note that this analysis is **explorative**: it uses the same features as the curves and is meant for quality control (outlier spots, plate drift) and for grouping correlated m/z values (isotopes, adducts), not for deciding which m/z responds to the concentration - that is what the metrics of the [peak table](#curve-screen) (CRS, R², FZ) are for. The `Transform` menu selects an optional `log10(x + 1)` of the intensity matrix; if the preprocessing already applies the sqrt transform, no further logarithm is offered (it would transform twice). The line below the buttons shows how many features are active per component, the x- and y-axis menus only offer components that contain at least one active feature.
+
+
 <div class="figure">
 <img src="figures/pca_loadings.png" alt="PCA loadings plot" width="66%" />
 <p class="caption">PCA loadings plot</p>

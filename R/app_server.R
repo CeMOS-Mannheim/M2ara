@@ -484,14 +484,77 @@ appServer <- function(input, output, session, defaults = NULL) {
     dummyPlot()
   })
 
-  observeEvent(input$doPca, {
-    if (!is.null(appData$res)) {
-      appData$pca <- generatePCA(appData$res,
-                                 num_PC = 5,
-                                 alpha = 10^input$pcaAlpha,
-                                 beta = 10^input$pcaBeta,
-                                 verbose = FALSE)
+  # the preprocessing may already apply a sqrt transform; a log transform on
+  # top of it would be a double transform, so it is only offered without it
+  pcaTransformChoices <- reactive({
+    if (isTRUE(handlePreprocSettings(input$preproc_settings, "sqrtTrans"))) {
+      return(c("as processed (sqrt)" = "as_processed"))
     }
+    c("as processed" = "as_processed", "log10(x + 1)" = "log10")
+  })
+
+  observeEvent(input$doPca, {
+    if (is.null(appData$res)) {
+      return()
+    }
+
+    choices <- pcaTransformChoices()
+    updateSelectInput(session, "pcaTransform",
+                      choices = choices,
+                      selected = if (input$pcaTransform %in% unname(choices)) input$pcaTransform else choices[[1]])
+
+    withProgress(message = "Performing sparse PCA", value = 0.5, {
+      pca <- tryCatch(
+        generatePCA(appData$res,
+                    num_PC = 5,
+                    alpha = 10^input$pcaAlpha,
+                    beta = 10^input$pcaBeta,
+                    transform = if (length(choices) == 1L) "as_processed" else input$pcaTransform,
+                    verbose = FALSE),
+        error = function(e) e
+      )
+    })
+
+    if (inherits(pca, "error")) {
+      showNotification(paste("PCA failed:", conditionMessage(pca)),
+                       type = "error", duration = 10)
+      return()
+    }
+
+    appData$pca <- pca
+
+    if (pca$dropped > 0L) {
+      showNotification(sprintf("%d constant feature(s) were dropped for the PCA.",
+                               pca$dropped), type = "message", duration = 6)
+    }
+    if (pca$naReplaced > 0L) {
+      showNotification(sprintf("%d missing intensity value(s) were treated as 0.",
+                               pca$naReplaced), type = "message", duration = 6)
+    }
+    if (any(pca$active == 0L)) {
+      empty <- names(pca$active)[pca$active == 0L]
+      showNotification(
+        paste0("Component(s) ", paste(empty, collapse = ", "),
+               " have no active feature - the L1 penalty is too high."),
+        type = "warning", duration = 10)
+    }
+
+    keep <- nonEmptyComponents(pca)
+    updateSelectInput(session, "pcaX", choices = keep,
+                      selected = if (input$pcaX %in% keep) input$pcaX else keep[1])
+    updateSelectInput(session, "pcaY", choices = keep,
+                      selected = if (input$pcaY %in% keep) input$pcaY else keep[min(2, length(keep))])
+  })
+
+  output$pcaSparsity <- renderText({
+    if (is.null(appData$pca)) {
+      return("")
+    }
+    active <- appData$pca$active
+    total <- length(appData$pca$mzIdx)
+    paste0("active features: ",
+           paste(names(active), paste0(active, "/", total), sep = " ", collapse = " \u00b7 "),
+           "  (L1 = ", signif(10^input$pcaAlpha, 2), ")")
   })
 
   observeEvent(input$doPca, {
