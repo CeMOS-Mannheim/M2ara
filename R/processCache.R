@@ -61,7 +61,7 @@ datasetCacheId <- function(dir) {
 
 # Bump this when the structure of a cached result changes; it is part of the
 # cache key, so old entries are ignored after an update of the app.
-processCacheSchema <- 3L
+processCacheSchema <- 4L
 
 # versions of the packages that produce a result
 processPipelineVersion <- function() {

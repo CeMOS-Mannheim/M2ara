@@ -100,6 +100,9 @@ appServer <- function(input, output, session, defaults = NULL) {
       if (!is.null(cached)) {
         appData$res <- cached$res
         appData$centroided <- cached$centroided
+        # the effective concentration sheet belongs to the result
+        appData$samples <- cached$samples
+        appData$mapping_source <- cached$mapping_source
         message(m2araTimeNow(), " results loaded from cache\n")
         showNotification("Results loaded from the cache.", duration = 5, type = "message")
         appData <- storeResults(appData, res = cached$res, input,

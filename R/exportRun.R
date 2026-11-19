@@ -146,7 +146,7 @@ runInfoJson <- function(res, centroided, settings_file, manifest, dataset,
     ),
     samples = list(
       file = if (is.null(samples_file)) NA_character_ else samples_file,
-      source = samples_source,
+      source = if (is.null(samples_source)) NA_character_ else samples_source,
       files = if (is.null(samples)) NA_integer_ else nrow(samples),
       concentrations = if (is.null(samples)) NA_integer_ else length(unique(samples$concentration)),
       spectra = if (is.null(samples)) NA_integer_ else sum(samples$n_spectra)
