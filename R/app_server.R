@@ -707,21 +707,91 @@ appServer <- function(input, output, session, defaults = NULL) {
   })
 
   ### clustering tab #####
+  clust_job <- reactiveVal(NULL)
+  clust_status <- reactiveVal(NULL)
+  clust_cancelled <- reactiveVal(FALSE)
+
+  output$clustRunning <- reactive({ !is.null(clust_job()) })
+  outputOptions(output, "clustRunning", suspendWhenHidden = FALSE)
+
+  output$clustStatus <- renderUI({
+    status <- clust_status()
+    if (is.null(status)) {
+      return(NULL)
+    }
+    tags$div(
+      style = "font-size: 85%; margin-bottom: 4px;",
+      status
+    )
+  })
+
   observeEvent(input$doClust, {
-    if (appData$show_plot) {
-      withProgress(
-        message = "Clustering curves...",
-        detail = paste0("Fitting models (k=2..10, centroid=", input$centroid_method, ")"),
-        value = 0.1,
-        expr = {
-          appData$clust <- clusterCurves(appData$res, nClusters = 10,
-                                          centroidMethod = input$centroid_method)
-        }
-      )
-      if (is.null(appData$clust)) {
-        showNotification("Clustering failed. Check console for details.",
-                         duration = 10, type = "error")
-      }
+    req(isTRUE(appData$show_plot))
+    if (!is.null(clust_job())) {
+      showNotification("Clustering is already running.", type = "warning")
+      return()
+    }
+
+    # sampling the fitted curves is fast, the clustering runs in the background
+    curves <- curveClusterData(appData$res)
+    if (is.null(curves)) {
+      showNotification("No fitted curves found - cannot run clustering.",
+                       type = "error", duration = 10)
+      return()
+    }
+
+    clust_cancelled(FALSE)
+    appData$clust <- NULL
+    clust_status(clusterStageLabel("queued"))
+    clust_job(clusterCurvesAsync(curves, nClusters = 10,
+                                 centroidMethod = input$centroid_method))
+    showNotification("Clustering started. You can cancel it below.",
+                     type = "message", duration = 5)
+  })
+
+  # poll the background job
+  observe({
+    job <- clust_job()
+    if (is.null(job)) {
+      return()
+    }
+
+    invalidateLater(500)
+
+    if (!clusterJobDone(job)) {
+      clust_status(clusterStageLabel(clusterJobProgress(job)))
+      return()
+    }
+
+    models <- clusterJobResult(job)
+    cancelled <- isTRUE(clust_cancelled())
+    log <- clusterJobLog(job)
+    clusterJobCleanup(job)
+    clust_job(NULL)
+    clust_status(NULL)
+
+    if (cancelled) {
+      showNotification("Clustering cancelled.", type = "message", duration = 5)
+      return()
+    }
+
+    if (is.null(models)) {
+      showNotification(
+        paste0("Clustering failed. ", if (nzchar(log)) log else "See the console."),
+        type = "error", duration = 15)
+      return()
+    }
+
+    appData$clust <- models
+    showNotification("Clustering finished.", type = "message", duration = 5)
+  })
+
+  observeEvent(input$cancelClust, {
+    job <- clust_job()
+    if (!is.null(job)) {
+      clust_cancelled(TRUE)
+      clusterJobCancel(job)
+      clust_status("Cancelling clustering ...")
     }
   })
 

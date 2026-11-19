@@ -31,6 +31,18 @@ clustTab <- function(defaults) {
                                        label = "Send to Peak Table",
                                        icon = "share-from-square"))
            ),
+           # status and cancel while the clustering runs in the background
+           conditionalPanel(
+             condition = "output.clustRunning",
+             fluidRow(
+               column(12,
+                      uiOutput("clustStatus"),
+                      actionButton("cancelClust", "Cancel clustering",
+                                   icon = icon("stop"),
+                                   class = "btn-sm",
+                                   style = "margin-top: 4px;"))
+             )
+           ),
            fluidRow(
              column(12,
                     plotlyOutput("optNumClust"))
