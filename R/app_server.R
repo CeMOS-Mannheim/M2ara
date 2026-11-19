@@ -17,6 +17,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   # background processing job and its cache key
   process_job <- reactiveVal(NULL)
+  loading <- reactiveVal(FALSE)
   process_status <- reactiveVal(NULL)
   process_console_bucket <- reactiveVal(-1L)
   process_cache_key <- reactiveVal(NULL)
@@ -92,7 +93,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       # 1) unchanged data and settings: the cached result is used (unless a
       # forced run was requested)
-      cached <- if (isTRUE(appData$force_reprocess)) NULL else processCacheGet(cache_key)
+      cached <- if (isTRUE(appData$force_reprocess)) NULL else processCacheGet(cache_key, appData$selected_dir)
       appData$force_reprocess <- FALSE
       if (!is.null(cached)) {
         appData$res <- cached$res
@@ -110,8 +111,15 @@ appServer <- function(input, output, session, defaults = NULL) {
       # 2) the spectra for this folder are not in memory yet: read them first
       if (is.null(appData$spec_all)) {
         show_spinner()
+        # the files are read synchronously, so at least say what is going on
+        loading(TRUE)
+        process_status(list(percent = 0,
+                            label = spectraLoadingLabel(appData$selected_dir,
+                                                       input$fileFormat)))
         message(m2araTimeNow(), " loading spectra...\n")
         appData <- loadSpectraData(input, appData, mapping = appData$mapping)
+        loading(FALSE)
+        process_status(NULL)
         if (!identical(appData$info_state, "loaded")) {
           hide_spinner()
           return()
@@ -163,6 +171,10 @@ appServer <- function(input, output, session, defaults = NULL) {
   ### processing job: progress, result and cancel ####
   output$processRunning <- reactive({ !is.null(process_job()) })
   outputOptions(output, "processRunning", suspendWhenHidden = FALSE)
+
+  # busy while loading or processing
+  output$processBusy <- reactive({ isTRUE(loading()) || !is.null(process_job()) })
+  outputOptions(output, "processBusy", suspendWhenHidden = FALSE)
 
   output$processStatus <- renderUI({
     status <- process_status()
@@ -234,7 +246,10 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
 
     processCachePut(process_cache_key(),
-                    list(res = out$res, centroided = isTRUE(appData$centroided)))
+                    value = list(res = out$res,
+                                 centroided = isTRUE(appData$centroided)),
+                    dir = appData$selected_dir)
+    cache_refresh(cache_refresh() + 1L)
     appData <- storeResults(appData, res = out$res, input,
                             stats = getStatistics(out$res))
     session$sendCustomMessage("m2ara_reset_selection", list())
@@ -258,6 +273,13 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### Peak table ####
 
+  # what is in the result cache
+  cache_refresh <- reactiveVal(0L)
+  output$cacheInfo <- renderText({
+    cache_refresh()
+    processCacheSummary()
+  })
+
   # read the files again and ignore the cache, e.g. after an update of M2ara
   observeEvent(input$forceProcess, {
     if (is.null(appData$selected_dir) || length(appData$selected_dir) == 0L) {
@@ -276,6 +298,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   observeEvent(input$clearCache, {
     removed <- clearProcessCache()
+    cache_refresh(cache_refresh() + 1L)
     showNotification(
       sprintf("Removed %d cached result(s) (%.1f MB).",
               removed, processCacheSize() / 1024^2),

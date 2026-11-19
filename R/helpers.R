@@ -137,3 +137,19 @@ getDirectory <- function(object) {
 m2araTimeNow <- function() {
   format(Sys.time(), "%H:%M")
 }
+# label for the sidebar while the spectra are read synchronously
+spectraLoadingLabel <- function(dir, fileFormat = "mzml") {
+  if (is.null(dir) || length(dir) == 0L) {
+    return("Reading spectra ...")
+  }
+
+  pattern <- if (identical(fileFormat, "bruker")) "fid" else "mzML"
+  files <- list.files(dir, pattern = pattern, ignore.case = TRUE, recursive = FALSE)
+  n <- length(files)
+
+  if (n == 0L) {
+    return("Reading spectra ...")
+  }
+
+  sprintf("Reading %d %s file%s ...", n, pattern, if (n == 1L) "" else "s")
+}

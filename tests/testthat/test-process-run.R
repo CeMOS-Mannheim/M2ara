@@ -98,9 +98,26 @@ test_that("the queue: cached results can be stored and read", {
   on.exit(unlink(cache_dir, recursive = TRUE), add = TRUE)
   withr::local_envvar(M2ARA_CACHE_DIR = cache_dir)
 
-  expect_null(processCacheGet("missing"))
-  processCachePut("abc", list(value = 42))
-  expect_equal(processCacheGet("abc"), list(value = 42))
+  # a dataset keeps its last result; another key invalidates it
+  data_dir <- file.path(tempdir(), "m2ara_cache_data")
+  unlink(data_dir, recursive = TRUE)
+  dir.create(data_dir, recursive = TRUE)
+  writeLines("a", file.path(data_dir, "1.mzML"))
+
+  expect_null(processCacheGet("missing", data_dir))
+  expect_true(processCachePut("key-1", list(value = 42), data_dir))
+  expect_equal(processCacheGet("key-1", data_dir), list(value = 42))
+
+  # a different key (other settings) does not return the old result ...
+  expect_null(processCacheGet("key-2", data_dir))
+  # ... and storing it replaces the previous entry
+  processCachePut("key-2", list(value = 43), data_dir)
+  expect_equal(processCacheGet("key-2", data_dir), list(value = 43))
+  expect_null(processCacheGet("key-1", data_dir))
+
+  # one entry per dataset, not per run
+  expect_length(list.files(cache_dir, pattern = "\\.rds$"), 1L)
+  expect_match(processCacheSummary(), "1 cached dataset")
 })
 test_that("processRunAsync runs the pipeline in a background process", {
   skip_on_cran()
