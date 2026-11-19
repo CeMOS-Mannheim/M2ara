@@ -86,6 +86,11 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
 }
 
 # short message instead of an empty plate (no m/z selected, no PCA data, ...)
+# only metrics with a wide, strictly positive range make sense on a log scale
+plateLogMetrics <- function() {
+  c("Concentration", "Total Peak Intensity", "Normalization factor", "Selected-mz")
+}
+
 plateMessage <- function(label) {
   ggplot() +
     annotate("text", x = 0, y = 0, size = 5, colour = "grey35", label = label) +
@@ -119,12 +124,22 @@ plateMapPlot <- function(appData,
     return(plateMessage(paste0("This metric needs a selected feature.\n",
                                "Click a row in the table to choose one.")))
   }
+  # the log scale is offered only for metrics where it is meaningful
+  useLog <- isTRUE(log10) && stat %in% plateLogMetrics()
+
   switch(stat,
          "Concentration" = {
            lab <- "Conc."
            conc <- as.numeric(names(spots))
-           df <- tibble(spot = spots,
-                        val = fct_reorder(scales::scientific(conc), conc))
+           if (useLog) {
+             # same transformation as the curve plot: log10 of the
+             # concentration, zeros one decade below the lowest value
+             df <- tibble(spot = spots,
+                          val = MALDIcellassay::transformConc2Log(conc))
+           } else {
+             df <- tibble(spot = spots,
+                          val = fct_reorder(scales::scientific(conc), conc))
+           }
          },
          "Total Peak Intensity" = {
            lab <- "Total peak int."
@@ -165,12 +180,6 @@ plateMapPlot <- function(appData,
            lab <- "Recal-shift"
            df <- tibble(spot = spots,
                         val = getAppliedMzShift(res))
-           if(log10) {
-             # log will lead to NA for negative values, display abs. shift
-             lab <- "Abs. Recal-shift"
-             df <- df %>%
-               mutate(val = abs(val))
-           }
          },
          "Selected-mz" = {
            if(!is.null(mz_idx)) {
@@ -186,18 +195,10 @@ plateMapPlot <- function(appData,
          "PC-x" = {
            if(!is.null(appData$pca)) {
              xnum <- parse_number(PCs[1])
-             if(log10) {
-               lab <- paste("Abs.", PCs[1])
-               df <- tibble(
-                 val = appData$pca[[1]] %>% pull(xnum),
-                 spot = spots) %>%
-                 mutate(val = (val-min(val))/(max(val)-min(val))*100)
-             } else {
-               lab <- PCs[1]
-               df <- tibble(
-                 val = appData$pca[[1]] %>% pull(xnum),
-                 spot = spots)
-             }
+             lab <- PCs[1]
+             df <- tibble(
+               val = appData$pca[[1]] %>% pull(xnum),
+               spot = spots)
            } else {
              lab <- "No PCA data yet.\nCalculate it in the PCA tab."
              df <- tibble(
@@ -208,18 +209,10 @@ plateMapPlot <- function(appData,
          "PC-y" = {
            if(!is.null(appData$pca)) {
              ynum <- parse_number(PCs[2])
-             if(log10) {
-               lab <- paste("Abs.", PCs[2])
-               df <- tibble(
-                 val = appData$pca[[1]] %>% pull(ynum),
-                 spot = spots) %>%
-                 mutate(val = (val-min(val))/(max(val)-min(val))*100)
-             } else {
-               lab <- PCs[2]
-               df <- tibble(
-                 val = appData$pca[[1]] %>% pull(ynum),
-                 spot = spots)
-             }
+             lab <- PCs[2]
+             df <- tibble(
+               val = appData$pca[[1]] %>% pull(ynum),
+               spot = spots)
            } else {
                lab <- "No PCA data yet.\nCalculate it in the PCA tab."
              df <- tibble(
@@ -284,12 +277,17 @@ plateMapPlot <- function(appData,
   }
 
   if(stat == "Concentration") {
-    p <- p  +
-      scale_fill_viridis_d()
+    if (useLog) {
+      # the values are log10 concentrations, label them like the curve plot
+      p <- p + scale_fill_viridis_c(labels = function(b) scales::scientific(10^b))
+    } else {
+      p <- p + scale_fill_viridis_d()
+    }
     return(p)
   }
 
-  if (log10 && stat != "Outlier-mz") {
+
+  if (useLog) {
     p <- p  +
       scale_fill_viridis_c(trans = "log10")
     return(p)

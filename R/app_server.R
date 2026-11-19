@@ -451,7 +451,8 @@ appServer <- function(input, output, session, defaults = NULL) {
   output$platemap <- renderPlot({
     if (isTRUE(appData$show_plot) && isTRUE(spotsAvailable())) {
       shinyjs::show(id = "plateStat")
-      shinyjs::show(id = "plateScale")
+      shinyjs::toggle(id = "plateScale",
+                      condition = input$plateStat %in% plateLogMetrics())
       plateMapPlot(appData,
                    stat = input$plateStat,
                    PCs = c(input$pcaX, input$pcaY),
