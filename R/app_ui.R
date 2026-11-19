@@ -17,6 +17,9 @@ appUI <- function(defaults) {
        }
        #mzTable td.m2ara-check-col input { margin: 0; }
        #mzTable th.m2ara-check-col { padding-right: 0 !important; }
+       /* no filter box for the checkbox column */
+       #mzTable tfoot tr th:first-child input { display: none !important; }
+       #mzTable tfoot tr th:first-child { padding: 0 !important; }
        #m2araLinkBox {
          display: none; position: fixed; z-index: 10001; right: 40px; bottom: 40px;
          background: #ffffff; border: 1px solid #cccccc; border-radius: 4px;
