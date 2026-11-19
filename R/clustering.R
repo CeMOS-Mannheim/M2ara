@@ -1,5 +1,5 @@
 clusterCurves <- function(res, nClusters = 10, centroidMethod = "mean") {
-  message(MALDIcellassay:::timeNow(), " running clustering...\n")
+  message(m2araTimeNow(), " running clustering...\n")
 
   fits <- getCurveFits(res)
   if (length(fits) == 0) {
@@ -41,7 +41,7 @@ clusterCurves <- function(res, nClusters = 10, centroidMethod = "mean") {
     as.matrix()
 
   dm <- proxy::dist(wide_mat, method = "SBD")
-  message(MALDIcellassay:::timeNow(), " distance matrix computed (",
+  message(m2araTimeNow(), " distance matrix computed (",
           attr(dm, "Size"), " series).\n")
 
   method <- latrend::lcMethodDtwclust(response = "y",
@@ -68,7 +68,7 @@ clusterCurves <- function(res, nClusters = 10, centroidMethod = "mean") {
   })
 
   nMod <- if (is.list(models)) length(models) else 0
-  message(MALDIcellassay:::timeNow(), " clustering done (", nMod, " models).\n")
+  message(m2araTimeNow(), " clustering done (", nMod, " models).\n")
   return(models)
 }
 

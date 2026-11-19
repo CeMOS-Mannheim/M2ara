@@ -132,3 +132,8 @@ getDirectory <- function(object) {
   }
   return(object@settings$dir)
 }
+# current time for console messages (kept local instead of using an internal of
+# MALDIcellassay)
+m2araTimeNow <- function() {
+  format(Sys.time(), "%H:%M")
+}

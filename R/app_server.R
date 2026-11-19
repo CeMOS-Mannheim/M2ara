@@ -97,7 +97,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       if (!is.null(cached)) {
         appData$res <- cached$res
         appData$centroided <- cached$centroided
-        message(MALDIcellassay:::timeNow(), " results loaded from cache\n")
+        message(m2araTimeNow(), " results loaded from cache\n")
         showNotification("Results loaded from the cache.", duration = 5, type = "message")
         appData <- storeResults(appData, res = cached$res, input,
                                 stats = getStatistics(cached$res))
@@ -110,7 +110,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       # 2) the spectra for this folder are not in memory yet: read them first
       if (is.null(appData$spec_all)) {
         show_spinner()
-        message(MALDIcellassay:::timeNow(), " loading spectra...\n")
+        message(m2araTimeNow(), " loading spectra...\n")
         appData <- loadSpectraData(input, appData, mapping = appData$mapping)
         if (!identical(appData$info_state, "loaded")) {
           hide_spinner()
@@ -126,7 +126,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       showNotification("Processing started. Please wait.",
                        duration = 5,
                        type = "default")
-      message(MALDIcellassay:::timeNow(), " start processing...\n")
+      message(m2araTimeNow(), " start processing...\n")
 
 
       # no cached result: run the pipeline in a background process, the poll

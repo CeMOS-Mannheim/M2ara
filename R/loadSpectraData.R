@@ -109,7 +109,7 @@ loadSpectraData <- function(input, appData, mapping) {
 
     appData$spec_all <- spec_raw
     if(checkEmpty) {
-      message(MALDIcellassay:::timeNow(),  " check for empty spectra...\n")
+      message(m2araTimeNow(),  " check for empty spectra...\n")
 
       # MAD would be faster but may fail in some circumstances...
       peaks <- detectPeaks(appData$spec_all,
@@ -120,7 +120,7 @@ loadSpectraData <- function(input, appData, mapping) {
                                    ifelse(length(mz(x)) > 0, TRUE, FALSE)
                                  },
                                  FUN.VALUE = TRUE)
-      message(MALDIcellassay:::timeNow(), " ",
+      message(m2araTimeNow(), " ",
               sum(appData$spec_idx), "/", length(appData$spec_all),
               " spectra retained.\n")
     } else {
