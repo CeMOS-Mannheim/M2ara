@@ -778,7 +778,9 @@ appServer <- function(input, output, session, defaults = NULL) {
         stats = appData$stats,
         settings = settings_file,
         centroided = isTRUE(appData$centroided),
-        plot_ready = appData$show_plot
+        plot_ready = appData$show_plot,
+        samples = appData$samples,
+        samples_source = appData$mapping_source
       )
     }
   )
