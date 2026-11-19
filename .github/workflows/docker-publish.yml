@@ -3,7 +3,7 @@ name: Docker
 on:
   push:
     branches: [main, dev, release]
-    tags: [ 'v*.*.*' ]
+    tags: [ 'v*.*.*', '[0-9]*' ]
   pull_request:
     branches: [main, dev]
 
