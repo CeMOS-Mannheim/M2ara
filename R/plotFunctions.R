@@ -240,7 +240,7 @@ plateMapPlot <- function(appData,
          "Outlier-all" = {
            lab <- paste0("Chauvenet\nCriterion\n",
                          "n(m/z)")
-           df <- getIntensityMatrix(res) %>%
+           wide <- getIntensityMatrix(res) %>%
              as_tibble() %>%
              mutate(conc = getConc(res),
                     spot = getSpots(res)) %>%
@@ -251,9 +251,14 @@ plateMapPlot <- function(appData,
              mutate(cheuv = MALDIcellassay::calculateChauvenetCriterion(intensity)) %>%
              group_by(spot) %>%
              count(cheuv) %>%
-             pivot_wider(names_from = cheuv, values_from = n) %>%
-             # no outliers at all means no TRUE column
-             mutate(val = if ("TRUE" %in% names(.)) .data[["TRUE"]] else 0L)
+             pivot_wider(names_from = cheuv, values_from = n)
+
+           # a dataset without any outlier has no TRUE column
+           if (!"TRUE" %in% names(wide)) {
+             wide[["TRUE"]] <- 0L
+           }
+           df <- wide %>%
+             mutate(val = .data[["TRUE"]])
          })
 
   p <- suppressWarnings(
