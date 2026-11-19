@@ -68,3 +68,22 @@ test_that("generatePCA reports the parameters of the run", {
   expect_equal(pca$beta, 5e-3)
   expect_equal(pca$transform, "as_processed")
 })
+test_that("the PCA plot refuses the same component on both axes", {
+  res <- MALDIcellassay::Blank2022res
+  pca <- generatePCA(res, num_PC = 3, alpha = 1e-2)
+
+  identical_axes <- pcaPlot(pca,
+                            conc = factor(MALDIcellassay::getConc(res)),
+                            x = "PC1", y = "PC1",
+                            ellipseLevel = 0.67,
+                            spots = MALDIcellassay::getSpots(res))
+  expect_s3_class(identical_axes, "plotly")
+  expect_equal(identical_axes$x$data[[1]]$mode, "text")
+
+  normal <- pcaPlot(pca,
+                    conc = factor(MALDIcellassay::getConc(res)),
+                    x = "PC1", y = "PC2",
+                    ellipseLevel = 0.67,
+                    spots = MALDIcellassay::getSpots(res))
+  expect_gt(length(normal$x$data), 1)
+})

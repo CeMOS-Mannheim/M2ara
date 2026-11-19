@@ -13,6 +13,14 @@ m2araTheme <- function() {
 }
 
 pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
+  # the same component on both axes would draw the identity line
+  if (identical(parse_number(x), parse_number(y))) {
+    return(ggplotly(plateMessage(paste0(
+      "x and y show the same component (", x, ").\n",
+      "Pick another component for one of the axes."
+    ))))
+  }
+
   xnum <- parse_number(x)
   ynum <- parse_number(y)
   conc <- as.numeric(as.character(conc))
@@ -32,7 +40,10 @@ pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
                col = c,
                text = spot)) +
     geom_point() +
-    stat_ellipse(aes(group = c), level = ellipseLevel) +
+    # own mapping so the ellipse does not inherit the plotly only `text`
+    stat_ellipse(mapping = aes(x = xax, y = yax, group = c, col = c),
+                 inherit.aes = FALSE,
+                 level = ellipseLevel) +
     scale_color_viridis_d(end = 0.75, option = "C") +
     labs(col = "Conc. [M]",
          x = paste0(x, " (", exp[xnum], "% expl. var.)"),

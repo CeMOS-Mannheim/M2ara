@@ -480,6 +480,28 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### PCA tab ####
   # default plot for PCA
+  # the two axes must show different components
+  pcaComponents <- reactive({
+    if (is.null(appData$pca)) {
+      return(paste0("PC", 1:5))
+    }
+    nonEmptyComponents(appData$pca)
+  })
+
+  observeEvent(input$pcaX, {
+    keep <- pcaComponents()
+    if (!is.null(input$pcaY) && identical(input$pcaY, input$pcaX) && length(keep) > 1L) {
+      updateSelectInput(session, "pcaY", selected = setdiff(keep, input$pcaX)[1])
+    }
+  }, ignoreInit = TRUE)
+
+  observeEvent(input$pcaY, {
+    keep <- pcaComponents()
+    if (!is.null(input$pcaX) && identical(input$pcaX, input$pcaY) && length(keep) > 1L) {
+      updateSelectInput(session, "pcaX", selected = setdiff(keep, input$pcaY)[1])
+    }
+  }, ignoreInit = TRUE)
+
   output$pca <- renderPlotly({
     dummyPlot()
   })
