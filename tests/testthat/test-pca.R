@@ -98,3 +98,18 @@ test_that("active features use a threshold relative to the component", {
   # far fewer features than non-zero values would suggest
   expect_true(all(pca$active > 0))
 })
+test_that("the loadings plot draws exactly the active features", {
+  res <- MALDIcellassay::Blank2022res
+  pca <- generatePCA(res, num_PC = 5, alpha = 1e-2)
+
+  for (pc in c("PC1", "PC2", "PC5")) {
+    df <- activeLoadings(pca, pc)
+    expect_equal(nrow(df), pca$active[[pc]])
+    expect_true(all(abs(df$val) >= 0.01 * max(abs(pca$loadings[[pc]]))))
+  }
+
+  expect_lte(nrow(activeLoadings(pca, "PC1", maxBars = 5)), 5)
+
+  plot <- loadingsPlot(pca, "PC1")
+  expect_match(plot$x$layout$title[[1]], "active feature")
+})
