@@ -55,39 +55,70 @@ pcaPlot <- function(pca, conc, x, y, ellipseLevel, spots) {
 }
 
 # loadings of the active features of one component, weakest to strongest
-activeLoadings <- function(pca, pc, maxBars = 50) {
+# loadings of the active features of one component, weakest to strongest
+#
+# At most perSide features per sign, and never more than maxBars in total: when
+# one sign has fewer features the other one may use the free slots.
+activeLoadings <- function(pca, pc, maxBars = 20, perSide = 10) {
   vals <- pca$loadings[[as.character(pc)]]
   active <- abs(vals) >= 0.01 * max(abs(vals))
 
-  out <- tibble(mz = as.numeric(rownames(pca$loadings)),
-                val = vals,
-                active = active) %>%
-    filter(.data$active) %>%
-    arrange(desc(abs(.data$val))) %>%
-    slice_head(n = maxBars) %>%
-    arrange(.data$val)
+  df <- tibble(mz = as.numeric(rownames(pca$loadings)),
+               val = vals,
+               active = active) %>%
+    filter(.data$active)
 
-  out
+  pos <- df %>% filter(.data$val > 0) %>% arrange(desc(.data$val))
+  neg <- df %>% filter(.data$val < 0) %>% arrange(.data$val)
+
+  nPos <- min(nrow(pos), perSide)
+  nNeg <- min(nrow(neg), perSide)
+
+  # a sign with fewer features than perSide lets the other one use the rest,
+  # but never more than maxBars in total
+  free <- maxBars - (nPos + nNeg)
+  if (free > 0 && nrow(pos) > nPos) {
+    nPos <- min(nrow(pos), nPos + free)
+  } else if (free > 0 && nrow(neg) > nNeg) {
+    nNeg <- min(nrow(neg), nNeg + free)
+  }
+
+  while (nPos + nNeg > maxBars) {
+    if (nPos >= nNeg && nPos > 0L) {
+      nPos <- nPos - 1L
+    } else if (nNeg > 0L) {
+      nNeg <- nNeg - 1L
+    } else {
+      break
+    }
+  }
+
+  bind_rows(slice_head(pos, n = nPos),
+            slice_head(neg, n = nNeg)) %>%
+    arrange(.data$val)
 }
 
-loadingsPlot <- function(pca, pc, simple = TRUE, maxBars = 50) {
+loadingsPlot <- function(pca, pc, simple = TRUE, maxBars = 20, perSide = 10) {
   vals <- pca$loadings[[as.character(pc)]]
   # same definition as the active feature count above the plot
   nActive <- sum(abs(vals) >= 0.01 * max(abs(vals)))
-  nShown <- min(nActive, maxBars)
-  plural <- if (nShown == 1L) "feature" else "features"
 
   if (simple) {
-    df_red <- activeLoadings(pca, pc, maxBars = maxBars) %>%
-      mutate(mz = factor(.data$mz)) %>%
-      mutate(mz = fct_reorder(.data$mz, .x = .data$val)) %>%
-      mutate(sign = ifelse(.data$val > 0, "pos", "neg"))
+    df_red <- activeLoadings(pca, pc, maxBars = maxBars, perSide = perSide)
+    nShown <- nrow(df_red)
+    plural <- if (nShown == 1L) "feature" else "features"
 
     title <- if (nShown < nActive) {
-      sprintf("Top-Features for %s (%d of %d active %s)", pc, nShown, nActive, plural)
+      sprintf("Top-Features for %s (%d of %d active %s)",
+              pc, nShown, nActive, plural)
     } else {
       sprintf("Top-Features for %s (%d active %s)", pc, nShown, plural)
     }
+
+    df_red <- df_red %>%
+      mutate(sign = ifelse(.data$val > 0, "pos", "neg")) %>%
+      mutate(mz = factor(.data$mz)) %>%
+      mutate(mz = fct_reorder(.data$mz, .x = .data$val))
 
     p <- df_red %>%
       ggplot(aes(x = mz,
@@ -113,8 +144,8 @@ loadingsPlot <- function(pca, pc, simple = TRUE, maxBars = 50) {
       geom_linerange(aes(ymin = 0, ymax = val), show.legend = FALSE) +
       labs(x = "m/z [Da]",
            y = paste0(pc, " Loading"),
-           title = sprintf("Feature importance for %s (%d of %d %s active)",
-                           pc, nActive, length(vals), "features")) +
+           title = sprintf("Feature importance for %s (%d of %d features active)",
+                           pc, nActive, length(vals))) +
       theme(legend.position = "none")
   }
 
