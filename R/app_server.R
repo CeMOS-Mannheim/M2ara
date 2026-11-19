@@ -421,9 +421,17 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
-  # platemap
+  # spots come from Bruker flex folders and from the mzML spectrum ids
+  spotsAvailable <- reactive({
+    if (is.null(appData$res)) {
+      return(FALSE)
+    }
+    spots <- getSpots(appData$res)
+    length(spots) > 0L && any(!is.na(spots) & nzchar(spots))
+  })
+
   output$platemap <- renderPlot({
-    if (appData$show_plot & input$fileFormat == "bruker") {
+    if (isTRUE(appData$show_plot) && isTRUE(spotsAvailable())) {
       shinyjs::show(id = "plateStat")
       shinyjs::show(id = "plateScale")
       plateMapPlot(appData,

@@ -58,6 +58,8 @@ loadSpectraData <- function(input, appData, mapping) {
                  }
                }
              )
+             # spot coordinates from the mzML ids, used by the plate map
+             spec_raw <- addMzmlSpots(spec_raw)
              appData$centroided <- centroided
              checkEmpty <- FALSE
            })

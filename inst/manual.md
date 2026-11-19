@@ -252,7 +252,7 @@ The metrics screen enables to visualize different metrics (*FZ*, *FV*, *FS*, *lo
 
 The top part of the OC tab focuses on the (potential) peak used for re-calibration and enables the user to inspect the alignment of the (average) spectra per concentration.
 
-The lower left part shows different metrics (both assay quality metrics like *FZ*, *FV*, *CRS* and MALDI parameters like total ion current as well as re-calibration shifts and PCA loadings) per spot in a target plate view. **This functionality is currently only featured for Bruker raw data. And wont be visible with the `mzML` input file format selected.**
+The lower left part shows different metrics (both assay quality metrics like *FZ*, *FV*, *CRS* and MALDI parameters like total ion current as well as re-calibration shifts and PCA loadings) per spot in a target plate view. The spot coordinates are taken from the Bruker flex folders or, for `mzML` files, from the spectrum ids (`spotID`, e.g. `chip=0 spot=K11`). If a file contains no spot information, the plate view stays hidden.
 
 The lower right shows processing (and in case of Bruker data also some measurement meta data) as a summary.
 

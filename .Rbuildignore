@@ -13,3 +13,4 @@
 ^app\.R$
 ^install_packages\.R$
 ^settings\.csv$
+^exampledata$
