@@ -29,8 +29,9 @@ appServer <- function(input, output, session, defaults = NULL) {
   })
 
   ### Text massage logic ####
-  observeEvent(list(appData$info_state, appData$selected_dir), {
+  observeEvent(list(appData$info_state, appData$selected_dir, appData$load_problem), {
     output <- infoStateMassageHandler(info_state = appData$info_state,
+                                       problem = appData$load_problem,
                                       output = output,
                                       selected_dir = appData$selected_dir)
   })
@@ -88,7 +89,8 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       settings <- processingSettings(input)
       cache_key <- processCacheKey(appData$selected_dir, settings,
-                                   appData$preprocessing)
+                                   appData$preprocessing,
+                                   mapping = appData$mapping)
       process_cache_key(cache_key)
 
       # 1) unchanged data and settings: the cached result is used (unless a
@@ -778,14 +780,35 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   )
 
-  # mappig of concentrations by external txt
+  # concentration mapping by an external sample sheet
   observeEvent(input$mappingFile, {
-    mapping <- processMappingFile(input$mappingFile)
-    if(is.null(mapping)) {
-      appData$info_state <- "errorMapping"
+    if (is.null(input$mappingFile)) {
+      appData$mapping <- NULL
       return()
     }
+
+    mapping <- tryCatch(processMappingFile(input$mappingFile),
+                        error = function(e) e)
+
+    if (inherits(mapping, "error")) {
+      appData$mapping <- NULL
+      appData$info_state <- "errorMapping"
+      appData$load_problem <- conditionMessage(mapping)
+      showNotification(conditionMessage(mapping), type = "error", duration = 12)
+      return()
+    }
+
     appData$mapping <- mapping
+    appData$load_problem <- NULL
+
+    if (identical(mapping$kind, "list")) {
+      showNotification(paste("Concentration list read - it is assigned in file order.",
+                             "A sample sheet with file names is safer."),
+                       type = "warning", duration = 10)
+    } else {
+      showNotification(sprintf("Sample sheet read: %d file(s).", nrow(mapping$sheet)),
+                       type = "message", duration = 6)
+    }
   })
 
   exportTestValues(numSpec = length(appData$spec_all),

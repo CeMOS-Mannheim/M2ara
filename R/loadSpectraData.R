@@ -89,16 +89,55 @@ loadSpectraData <- function(input, appData, mapping) {
     }
     
     
-    if(length(mapping) > 0) {
-      if(!length(mapping) == length(spec_raw)) {
-        warning("Number of concentrations in mapping file do not match number of spectra.\n")
+    # concentrations: from the mapping (per file) or from the file names
+    files <- names(spec_raw)
+    spots <- vapply(spec_raw, function(x) {
+      patch <- metaData(x)[["patch"]]
+      if (is.null(patch) || length(patch) == 0L) "" else paste(patch, collapse = " ")
+    }, character(1))
+
+    # a sample sheet in the data folder is used when none was uploaded
+    if (is.null(mapping) || length(mapping) == 0L) {
+      auto <- findSampleSheet(appData$selected_dir)
+      mapping <- auto$mapping
+      if (!is.null(auto$error)) {
+        warning("Ignoring ", auto$file, " in the data folder: ", auto$error, "\n")
+      }
+    }
+
+    concentrations <- NULL
+    if (!is.null(mapping) && length(mapping) > 0L) {
+      concentrations <- resolveMapping(mapping, files)
+      problem <- attr(concentrations, "problem")
+      if (is.null(concentrations) || !is.null(problem)) {
+        appData$load_problem <- problem
         appData$info_state <- "loadErrorMapping"
         hide_spinner()
         return()
       }
-      message("Changed spectra names using mapping file.\n")
-      names(spec_raw) <- mapping
+
+      unknown <- attr(concentrations, "unknown")
+      if (!is.null(unknown) && length(unknown) > 0L) {
+        message("Sample sheet lists files that are not in the folder: ",
+                paste(unknown, collapse = ", "))
+      }
+      message("Changed spectra names using the sample sheet.\n")
+    } else {
+      concentrations <- suppressWarnings(as.numeric(files))
+      if (anyNA(concentrations)) {
+        appData$load_problem <- paste0(
+          "These names are not numeric concentrations: ",
+          paste(unique(files[is.na(concentrations)]), collapse = ", "),
+          ". Provide a sample sheet with file names and concentrations.")
+        appData$info_state <- "loadErrorNum"
+        hide_spinner()
+        return()
+      }
     }
+
+    names(spec_raw) <- concentrations
+    appData$samples <- sampleSheet(files, concentrations, spots)
+
 
     appData$info_state <- "loaded"
 

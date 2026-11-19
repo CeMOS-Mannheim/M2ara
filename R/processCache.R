@@ -73,8 +73,16 @@ processPipelineVersion <- function() {
   paste(c(processCacheSchema, versions), collapse = "-")
 }
 
+# stable identifier of the concentration mapping (it changes the result)
+mappingHash <- function(mapping) {
+  if (is.null(mapping) || length(mapping) == 0L) {
+    return("none")
+  }
+  .hashString(paste(as.integer(serialize(mapping, NULL)), collapse = ","))
+}
+
 # key of the cache entry, NULL when the dataset cannot be fingerprinted
-processCacheKey <- function(dir, settings, preprocessing) {
+processCacheKey <- function(dir, settings, preprocessing, mapping = NULL) {
   fingerprint <- datasetFingerprint(dir)
   if (is.null(fingerprint)) {
     return(NULL)
@@ -86,6 +94,7 @@ processCacheKey <- function(dir, settings, preprocessing) {
       files = fingerprint,
       settings = settings,
       preprocessing = preprocessing,
+      mapping = mappingHash(mapping),
       pipeline = processPipelineVersion()
     ),
     auto_unbox = TRUE,
