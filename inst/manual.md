@@ -60,9 +60,10 @@ file,concentration,spot,group
 0.0225,0.0225,K9;L9;M9;N9,
 ```
 
-One row per file: every spectrum of a file (i.e. every replicate) inherits its concentration, so files with several spots are supported. The file name is matched without its extension and case insensitive. Missing files, duplicated entries and non numeric concentrations are reported in the app.
+One row per file: every spectrum of a file (i.e. every replicate) inherits its concentration, so files with several spots are supported. The optional `group` column documents how replicates belong together (e.g. biological versus technical replicates); it is written to the exported sample sheet. The file name is matched without its extension and case insensitive. Missing files, duplicated entries and non numeric concentrations are reported in the app.
 
-The assignment that was actually used is exported with the results (`sample_sheet.csv`), so it stays traceable which file had which concentration.
+The assignment that was actually used is exported with the results (`sample_sheet.csv`) - also when the concentrations simply come from the file names - so it stays traceable which file had which concentration.
+Entries in the data folder that are not a dataset of the selected format (e.g. `samples.csv` or notes next to the spectra) are skipped and reported in the console; only files with the expected extension (and, for Bruker flex, sub folders containing a `fid`) are read.
 
 
 ## Bruker Flex format (\*.fid) {#bruker}

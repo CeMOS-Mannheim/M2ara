@@ -21,5 +21,7 @@ emptyAppDataObject <- function(){
                  pending_selection = integer(0), # features from a share link
                  force_reprocess = FALSE, # next run ignores the cache
                  samples = NULL, # effective concentration sheet
-                 load_problem = NULL) # reason when loading failed
+                 load_problem = NULL, # reason when loading failed
+                 skipped = character(0), # entries that are no dataset
+                 mapping_source = NULL) # 'file names', 'uploaded' or the sheet file
 }

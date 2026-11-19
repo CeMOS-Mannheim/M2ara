@@ -6,7 +6,8 @@
 # README.md inside the archive.
 
 exportRun <- function(file, res, stats, settings = NULL, centroided = FALSE,
-                      plot_ready = FALSE, samples = NULL) {
+                      plot_ready = FALSE, samples = NULL,
+                      samples_source = NULL) {
   if (!isTRUE(plot_ready)) {
     warning("Nothing to export. Load and process data.")
     return(invisible(NULL))
@@ -35,7 +36,8 @@ exportRun <- function(file, res, stats, settings = NULL, centroided = FALSE,
   )
 
   writeLines(
-    runInfoJson(res, centroided, settings_file, manifest, dataset, samples_file, samples),
+    runInfoJson(res, centroided, settings_file, manifest, dataset, samples_file, samples,
+                samples_source),
     file.path(root, "run_info.json")
   )
   writeLines(
@@ -108,7 +110,8 @@ exportSettings <- function(settings, root) {
 
 # machine readable run information ---------------------------------------------
 runInfoJson <- function(res, centroided, settings_file, manifest, dataset,
-                        samples_file = NULL, samples = NULL) {
+                        samples_file = NULL, samples = NULL,
+                        samples_source = NULL) {
   version_of <- function(package) {
     tryCatch(
       as.character(utils::packageVersion(package)),
@@ -143,7 +146,7 @@ runInfoJson <- function(res, centroided, settings_file, manifest, dataset,
     ),
     samples = list(
       file = if (is.null(samples_file)) NA_character_ else samples_file,
-      source = if (is.null(samples)) "file names" else "sample sheet",
+      source = samples_source,
       files = if (is.null(samples)) NA_integer_ else nrow(samples),
       concentrations = if (is.null(samples)) NA_integer_ else length(unique(samples$concentration)),
       spectra = if (is.null(samples)) NA_integer_ else sum(samples$n_spectra)

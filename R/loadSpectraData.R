@@ -28,18 +28,27 @@ loadSpectraData <- function(input, appData, mapping) {
 
     switch(input$fileFormat,
            "bruker" = {
-             spec_raw <- loadSpectra(appData$selected_dir)
+             # only sub folders that contain a fid file are datasets, every
+             # other folder or file in the directory is ignored
+             dirs <- list.dirs(appData$selected_dir, recursive = FALSE, full.names = TRUE)
+             isDataset <- vapply(dirs, function(d) {
+               any(tolower(list.files(d)) == "fid")
+             }, logical(1))
+             skipped <- basename(dirs)[!isDataset]
+             appData$skipped <- skipped
+             spec_raw <- loadSpectra(appData$selected_dir, filter = skipped)
              # at the moment we assume Bruker flex data to always be continuous
              appData$centroided <- FALSE
            },
            "mzml" = {
+             files <- list.files(appData$selected_dir, recursive = FALSE)
+             isMzml <- grepl("\\.mzml$", files, ignore.case = TRUE)
+             skipped <- files[!isMzml]
+             appData$skipped <- skipped
 
              # check if data is centroided for first file
              # assume rest is also centroided
-             f <- list.files(appData$selected_dir,
-                             recursive = FALSE,
-                             full.names = TRUE,
-                             pattern = "mzML")
+             f <- file.path(appData$selected_dir, files[isMzml])
              centroided <- any(stringr::str_detect(readLines(f[1],
                                                              n = -1L),
                                                    pattern = "centroid spectrum"))
@@ -51,7 +60,8 @@ loadSpectraData <- function(input, appData, mapping) {
              # the mzML files may contain chromatograms, the parser warns for
              # every one of them - that is noise and not actionable
              spec_raw <- withCallingHandlers(
-               loadSpectraMzML(appData$selected_dir, centroided = centroided),
+               loadSpectraMzML(appData$selected_dir, filter = skipped,
+                               centroided = centroided),
                warning = function(w) {
                  if (grepl("tag is not supported", conditionMessage(w), fixed = TRUE)) {
                    invokeRestart("muffleWarning")
@@ -63,6 +73,13 @@ loadSpectraData <- function(input, appData, mapping) {
              appData$centroided <- centroided
              checkEmpty <- FALSE
            })
+
+    if (length(appData$skipped) > 0L) {
+      message("Skipped ", length(appData$skipped), " entry(ies) that are no ",
+              input$fileFormat, " dataset: ",
+              paste(utils::head(appData$skipped, 5), collapse = ", "),
+              if (length(appData$skipped) > 5L) " ..." else "")
+    }
     
     unique_mz <- purrr::map_lgl(spec_raw, function(x) {
       mz <- mass(x)
@@ -136,7 +153,25 @@ loadSpectraData <- function(input, appData, mapping) {
     }
 
     names(spec_raw) <- concentrations
-    appData$samples <- sampleSheet(files, concentrations, spots)
+
+    # the optional group column (e.g. biological vs technical replicate) is kept
+    # in the exported sample sheet
+    groups <- NULL
+    if (!is.null(mapping) && identical(mapping$kind, "sheet") &&
+        "group" %in% names(mapping$sheet)) {
+      sheetGroups <- stats::setNames(mapping$sheet$group,
+                                     tolower(stripDataExtension(mapping$sheet$file)))
+      groups <- unname(sheetGroups[tolower(stripDataExtension(files))])
+    }
+
+    appData$samples <- sampleSheet(files, concentrations, spots, groups)
+    appData$mapping_source <- if (is.null(mapping)) {
+      "file names"
+    } else if (identical(mapping$kind, "list")) {
+      "concentration list"
+    } else {
+      "sample sheet"
+    }
 
 
     appData$info_state <- "loaded"

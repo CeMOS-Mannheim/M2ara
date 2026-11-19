@@ -139,32 +139,35 @@ resolveMapping <- function(mapping, files) {
 }
 
 # effective assignment of concentrations to files, as exported with the results
-sampleSheet <- function(files, concentrations, spots = NULL) {
+sampleSheet <- function(files, concentrations, spots = NULL, groups = NULL) {
   files <- as.character(files)
+  hasSpots <- !is.null(spots)
+  hasGroups <- !is.null(groups)
 
   df <- tibble::tibble(file = stripDataExtension(basename(files)),
-                       concentration = as.numeric(concentrations))
+                       concentration = as.numeric(concentrations),
+                       spot = if (hasSpots) as.character(spots) else NA_character_,
+                       group = if (hasGroups) as.character(groups) else NA_character_)
 
-  if (!is.null(spots)) {
-    df$spot <- as.character(spots)
+  out <- df %>%
+    dplyr::group_by(.data$file, .data$concentration) %>%
+    dplyr::summarise(
+      n_spectra = dplyr::n(),
+      spots = paste(unique(stats::na.omit(.data$spot[nzchar(.data$spot)])), collapse = ";"),
+      group = paste(unique(stats::na.omit(.data$group[nzchar(.data$group)])), collapse = ";"),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(spots = dplyr::na_if(.data$spots, ""),
+                  group = dplyr::na_if(.data$group, ""))
+
+  if (!hasSpots) {
+    out$spots <- NULL
+  }
+  if (!hasGroups) {
+    out$group <- NULL
   }
 
-  if ("spot" %in% names(df)) {
-    df <- df %>%
-      dplyr::group_by(.data$file, .data$concentration) %>%
-      dplyr::summarise(
-        n_spectra = dplyr::n(),
-        spots = paste(unique(stats::na.omit(.data$spot[nzchar(.data$spot)])), collapse = ";"),
-        .groups = "drop"
-      ) %>%
-      dplyr::mutate(spots = dplyr::na_if(.data$spots, ""))
-  } else {
-    df <- df %>%
-      dplyr::group_by(.data$file, .data$concentration) %>%
-      dplyr::summarise(n_spectra = dplyr::n(), .groups = "drop")
-  }
-
-  df %>% dplyr::arrange(.data$concentration, .data$file)
+  dplyr::arrange(out, .data$concentration, .data$file)
 }
 # sample sheet that is placed in the data folder (used when none was uploaded)
 findSampleSheet <- function(dir) {
