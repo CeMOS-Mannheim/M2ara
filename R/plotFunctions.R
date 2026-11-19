@@ -85,6 +85,13 @@ loadingsPlot <- function(pca, pc, simple = TRUE, n = 10) {
   return(p)
 }
 
+# short message instead of an empty plate (no m/z selected, no PCA data, ...)
+plateMessage <- function(label) {
+  ggplot() +
+    annotate("text", x = 0, y = 0, size = 5, colour = "grey35", label = label) +
+    theme_void()
+}
+
 plateMapPlot <- function(appData,
                          stat = c("Concentration",
                                   "Total Peak Intensity",
@@ -109,13 +116,8 @@ plateMapPlot <- function(appData,
   # deep inside the plot with an obscure error
   needsMz <- stat %in% c("Selected-mz", "Outlier-mz")
   if (needsMz && (length(mz_idx) == 0L || is.na(mz_idx))) {
-    return(
-      ggplot() +
-        annotate("text", x = 0, y = 0, size = 5, colour = "grey35",
-                 label = paste0("This metric needs a selected feature.\n",
-                                "Click a row in the table to choose one.")) +
-        theme_void()
-    )
+    return(plateMessage(paste0("This metric needs a selected feature.\n",
+                               "Click a row in the table to choose one.")))
   }
   switch(stat,
          "Concentration" = {
@@ -197,7 +199,7 @@ plateMapPlot <- function(appData,
                  spot = spots)
              }
            } else {
-             lab <- "No PCA data"
+             lab <- "No PCA data yet.\nCalculate it in the PCA tab."
              df <- tibble(
                val = rep(NA_integer_, length(spots)),
                spot = spots)
@@ -219,7 +221,7 @@ plateMapPlot <- function(appData,
                  spot = spots)
              }
            } else {
-             lab <- "No PCA data"
+               lab <- "No PCA data yet.\nCalculate it in the PCA tab."
              df <- tibble(
                val = rep(NA_integer_, length(spots)),
                spot = spots)
@@ -258,8 +260,15 @@ plateMapPlot <- function(appData,
              wide[["TRUE"]] <- 0L
            }
            df <- wide %>%
-             mutate(val = .data[["TRUE"]])
+             # spots without any outlier have no TRUE count
+             mutate(val = ifelse(is.na(.data[["TRUE"]]), 0L, .data[["TRUE"]]))
          })
+
+  # nothing to show (e.g. no PCA computed yet): a hint is nicer than an
+  # empty plate
+  if (all(is.na(df$val))) {
+    return(plateMessage(lab))
+  }
 
   p <- suppressWarnings(
     platetools::raw_map(data = df$val, well = df$spot, plate = format) +
@@ -280,13 +289,13 @@ plateMapPlot <- function(appData,
     return(p)
   }
 
-  if(log10 & !stat == "Outlier-mz") {
+  if (log10 && stat != "Outlier-mz") {
     p <- p  +
       scale_fill_viridis_c(trans = "log10")
     return(p)
   }
 
-  if(!stat == "Outlier-mz") {
+  if (stat != "Outlier-mz") {
     p <- p +
       scale_fill_viridis_c()
   }

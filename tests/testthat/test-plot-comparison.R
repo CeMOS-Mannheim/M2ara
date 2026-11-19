@@ -49,3 +49,32 @@ test_that("the plate map renders every metric and hints without a feature", {
     expect_s3_class(p$data, "data.frame")
   }
 })
+test_that("the plate map explains a missing PCA and missing outliers", {
+  res <- MALDIcellassay::Blank2022res
+  appData <- list(res = res, pca = NULL)
+
+  # without PCA the PC metrics show a message instead of an empty plate
+  for (stat in c("PC-x", "PC-y")) {
+    p <- plateMapPlot(appData, stat = stat, PCs = c("PC1", "PC2"))
+    expect_s3_class(p$data, "waiver")
+  }
+
+  # Outlier-all renders a plate even when a dataset has no outlier at all
+  p <- plateMapPlot(appData, stat = "Outlier-all", PCs = c("PC1", "PC2"), mz_idx = 2)
+  expect_s3_class(p$data, "data.frame")
+})
+
+test_that("the plate map switches to a log scale", {
+  res <- MALDIcellassay::Blank2022res
+  appData <- list(res = res, pca = NULL)
+
+  lin <- plateMapPlot(appData, stat = "Total Peak Intensity", PCs = c("PC1", "PC2"),
+                      log10 = FALSE)
+  log <- plateMapPlot(appData, stat = "Total Peak Intensity", PCs = c("PC1", "PC2"),
+                      log10 = TRUE)
+
+  expect_s3_class(lin, "ggplot")
+  expect_s3_class(log, "ggplot")
+  # the transformed scale is applied (the scales differ)
+  expect_false(identical(lin$scales$scales, log$scales$scales))
+})
