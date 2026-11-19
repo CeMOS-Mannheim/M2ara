@@ -6,6 +6,16 @@ loadSpectraData <- function(input, appData, mapping) {
 
     checkEmpty <- input$checkEmpty
 
+    # a sample sheet in the data folder counts like an uploaded one, so it has to
+    # be found before the file names are checked
+    if (is.null(mapping) || length(mapping) == 0L) {
+      auto <- findSampleSheet(appData$selected_dir)
+      mapping <- auto$mapping
+      if (!is.null(auto$error)) {
+        warning("Ignoring ", auto$file, " in the data folder: ", auto$error, "\n")
+      }
+    }
+
     # check if all spectra names are numeric/concentrations
     # for later: if pos and neg ctrls are included
     # checkSpecNames needs to return indices of the numeric folders
@@ -112,15 +122,6 @@ loadSpectraData <- function(input, appData, mapping) {
       patch <- metaData(x)[["patch"]]
       if (is.null(patch) || length(patch) == 0L) "" else paste(patch, collapse = " ")
     }, character(1))
-
-    # a sample sheet in the data folder is used when none was uploaded
-    if (is.null(mapping) || length(mapping) == 0L) {
-      auto <- findSampleSheet(appData$selected_dir)
-      mapping <- auto$mapping
-      if (!is.null(auto$error)) {
-        warning("Ignoring ", auto$file, " in the data folder: ", auto$error, "\n")
-      }
-    }
 
     concentrations <- NULL
     if (!is.null(mapping) && length(mapping) > 0L) {

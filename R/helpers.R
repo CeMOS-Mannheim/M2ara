@@ -153,3 +153,19 @@ spectraLoadingLabel <- function(dir, fileFormat = "mzml") {
 
   sprintf("Reading %d %s file%s ...", n, pattern, if (n == 1L) "" else "s")
 }
+# entries of a dataset folder whose name is not a number (used for the message
+# when no concentration can be derived)
+nonNumericNames <- function(dir, fileFormat = "mzml") {
+  if (is.null(dir) || length(dir) == 0L || !dir.exists(dir)) {
+    return(character(0))
+  }
+
+  names <- if (identical(fileFormat, "bruker")) {
+    basename(list.dirs(dir, recursive = FALSE, full.names = TRUE))
+  } else {
+    # only files of the selected format are spectra, the rest is skipped anyway
+    stripDataExtension(list.files(dir, pattern = "\\.mzml$", ignore.case = TRUE))
+  }
+
+  names[is.na(suppressWarnings(as.numeric(names)))]
+}
