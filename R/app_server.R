@@ -30,7 +30,9 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### dataset card in the sidebar #####
   output$datasetCard <- renderUI({
-    datasetCardUi(appData, input)
+    datasetCardUi(appData, input,
+                    running = !is.null(process_job()),
+                    loading = isTRUE(loading()))
   })
 
   ### Text massage logic ####

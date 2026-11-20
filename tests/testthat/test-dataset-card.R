@@ -79,3 +79,14 @@ test_that("a processed dataset knows whether the settings still fit", {
   input$concUnits <- "nM"
   expect_equal(datasetStatus(appData, input)$class, "changed")
 })
+test_that("a running job and reading are shown", {
+  input <- controlInput()
+  appData <- list(info_state = "loaded", preprocessing = list(),
+                  run_signature = NULL)
+
+  expect_equal(datasetStatus(appData, input, loading = TRUE)$text, "Reading spectra ...")
+  expect_equal(datasetStatus(appData, input, running = TRUE)$text, "Processing ...")
+  # both take precedence over the plain state
+  appData$info_state <- "processed"
+  expect_equal(datasetStatus(appData, input, running = TRUE)$class, "pending")
+})

@@ -41,8 +41,15 @@ datasetEntryCount <- function(dir) {
 }
 
 # state of the app as a coloured dot and a short text
-datasetStatus <- function(appData, input) {
+datasetStatus <- function(appData, input, running = FALSE, loading = FALSE) {
   state <- appData$info_state
+
+  if (isTRUE(loading)) {
+    return(list(class = "pending", text = "Reading spectra ..."))
+  }
+  if (isTRUE(running)) {
+    return(list(class = "pending", text = "Processing ..."))
+  }
 
   if (state %in% c("loadErrorNum", "loadErrorFormat", "loadErrorUniqueMz",
                    "loadErrorMapping", "errorMapping")) {
@@ -75,9 +82,9 @@ datasetStatus <- function(appData, input) {
 }
 
 # the card
-datasetCardUi <- function(appData, input) {
+datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
   parts <- datasetNameParts(appData$selected_dir)
-  status <- datasetStatus(appData, input)
+  status <- datasetStatus(appData, input, running = running, loading = loading)
 
   if (!nzchar(parts$full)) {
     return(tags$div(
@@ -96,12 +103,13 @@ datasetCardUi <- function(appData, input) {
     if (features > 0L) sprintf("%d features", features)
   )
 
+  # the label above says "Last run", so only the value is shown
   runs <- if (is.null(appData$run_signature)) {
-    "No run yet."
+    "Never."
   } else if (is.null(appData$run_time)) {
-    "The shown result was computed with the settings in the form."
+    "Unknown (result from the cache)."
   } else {
-    sprintf("Last run: %s.", format(appData$run_time, "%Y-%m-%d %H:%M"))
+    format(appData$run_time, "%Y-%m-%d %H:%M")
   }
 
   facts <- paste(facts, collapse = " \u00b7 ")
