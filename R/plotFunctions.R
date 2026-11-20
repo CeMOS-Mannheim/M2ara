@@ -7,8 +7,16 @@ m2araTheme <- function() {
       panel.grid = ggplot2::element_blank(),
       strip.text.x = ggplot2::element_text(
         margin = ggplot2::margin(2, 1, 2, 1, "mm"),
-        size = 10
-      )
+        size = 10,
+        hjust = 0,
+        colour = "grey40"
+      ),
+      # no band behind the facet labels: with plotly the curves of the facet
+      # above are drawn over it
+      strip.background = ggplot2::element_blank(),
+      # room between the rows, so the axis labels of the upper row do not
+      # collide with the labels of the lower row
+      panel.spacing.y = ggplot2::unit(10, "mm")
     )
 }
 
@@ -421,4 +429,7 @@ scorePlot <- function(stats, metric = c("CRS", "FV", "FZ", "log2FC", "pEC50", "F
 
   return(p)
 }
-
+# the same margins for the two plots side by side, so their panels line up
+m2araPlotMargin <- function() {
+  list(t = 55, b = 60, l = 70, r = 20)
+}
