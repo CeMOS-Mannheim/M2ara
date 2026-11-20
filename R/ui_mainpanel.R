@@ -25,7 +25,7 @@ appMainPanel <- function(defaults) {
                                   ),
                                   column(3,
                                          actionButton("forceProcess",
-                                                      "Re-process from scratch",
+                                                      "Read files again (ignore cache)",
                                                       icon = icon("rotate"),
                                                       style = 'padding:6px; font-size:80%')
                                   ),

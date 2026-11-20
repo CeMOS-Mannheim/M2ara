@@ -33,7 +33,7 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
       # show notification only on actual user interaction, not on init
       if (userSelectedDir && !is.null(output) && is.character(appData$selected_dir)) {
         msg <- paste0("Folder '", basename(appData$selected_dir), "' selected.")
-        showNotification(msg, duration = 5, type = "default")
+        showNotification(msg, duration = 5, type = "message")
       }
       userSelectedDir <- TRUE
     }

@@ -28,6 +28,21 @@ appServer <- function(input, output, session, defaults = NULL) {
     appData <- setPreprocessSettings(input, appData)
   })
 
+  ### enable/disable buttons #####
+  # a button that cannot do anything should not look clickable
+  observe({
+    ready <- appData$info_state %in% c("dir_set", "loaded", "processed")
+    busy <- isTRUE(loading()) || !is.null(process_job())
+    shinyjs::toggleState("process", condition = ready && !busy)
+  })
+
+  observe({
+    hasData <- isTRUE(appData$show_plot)
+    shinyjs::toggleState("doClust",
+                         condition = hasData && is.null(clust_job()))
+    shinyjs::toggleState("clust2peaksTable",
+                         condition = hasData && !is.null(appData$clust))
+  })
   ### dataset card in the sidebar #####
   output$datasetCard <- renderUI({
     datasetCardUi(appData, input,
@@ -177,7 +192,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       showM2araSpinner()
       showNotification("Processing started. Please wait.",
                        duration = 5,
-                       type = "default")
+                       type = "message")
       message(m2araTimeNow(), " start processing...\n")
 
 
@@ -783,7 +798,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     if (length(excluded) > 0L) {
       showNotification(sprintf("%d curves are left out before the clustering: %s.",
                                features, paste(excluded, collapse = ", ")),
-                       type = "warning", duration = 12)
+                       type = "warning", duration = 10)
     }
 
     clust_cancelled(FALSE)
@@ -957,7 +972,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       appData$mapping <- NULL
       setInfoState(appData, "errorMapping")
       appData$load_problem <- conditionMessage(mapping)
-      showNotification(conditionMessage(mapping), type = "error", duration = 12)
+      showNotification(conditionMessage(mapping), type = "error", duration = 10)
       return()
     }
 

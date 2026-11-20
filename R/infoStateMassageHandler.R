@@ -16,14 +16,14 @@ infoStateMassageHandler <- function(info_state, output, selected_dir = NULL,
            output$info2 <- renderText(selected_dir)
            output$info3 <- renderText("")
            msg <- paste0("Dataset '", basename(selected_dir), "' was successfully loaded.")
-           showNotification(msg, duration = 5, type = "default")
+           showNotification(msg, duration = 5, type = "message")
          },
          "processed" = {
            output$info1 <- renderText(("Dataset:"))
            output$info2 <- renderText(selected_dir)
            output$info3 <- renderText("")
            msg <- paste0("Dataset '", basename(selected_dir), "' was successfully processed")
-           showNotification(msg, duration = 5, type = "default")
+           showNotification(msg, duration = 5, type = "message")
          },
          "fitErrorRecal" = {
            output$info1 <- renderText(("Dataset:"))
