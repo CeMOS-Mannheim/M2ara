@@ -28,32 +28,6 @@ appServer <- function(input, output, session, defaults = NULL) {
     appData <- setPreprocessSettings(input, appData)
   })
 
-  ### what is in the selected folder #####
-  # shows the format and where the concentrations come from before anything is
-  # loaded (a plain folder listing, nothing is read)
-  output$dataStatus <- renderUI({
-    dir <- appData$selected_dir
-    if (is.null(dir) || !nzchar(dir)) {
-      return(NULL)
-    }
-
-    format <- detectDataFormat(dir)
-    formatText <- switch(
-      ifelse(is.na(format), "none", format),
-      "mzml" = "mzML",
-      "bruker" = "Bruker flex",
-      "both" = "mzML and Bruker flex",
-      "not recognised"
-    )
-
-    source <- detectConcentrationSource(dir, if (is.na(format)) NA_character_ else format)
-
-    div(
-      class = "m2ara-data-status",
-      div(sprintf("Format: %s", formatText)),
-      div(describeConcentrations(source))
-    )
-  })
   ### enable/disable buttons #####
   # a button that cannot do anything should not look clickable
   observe({

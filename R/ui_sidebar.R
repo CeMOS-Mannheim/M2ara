@@ -26,7 +26,6 @@ appSidebar <- function(defaults) {
                      icon = icon("search"),
                      style = 'padding:6px; font-size:80%',
                      class = "btn-default"),
-      uiOutput("dataStatus"),
       div(style = "margin-top: 6px;",
           selectInput(inputId = "concUnits",
                       label = "Conc. unit",

@@ -128,6 +128,29 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
 
   facts <- paste(facts, collapse = " \u00b7 ")
 
+  # what the folder contains and where the concentrations come from
+  dataFormat <- detectDataFormat(appData$selected_dir)
+  dataSource <- detectConcentrationSource(appData$selected_dir, dataFormat)
+  formatText <- switch(
+    ifelse(is.na(dataFormat), "none", dataFormat),
+    "mzml" = "mzML",
+    "bruker" = "Bruker flex",
+    "both" = "mzML and Bruker",
+    "unknown format"
+  )
+  sourceText <- switch(
+    dataSource$kind,
+    "file names" = "concentrations from the file names",
+    "sample sheet" = sprintf("concentrations from %s", dataSource$sheet),
+    "missing" = sprintf("concentrations missing for %d file(s)",
+                        length(dataSource$missing))
+  )
+  dataClass <- if (identical(dataSource$kind, "missing")) {
+    "m2ara-dataset-meta m2ara-dataset-warn"
+  } else {
+    "m2ara-dataset-meta"
+  }
+
   # the card shows the last two folders (the path would be too long and is
   # repeated in Details anyway)
   tags$div(
@@ -137,6 +160,8 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
     if (nzchar(parts$last))
       tags$div(class = "m2ara-dataset-meta", title = parts$full, parts$last),
     tags$div(class = "m2ara-dataset-meta", title = facts, facts),
+    tags$div(class = dataClass, title = paste(formatText, sourceText, sep = " - "),
+             sprintf("%s \u00b7 %s", formatText, sourceText)),
     tags$div(class = paste("m2ara-status", status$class),
              tags$span(class = "m2ara-status-dot"),
              status$text),
