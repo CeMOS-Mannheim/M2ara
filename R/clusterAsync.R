@@ -116,12 +116,20 @@ clusterJobCleanup <- function(job) {
 }
 
 clusterStageLabel <- function(stage) {
+  stage <- as.character(stage)
+
+  # "clustering 3/9 (k = 4)" -> a readable label
+  m <- regmatches(stage, regexec("^clustering ([0-9]+)/([0-9]+) \\(k = ([0-9]+)\\)$", stage))[[1]]
+  if (length(m) > 0L) {
+    return(sprintf("Clustering the curves: k = %s (%s of %s done) ...", m[4], m[2], m[3]))
+  }
+
   switch(
     as.character(stage),
     "queued" = "Preparing curves ...",
     "curves" = "Preparing curves ...",
     "distances" = "Computing the distance matrix ...",
-    "clustering" = "Clustering the curves (k = 2..10) ...",
+    "clustering" = "Clustering the curves ...",
     "done" = "Preparing the plots ...",
     "Clustering ..."
   )

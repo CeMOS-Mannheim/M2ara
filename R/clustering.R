@@ -92,9 +92,14 @@ clusterCurvesFromData <- function(curves, nClusters = 10,
 
   methods <- latrend::lcMethods(method, nClusters = 2:nClusters)
 
-  progress("clustering")
+  # one call per k, so the app can show how many of them are done
+  ks <- 2:nClusters
   models <- tryCatch({
-    latrend::latrendBatch(methods, data = curves, verbose = TRUE)
+    fits <- lapply(seq_along(ks), function(i) {
+      progress(sprintf("clustering %d/%d (k = %d)", i, length(ks), ks[i]))
+      latrend::latrend(methods[[i]], data = curves, verbose = FALSE)
+    })
+    latrend::as.lcModels(fits)
   }, error = function(e) {
     message("Full error: ", conditionMessage(e), "\n")
     return(NULL)
@@ -179,27 +184,55 @@ plotClusterMetrics <- function(models) {
 }
 # Which k do the metrics suggest?
 #
-# The silhouette (ASW) works with the SBD distances and is the most reliable
-# index here; Dunn supports it. The suggestion is the k with the best ASW; when
-# Dunn agrees, that is mentioned.
+# Three indices point to a k: the silhouette (ASW, larger is better), Dunn
+# (larger is better) and Davies-Bouldin (smaller is better). All three work with
+# the SBD distances. The suggestion is the k the most of them agree on, with the
+# silhouette breaking a tie - it is the most reliable of the three. WRSS is not
+# used, it decreases with every cluster and would always vote for the maximum k.
 suggestClusters <- function(models) {
   ks <- seq_len(length(models)) + 1L  # models are k = 2..n
 
-  asw <- tryCatch(as.numeric(latrend::metric(models, "ASW")),
-                  error = function(e) rep(NA_real_, length(ks)))
-  dunn <- tryCatch(as.numeric(latrend::metric(models, "Dunn")),
-                   error = function(e) rep(NA_real_, length(ks)))
+  metricOf <- function(name) {
+    tryCatch(as.numeric(latrend::metric(models, name)),
+             error = function(e) rep(NA_real_, length(ks)))
+  }
+
+  asw <- metricOf("ASW")
+  dunn <- metricOf("Dunn")
+  db <- metricOf("DaviesBouldin")
 
   if (length(asw) != length(ks) || all(is.na(asw))) {
     return(NULL)
   }
 
-  bestAsW <- ks[which.max(asw)]
-  bestDunn <- if (all(is.na(dunn))) NA_integer_ else ks[which.max(dunn)]
+  bestOf <- function(values, better = c("max", "min")) {
+    if (length(values) != length(ks) || all(is.na(values))) {
+      return(NA_integer_)
+    }
+    if (match.arg(better) == "max") ks[which.max(values)] else ks[which.min(values)]
+  }
 
-  list(k = bestAsW,
-       asw = asw[which.max(asw)],
-       dunnAgrees = identical(as.integer(bestAsW), as.integer(bestDunn)))
+  votes <- c(asw = bestOf(asw, "max"),
+             dunn = bestOf(dunn, "max"),
+             db = bestOf(db, "min"))
+  votes <- votes[!is.na(votes)]
+
+  counts <- table(votes)
+  top <- names(counts)[counts == max(counts)]
+
+  k <- if (length(top) == 1L) {
+    as.integer(top)
+  } else if (as.character(votes[["asw"]]) %in% top) {
+    votes[["asw"]]
+  } else {
+    as.integer(top[1L])
+  }
+
+  agreeing <- names(votes)[votes == k]
+  list(k = k,
+       asw = asw[ks == k],
+       agree = agreeing,
+       best = votes)
 }
 
 # text for the app
@@ -209,7 +242,19 @@ suggestClustersText <- function(models) {
     return("")
   }
 
-  sprintf("Suggested k: %d (best silhouette at %.2f%s)",
-          suggestion$k, suggestion$asw,
-          if (isTRUE(suggestion$dunnAgrees)) ", Dunn agrees" else "")
+  agree <- suggestion$agree
+  if (length(agree) == 0L) {
+    agree <- "silhouette"
+  }
+
+  label <- c(asw = "Silhouette", dunn = "Dunn", db = "Davies-Bouldin")[agree]
+  if (any(is.na(label))) {
+    label <- label[!is.na(label)]
+  }
+
+  sprintf("Suggested k: %d (%s %s, silhouette %.2f)",
+          suggestion$k,
+          paste(label, collapse = " and "),
+          if (length(agree) == 1L) "suggests" else "agree",
+          suggestion$asw)
 }
