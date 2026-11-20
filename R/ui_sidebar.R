@@ -5,10 +5,10 @@ sidebarGroup <- function(title, help = NULL, ...) {
     class = "m2ara-group",
     div(class = "m2ara-group-title", title,
         if (!is.null(help)) {
-          tags$span(
+          tags$details(
             class = "m2ara-group-help",
-            title = help,
-            icon("circle-question")
+            tags$summary(icon("circle-question")),
+            tags$div(class = "m2ara-group-hint", help)
           )
         }
     ),

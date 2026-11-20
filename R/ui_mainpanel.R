@@ -73,18 +73,18 @@ appMainPanel <- function(defaults) {
                                              )
                                       ),
                                       column(3,
-                                             actionButton("forceProcess",
-                                                          "Read files again (ignore cache)",
-                                                          icon = icon("rotate"),
-                                                          style = 'padding:6px; font-size:80%'),
-                                             tags$div(style = "height: 10px;")
+                                             div(class = "m2ara-action",
+                                                 actionButton("forceProcess",
+                                                              "Read files again (ignore cache)",
+                                                              icon = icon("rotate"),
+                                                              style = 'padding:6px; font-size:80%'))
                                       ),
                                       column(3,
-                                             actionButton("copyLink",
-                                                          "Copy link to this view",
-                                                          icon = icon("link"),
-                                                          style = 'padding:6px; font-size:80%'),
-                                             tags$div(style = "height: 10px;")
+                                             div(class = "m2ara-action",
+                                                 actionButton("copyLink",
+                                                              "Copy link to this view",
+                                                              icon = icon("link"),
+                                                              style = 'padding:6px; font-size:80%'))
                                       ),
                                       column(3,
                                              tags$label("Open shared view", `for` = "m2araOpenInput",
