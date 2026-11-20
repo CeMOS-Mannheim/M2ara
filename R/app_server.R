@@ -442,9 +442,10 @@ appServer <- function(input, output, session, defaults = NULL) {
                                           normalize = isTRUE(input$normalizeCompare))))
       }
 
-      p_curve <- plotCurves(appData$res,
-                            mzIdx = selected_features()[1],
-                            errorbars = input$errorbars) +
+      # one feature uses the same overlay, so "normalize curves" works here too
+      p_curve <- plotCurvesOverlay(appData$res, sel,
+                                   errorbars = input$errorbars,
+                                   normalize = isTRUE(input$normalizeCompare)) +
         labs(title = paste0("m/z = ",
                             round(
                               getMzFromMzIdx(appData$res,
