@@ -116,7 +116,8 @@ plotClusters <- function(models, k) {
   latrend::plot(model) +
     labs(y = "rel. Intensity [arb. u.]",
          x = "Log10 Concentration",
-         title = NULL)
+         title = NULL) +
+    m2araTheme()
 }
 
 
@@ -126,7 +127,8 @@ plotTraj <- function(models, k) {
   p <- latrend::plotClusterTrajectories(model) +
     labs(y = "rel. Intensity [arb. u.]",
          x = "Log10 Concentration",
-         title = "Average Trajectories")
+         title = "Average Trajectories") +
+    m2araTheme()
   p <- ggplotly(p)
 
   return(p)
@@ -135,6 +137,7 @@ plotTraj <- function(models, k) {
 plotClusterMetrics <- function(models) {
   nClust <- length(models) + 1  # models go from k=2..n
   p <- latrend::plotMetric(models, c("Dunn", "ASW", "WMAE", "WRSS", "CalinskiHarabasz")) +
+    m2araTheme() +
     facet_wrap(~Metric,
                scales = "free_y",
                nrow = 1) +
