@@ -121,7 +121,7 @@ plotClusters <- function(models, k) {
     theme(strip.background = element_blank(),
           strip.text = element_text(hjust = 0, colour = "grey40"))
 
-  ggplotly(p)
+    ggplotly(p) %>% plotly::layout(margin = m2araPlotMargin())
 }
 
 
@@ -134,7 +134,7 @@ plotTraj <- function(models, k) {
          title = "Average Trajectories") +
     m2araTheme()
 
-  ggplotly(p)
+    ggplotly(p) %>% plotly::layout(margin = m2araPlotMargin())
 }
 
 plotClusterMetrics <- function(models) {
@@ -146,5 +146,5 @@ plotClusterMetrics <- function(models) {
                nrow = 1) +
     scale_x_continuous(breaks = seq(2, nClust, by = 2))
 
-  ggplotly(p)
+    ggplotly(p) %>% plotly::layout(margin = m2araPlotMargin())
 }
