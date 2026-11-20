@@ -37,6 +37,20 @@ appUI <- function(defaults) {
          border-radius: 3px; padding: 0 4px; font-size: 90%; }
 
        .m2ara-dataset-warn { color: #a86b00; }
+       .m2ara-conc-list {
+         max-height: 50vh; overflow-y: auto; margin-bottom: 8px;
+         border-top: 1px solid #eee;
+       }
+       .m2ara-conc-row {
+         display: flex; align-items: center; gap: 10px;
+         padding: 3px 2px; border-bottom: 1px solid #f3f3f3;
+       }
+       .m2ara-conc-file {
+         flex: 1; white-space: nowrap; overflow: hidden;
+         text-overflow: ellipsis; font-family: monospace; font-size: 85%;
+       }
+       .m2ara-conc-input { width: 130px; flex: 0 0 130px; }
+       .m2ara-conc-input .form-group { margin-bottom: 0; }
        .m2ara-data-status {
          font-size: 80%; color: #6b6b6b; margin-top: 5px; line-height: 1.3;
        }

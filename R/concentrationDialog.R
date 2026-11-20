@@ -71,21 +71,47 @@ concentrationSheet <- function(table) {
              stringsAsFactors = FALSE)
 }
 
-# the dialog
-concentrationDialog <- function() {
+# the dialog: one visible input per file, which is clearer than an editable table
+concentrationDialog <- function(table) {
+  rows <- lapply(seq_len(nrow(table)), function(i) {
+    div(
+      class = "m2ara-conc-row",
+      tags$span(class = "m2ara-conc-file", title = table$file[i], table$file[i]),
+      div(class = "m2ara-conc-input",
+          numericInput(inputId = paste0("concValue", i),
+                       label = NULL,
+                       value = table$concentration[i],
+                       step = 0.001,
+                       width = "100%"))
+    )
+  })
+
   modalDialog(
     title = "Concentrations",
     size = "l",
     easyClose = FALSE,
     tags$p(style = "font-size: 90%; color: #555;",
-           paste("One row per file. Double click a concentration to change it.",
-                 "The assignment is used like a sample sheet.")),
-    DT::DTOutput("concTable"),
-    checkboxInput("concWriteSheet", "Write samples.csv into the folder", value = FALSE),
+           paste("Type the concentration of every file. Where the name is a",
+                 "number it is already filled in.")),
+    div(class = "m2ara-conc-list", rows),
+    checkboxInput("concWriteSheet",
+                  "Save as samples.csv in the data folder (remembered next time)",
+                  value = FALSE),
     footer = tagList(
       modalButton("Cancel"),
       actionButton("applyConcentrations", "Use these concentrations",
                    icon = icon("check"))
     )
   )
+}
+
+# the table from the inputs of the dialog
+concentrationDialogTable <- function(table, input) {
+  values <- vapply(seq_len(nrow(table)), function(i) {
+    value <- input[[paste0("concValue", i)]]
+    if (is.null(value)) NA_real_ else suppressWarnings(as.numeric(value))
+  }, numeric(1))
+
+  table$concentration <- values
+  table
 }

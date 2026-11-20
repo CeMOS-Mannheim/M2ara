@@ -42,34 +42,11 @@ appServer <- function(input, output, session, defaults = NULL) {
       return()
     }
     conc_data(table)
-    showModal(concentrationDialog())
-  })
-
-  output$concTable <- DT::renderDT({
-    req(conc_data())
-    DT::datatable(
-      conc_data(),
-      rownames = FALSE,
-      editable = list(target = "cell", disable = list(columns = 0)),
-      options = list(pageLength = 15, lengthChange = FALSE, searching = FALSE,
-                     ordering = FALSE)
-    )
-  }, server = FALSE)
-
-  observeEvent(input$concTable_cell_edit, {
-    edit <- input$concTable_cell_edit
-    table <- conc_data()
-    req(table)
-    row <- as.integer(edit$row) + 1L
-    value <- suppressWarnings(as.numeric(edit$value))
-    if (!is.na(row) && row <= nrow(table) && edit$col == 1) {
-      table$concentration[row] <- value
-      conc_data(table)
-    }
+    showModal(concentrationDialog(table))
   })
 
   observeEvent(input$applyConcentrations, {
-    table <- conc_data()
+    table <- concentrationDialogTable(conc_data(), input)
     problem <- concentrationTableProblem(table)
     if (!is.null(problem)) {
       showNotification(problem, type = "error", duration = 15)
