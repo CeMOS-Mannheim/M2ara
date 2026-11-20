@@ -119,6 +119,10 @@ appServer <- function(input, output, session, defaults = NULL) {
       cached <- if (isTRUE(appData$force_reprocess)) NULL else processCacheGet(cache_key, appData$selected_dir)
       appData$force_reprocess <- FALSE
       if (!is.null(cached)) {
+        # keep the sidecar of the entry up to date, so the sidebar can tell that
+        # a cached result exists
+        processCacheWriteMeta(cache_key, appData$selected_dir,
+                              created = file.mtime(processCachePath(appData$selected_dir)))
         appData$res <- cached$res
         appData$centroided <- cached$centroided
         # the effective concentration sheet belongs to the result

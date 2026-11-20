@@ -41,7 +41,8 @@ datasetEntryCount <- function(dir) {
 }
 
 # state of the app as a coloured dot and a short text
-datasetStatus <- function(appData, input, running = FALSE, loading = FALSE) {
+datasetStatus <- function(appData, input, running = FALSE, loading = FALSE,
+                          cached = NULL) {
   state <- appData$info_state
 
   if (isTRUE(loading)) {
@@ -75,6 +76,11 @@ datasetStatus <- function(appData, input, running = FALSE, loading = FALSE) {
   }
 
   if (identical(state, "dir_set")) {
+    if (!is.null(cached[["created"]])) {
+      return(list(class = "pending",
+                  text = sprintf("Cached result from %s - press Process spectra",
+                                 format(cached$created, "%Y-%m-%d %H:%M"))))
+    }
     return(list(class = "pending", text = "Not read yet"))
   }
 
@@ -84,7 +90,9 @@ datasetStatus <- function(appData, input, running = FALSE, loading = FALSE) {
 # the card
 datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
   parts <- datasetNameParts(appData$selected_dir)
-  status <- datasetStatus(appData, input, running = running, loading = loading)
+  cached <- if (is.null(appData$run_signature)) cacheLookup(appData, input) else NULL
+  status <- datasetStatus(appData, input, running = running, loading = loading,
+                          cached = cached)
 
   if (!nzchar(parts$full)) {
     return(tags$div(
@@ -94,6 +102,7 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
   }
 
   entries <- datasetEntryCount(appData$selected_dir)
+
   spectra <- length(appData$spec_all)
   features <- if (is.null(appData$stats)) 0L else nrow(appData$stats)
 
@@ -103,9 +112,14 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
     if (features > 0L) sprintf("%d features", features)
   )
 
-  # the label above says "Last run", so only the value is shown
+  # the label above says "Last run", so only the value is shown. A cached result
+  # of this dataset counts as a result, even before the app has used it.
   runs <- if (is.null(appData$run_signature)) {
-    "Never."
+    if (is.null(cached$created)) {
+      "Never."
+    } else {
+      sprintf("Cached result from %s - not used yet.", format(cached$created, "%Y-%m-%d %H:%M"))
+    }
   } else if (is.null(appData$run_time)) {
     "Unknown (result from the cache)."
   } else {
@@ -135,4 +149,23 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
       tags$div(class = "m2ara-dataset-note", runs)
     )
   )
+}
+# Is there a cached result for this dataset and these settings? Only the small
+# sidecar file is read, not the result itself.
+cacheLookup <- function(appData, input) {
+  dir <- appData$selected_dir
+  if (is.null(dir) || !nzchar(dir)) {
+    return(NULL)
+  }
+
+  key <- tryCatch(
+    processCacheKey(dir, processingSettings(input), appData$preprocessing,
+                    mapping = appData$mapping),
+    error = function(e) NULL
+  )
+  if (is.null(key)) {
+    return(NULL)
+  }
+
+  processCacheMeta(key, dir)
 }

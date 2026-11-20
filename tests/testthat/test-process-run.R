@@ -115,8 +115,8 @@ test_that("the queue: cached results can be stored and read", {
   expect_equal(processCacheGet("key-2", data_dir), list(value = 43))
   expect_null(processCacheGet("key-1", data_dir))
 
-  # one entry per dataset, not per run
-  expect_length(list.files(cache_dir, pattern = "\\.rds$"), 1L)
+  # one entry per dataset, not per run (plus its small sidecar)
+  expect_length(list.files(cache_dir, pattern = "\\.rds$"), 2L)
   expect_match(processCacheSummary(), "1 cached dataset")
 })
 test_that("processRunAsync runs the pipeline in a background process", {
@@ -159,4 +159,30 @@ test_that("the cache key depends on the pipeline version", {
   expect_true(nzchar(key))
   expect_true(grepl(utils::packageVersion("M2ara"), processPipelineVersion(),
                     fixed = TRUE))
+})
+test_that("a cache entry leaves a small sidecar that says it exists", {
+  cache_dir <- file.path(tempdir(), "m2ara_cache_meta")
+  unlink(cache_dir, recursive = TRUE)
+  dir.create(cache_dir, recursive = TRUE)
+  on.exit(unlink(cache_dir, recursive = TRUE), add = TRUE)
+  withr::local_envvar(M2ARA_CACHE_DIR = cache_dir)
+
+  data_dir <- file.path(tempdir(), "m2ara_cache_meta_data")
+  unlink(data_dir, recursive = TRUE)
+  dir.create(data_dir, recursive = TRUE)
+  writeLines("a", file.path(data_dir, "1.mzML"))
+
+  expect_null(processCacheMeta("key-1", data_dir))
+
+  processCachePut("key-1", list(value = 42), data_dir)
+  meta <- processCacheMeta("key-1", data_dir)
+  expect_equal(meta$key, "key-1")
+  expect_s3_class(meta$created, "POSIXct")
+
+  # another key does not match the sidecar
+  expect_null(processCacheMeta("key-2", data_dir))
+
+  # the sidecar is not counted as a second dataset
+  expect_match(processCacheSummary(), "1 cached dataset")
+  expect_equal(length(list.files(cache_dir, pattern = "[.]rds$")), 2L)
 })

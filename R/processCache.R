@@ -129,6 +129,29 @@ processCacheGet <- function(key, dir) {
   entry[["value"]]
 }
 
+# small sidecar next to a cache entry: enough to say "a cached result exists"
+# without reading the (large) result itself
+processCacheMetaPath <- function(dir) {
+  path <- processCachePath(dir)
+  if (is.null(path)) {
+    return(NULL)
+  }
+  sub("[.]rds$", ".meta.rds", path)
+}
+
+processCacheMeta <- function(key, dir) {
+  path <- processCacheMetaPath(dir)
+  if (is.null(path) || !file.exists(path) || is.null(key) || is.na(key)) {
+    return(NULL)
+  }
+
+  meta <- tryCatch(readRDS(path), error = function(e) NULL)
+  if (is.null(meta) || !identical(meta[["key"]], key)) {
+    return(NULL)
+  }
+  meta
+}
+
 processCachePut <- function(key, value, dir) {
   if (is.null(key) || is.na(key)) {
     return(invisible(FALSE))
@@ -153,6 +176,8 @@ processCachePut <- function(key, value, dir) {
   )
   if (!isTRUE(ok)) {
     unlink(tmp)
+  } else {
+    processCacheWriteMeta(key, dir)
   }
 
   invisible(isTRUE(ok))
@@ -167,16 +192,38 @@ clearProcessCache <- function() {
 }
 
 processCacheSize <- function() {
-  files <- list.files(processCacheDir(), pattern = "\\.rds$", full.names = TRUE)
+  files <- .processCacheResultFiles()
   if (length(files) == 0L) {
     return(0)
   }
   sum(file.size(files), na.rm = TRUE)
 }
 
+# the result entries, without the small sidecars
+.processCacheResultFiles <- function() {
+  files <- list.files(processCacheDir(), pattern = "\\.rds$", full.names = TRUE)
+  files[!grepl("[.]meta[.]rds$", files)]
+}
+
 # short description for the settings tab
 processCacheSummary <- function() {
-  files <- list.files(processCacheDir(), pattern = "\\.rds$", full.names = TRUE)
+  files <- .processCacheResultFiles()
   size <- if (length(files) == 0L) 0 else sum(file.size(files), na.rm = TRUE)
   sprintf("%d cached dataset(s), %.1f MB", length(files), size / 1024^2)
+}
+# write the sidecar of a cache entry (also used when an entry is reused, so old
+# entries get one too)
+processCacheWriteMeta <- function(key, dir, created = Sys.time()) {
+  path <- processCacheMetaPath(dir)
+  if (is.null(path) || is.null(key) || is.na(key)) {
+    return(invisible(FALSE))
+  }
+
+  tryCatch(
+    {
+      saveRDS(list(key = key, created = created), path)
+      invisible(TRUE)
+    },
+    error = function(e) invisible(FALSE)
+  )
 }
