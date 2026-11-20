@@ -28,6 +28,11 @@ appServer <- function(input, output, session, defaults = NULL) {
     appData <- setPreprocessSettings(input, appData)
   })
 
+  ### dataset card in the sidebar #####
+  output$datasetCard <- renderUI({
+    datasetCardUi(appData, input)
+  })
+
   ### Text massage logic ####
   observeEvent(list(appData$info_state, appData$selected_dir, appData$load_problem), {
     output <- infoStateMassageHandler(info_state = appData$info_state,
@@ -88,6 +93,11 @@ appServer <- function(input, output, session, defaults = NULL) {
       appData$settings_snapshot <- settingsDataFrame(input)
 
       settings <- processingSettings(input)
+      # remembered, so the sidebar can tell whether the shown result still
+      # belongs to the settings in the form
+      appData$run_signature <- list(settings = settings,
+                                    preprocessing = appData$preprocessing,
+                                    concUnits = input$concUnits)
 
       # a value the widgets accept can still break the pipeline
       problems <- validateProcessingSettings(settings)

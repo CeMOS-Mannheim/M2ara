@@ -9,19 +9,19 @@ infoStateMassageHandler <- function(info_state, output, selected_dir = NULL,
          "dir_set" = {
            output$info1 <- renderText("Selected:")
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Press the process button.")
+           output$info3 <- renderText("")
          },
          "loaded" = {
            output$info1 <- renderText("Loaded:")
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Press the process button.")
+           output$info3 <- renderText("")
            msg <- paste0("Dataset '", basename(selected_dir), "' was successfully loaded.")
            showNotification(msg, duration = 5, type = "default")
          },
          "processed" = {
            output$info1 <- renderText(("Dataset:"))
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Changed settings apply after re-processing.")
+           output$info3 <- renderText("")
            msg <- paste0("Dataset '", basename(selected_dir), "' was successfully processed")
            showNotification(msg, duration = 5, type = "default")
          },

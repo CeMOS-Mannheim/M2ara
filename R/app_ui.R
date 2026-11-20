@@ -34,7 +34,40 @@ appUI <- function(defaults) {
        }
        #m2araShortcuts table td { padding: 1px 8px 1px 0; }
        #m2araShortcuts kbd { background: #f7f7f7; border: 1px solid #cccccc;
-         border-radius: 3px; padding: 0 4px; font-size: 90%; }"
+         border-radius: 3px; padding: 0 4px; font-size: 90%; }
+
+       /* dataset card in the sidebar */
+       .m2ara-dataset {
+         border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa;
+         padding: 7px 9px; margin-top: 8px; font-size: 85%;
+         line-height: 1.35; overflow: hidden;
+       }
+       .m2ara-dataset-name {
+         font-weight: 600; white-space: nowrap; overflow: hidden;
+         text-overflow: ellipsis;
+       }
+       .m2ara-dataset-meta {
+         color: #6b6b6b; white-space: nowrap; overflow: hidden;
+         text-overflow: ellipsis;
+       }
+       .m2ara-status { margin-top: 4px; display: flex; align-items: center; gap: 5px; }
+       .m2ara-status-dot {
+         width: 8px; height: 8px; border-radius: 50%; background: #b0b0b0;
+         flex: 0 0 8px;
+       }
+       .m2ara-status.ok .m2ara-status-dot { background: #2e9e4f; }
+       .m2ara-status.changed .m2ara-status-dot { background: #d98a00; }
+       .m2ara-status.error .m2ara-status-dot { background: #cf3b3b; }
+       .m2ara-status.pending .m2ara-status-dot { background: #3f7ecb; }
+       .m2ara-status.changed { color: #a86b00; }
+       .m2ara-status.error { color: #b02a2a; }
+       .m2ara-dataset-details { margin-top: 5px; font-size: 95%; }
+       .m2ara-dataset-details summary { cursor: pointer; color: #6b6b6b; outline: none; }
+       .m2ara-dataset-path {
+         word-break: break-all; color: #444; margin-top: 3px;
+         font-family: monospace; font-size: 90%;
+       }
+       .m2ara-dataset-note { color: #6b6b6b; margin-top: 2px; }"
     )),
     # share link box, filled by the server
     div(id = "m2araLinkBox",

@@ -113,8 +113,7 @@ appSidebar <- function(defaults) {
           )
       )
     ),
-    textOutput("info1", inline = FALSE),
-    textOutput("info2", inline = FALSE),
+    uiOutput("datasetCard"),
     textOutput("info3", inline = FALSE),
     width = 2L)
   return(s)
