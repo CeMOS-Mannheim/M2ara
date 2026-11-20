@@ -6,7 +6,8 @@
 # the child reports its stage to a file and the models are written to an RDS file.
 # The server polls the stage and can kill the child.
 
-clusterCurvesAsync <- function(curves, nClusters = 10, centroidMethod = "mean") {
+clusterCurvesAsync <- function(curves, nClusters = 10, centroidMethod = "mean",
+                               distance = "sbd") {
   data_file <- tempfile(pattern = "m2ara_clust_", fileext = ".rds")
   result_file <- tempfile(pattern = "m2ara_clust_result_", fileext = ".rds")
   progress_file <- tempfile(pattern = "m2ara_clust_progress_", fileext = ".txt")
@@ -14,7 +15,7 @@ clusterCurvesAsync <- function(curves, nClusters = 10, centroidMethod = "mean") 
   stderr_file <- tempfile(pattern = "m2ara_clust_stderr_", fileext = ".log")
 
   saveRDS(list(curves = curves, nClusters = nClusters,
-               centroidMethod = centroidMethod), data_file)
+               centroidMethod = centroidMethod, distance = distance), data_file)
   writeLines("queued", progress_file)
 
   job <- callr::r_bg(
@@ -33,6 +34,7 @@ clusterCurvesAsync <- function(curves, nClusters = 10, centroidMethod = "mean") 
         curves = args$curves,
         nClusters = args$nClusters,
         centroidMethod = args$centroidMethod,
+        distance = args$distance,
         progress = function(step) {
           cat(step, "\n", sep = "", file = progress_file, append = TRUE)
         }

@@ -771,9 +771,12 @@ appServer <- function(input, output, session, defaults = NULL) {
 
     clust_cancelled(FALSE)
     appData$clust <- NULL
+    appData$clust_distance <- input$clustDistance
+    appData$clust_centroid <- input$centroid_method
     clust_status(clusterStageLabel("queued"))
     clust_job(clusterCurvesAsync(curves, nClusters = 10,
-                                 centroidMethod = input$centroid_method))
+                                 centroidMethod = input$centroid_method,
+                                 distance = input$clustDistance))
     showNotification("Clustering started. You can cancel it below.",
                      type = "message", duration = 5)
   })
@@ -814,6 +817,23 @@ appServer <- function(input, output, session, defaults = NULL) {
     appData$clust <- models
     showNotification("Clustering finished.", type = "message", duration = 5)
   })
+
+  # switching distance or centroid re-runs the clustering (the previous result
+  # belongs to the old settings)
+  observeEvent(list(input$clustDistance, input$centroid_method), {
+    req(appData$show_plot, !is.null(appData$clust))
+    if (identical(input$clustDistance, appData$clust_distance) &&
+        identical(input$centroid_method, appData$clust_centroid)) {
+      return()
+    }
+    if (!is.null(clust_job())) {
+      return()  # a run is in progress
+    }
+
+    showNotification("Settings changed - clustering again.", type = "message",
+                     duration = 5)
+    shinyjs::click("doClust")
+  }, ignoreInit = TRUE)
 
   observeEvent(input$cancelClust, {
     job <- clust_job()

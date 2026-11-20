@@ -60,12 +60,19 @@ curveClusterData <- function(res) {
 }
 
 # the clustering itself (runs in the background process)
+#
+# distance = "sbd": shape only, curves may be shifted along the concentration
+# axis (potency does not matter). distance = "euclidean": the curves have to run
+# alike at the same concentration, so the potency counts.
 clusterCurvesFromData <- function(curves, nClusters = 10,
                                   centroidMethod = "mean",
+                                  distance = c("sbd", "euclidean"),
                                   progress = function(step) NULL) {
+  distance <- match.arg(distance)
+
   progress("curves")
 
-  # precompute the SBD distance matrix once - all k values share the distances
+  # one distance matrix for all k values
   wide_mat <- curves %>%
     tidyr::pivot_wider(id_cols = mzIdx,
                        names_from = x,
@@ -78,14 +85,15 @@ clusterCurvesFromData <- function(curves, nClusters = 10,
   # the SBD distance is registered when dtwclust is loaded - in a fresh
   # background process it has not been loaded yet
   requireNamespace("dtwclust", quietly = TRUE)
-  dm <- proxy::dist(wide_mat, method = "SBD")
-  message(m2araTimeNow(), " distance matrix computed (",
+  dm <- proxy::dist(wide_mat,
+                    method = if (identical(distance, "sbd")) "SBD" else "euclidean")
+  message(m2araTimeNow(), " ", distance, " distance matrix computed (",
           attr(dm, "Size"), " series).\n")
 
   method <- latrend::lcMethodDtwclust(response = "y",
                              time = "x",
                              id = "mzIdx",
-                             distance = "sbd",
+                             distance = if (identical(distance, "sbd")) "sbd" else "L2",
                              centroid = centroidMethod,
                              seed = 42,
                              control = dtwclust::partitional_control(distmat = dm))

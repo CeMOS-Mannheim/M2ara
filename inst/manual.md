@@ -310,6 +310,8 @@ The cluster tab enables to cluster curves based on their shape to enable to dete
 
 On the right the individual (black) curves for all signals are shown together with their average curves trajectory (colored). The left plot shows all trajectories in direct comparison.
 
+**Distance.** *shape only (SBD)* compares the shape of the curves and allows them to be shifted along the concentration axis, so a signal with the same behaviour but a different potency still counts as similar. *shape + potency (Euclidean)* requires the curves to run alike at the same concentration, so the potency matters as well. The distance is not a quality setting: which one is right depends on the question. The centroid should match the distance (`pam` works for both, `shape`/DBA is the prototype of SBD, `mean` is the average and fits the Euclidean distance).
+
 Using the slider the user needs to adjust the number of clusters to a reasonable value. The clustering metrics shown below can help but in the end non of these metrics is perfect and the clustering might work better for some data sets then for other. It is intended not as an analytic tool but rather as a helper to find curves with similar trajectories (e.g. identify all signals were the intensity goes up or down with increasing concentration). So the number of clusters should be selected in a way that the average trajectories line up as good as possible with the individual curves.
 
 <div class="figure">
