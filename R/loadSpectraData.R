@@ -2,7 +2,7 @@ loadSpectraData <- function(input, appData, mapping) {
   if (appData$info_state %in% c("dir_set",
                                 "loadErrorNum",
                                 "loadErrorFormat")) {
-    show_spinner()
+    showM2araSpinner()
 
     checkEmpty <- input$checkEmpty
 
@@ -24,7 +24,7 @@ loadSpectraData <- function(input, appData, mapping) {
         warning("Found folder names that could not be converted to numeric and no mapping file found.
                 All folders/spectra need to have concentrations as names or mapping file with conc. needed.\n")
         setInfoState(appData, "loadErrorNum")
-        hide_spinner()
+        hideM2araSpinner()
         return()
       }
     }
@@ -32,7 +32,7 @@ loadSpectraData <- function(input, appData, mapping) {
     if (!checkSpecNamesFormat(appData$selected_dir, input$fileFormat)) {
       warning("Could not find data with '", input$fileFormat, "' file format.\n")
       setInfoState(appData, "loadErrorFormat")
-      hide_spinner()
+      hideM2araSpinner()
       return()
     }
 
@@ -111,7 +111,7 @@ loadSpectraData <- function(input, appData, mapping) {
     if(any(!unique_mz)) {
       warning("Not all mz are unique. Did you use tims resolved data?\n")
         setInfoState(appData, "loadErrorUniqueMz")
-        hide_spinner()
+        hideM2araSpinner()
         return()
     }
     
@@ -130,7 +130,7 @@ loadSpectraData <- function(input, appData, mapping) {
       if (is.null(concentrations) || !is.null(problem)) {
         appData$load_problem <- problem
         setInfoState(appData, "loadErrorMapping")
-        hide_spinner()
+        hideM2araSpinner()
         return()
       }
 
@@ -148,7 +148,7 @@ loadSpectraData <- function(input, appData, mapping) {
           paste(unique(files[is.na(concentrations)]), collapse = ", "),
           ". Provide a sample sheet with file names and concentrations.")
         setInfoState(appData, "loadErrorNum")
-        hide_spinner()
+        hideM2araSpinner()
         return()
       }
     }
@@ -204,7 +204,7 @@ loadSpectraData <- function(input, appData, mapping) {
     }
 
 
-    hide_spinner()
+    hideM2araSpinner()
   }
   return(appData)
 }

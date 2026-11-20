@@ -123,7 +123,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       # 2) the spectra for this folder are not in memory yet: read them first
       if (is.null(appData$spec_all)) {
-        show_spinner()
+        showM2araSpinner()
         # the files are read synchronously, so at least say what is going on
         loading(TRUE)
         process_status(list(percent = 0,
@@ -134,7 +134,7 @@ appServer <- function(input, output, session, defaults = NULL) {
         loading(FALSE)
         process_status(NULL)
         if (!identical(appData$info_state, "loaded")) {
-          hide_spinner()
+          hideM2araSpinner()
           return()
         }
       }
@@ -157,7 +157,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       }
 
       # 3) process in a background process
-      show_spinner()
+      showM2araSpinner()
       showNotification("Processing started. Please wait.",
                        duration = 5,
                        type = "default")
@@ -183,7 +183,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       if (is.null(job)) {
         setInfoState(appData, "fitErrorOther")
-        hide_spinner()
+        hideM2araSpinner()
         showNotification("Processing could not be started.",
                          type = "error", duration = 10)
         return()
@@ -248,7 +248,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     process_job(NULL)
     process_status(NULL)
     process_console_bucket(-1L)
-    hide_spinner()
+    hideM2araSpinner()
 
     if (is.null(out)) {
       setInfoState(appData, "fitErrorOther")
@@ -294,7 +294,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     process_job(NULL)
     process_status(NULL)
     process_console_bucket(-1L)
-    hide_spinner()
+    hideM2araSpinner()
     showNotification("Processing cancelled.", type = "warning", duration = 5)
   })
 

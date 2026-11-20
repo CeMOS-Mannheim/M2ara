@@ -169,3 +169,14 @@ nonNumericNames <- function(dir, fileFormat = "mzml") {
 
   names[is.na(suppressWarnings(as.numeric(names)))]
 }
+# The spinner of shinybusy needs a real session; these wrappers keep it harmless
+# when the server is driven without a browser (shiny::testServer).
+showM2araSpinner <- function() {
+  try(shinybusy::show_spinner(), silent = TRUE)
+  invisible(NULL)
+}
+
+hideM2araSpinner <- function() {
+  try(shinybusy::hide_spinner(), silent = TRUE)
+  invisible(NULL)
+}
