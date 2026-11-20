@@ -107,17 +107,21 @@ extractLaClusters <- function(models, k = 2) {
 
 # Fitted curves per cluster, the way latrend plots them (one facet per cluster).
 #
-# Returned as ggplot and rendered as a static figure: plotly does not clip traces
-# to the facet panel and would draw the curves over the strips of the
-# neighbouring panels, ggplot clips them.
+# plotly does not clip traces to the facet panel and the default strip band lies
+# at the top of the panel, so curves would be drawn over it. The strip is drawn
+# without a background and inside the panel, so nothing can be hidden by it.
 plotClusters <- function(models, k) {
   model <- models[[k - 1]]
 
-  latrend::plot(model) +
+  p <- latrend::plot(model) +
     labs(y = "rel. Intensity [arb. u.]",
          x = "Log10 Concentration",
-         title = NULL) +
-    m2araTheme()
+         title = "Curves per cluster") +
+    m2araTheme() +
+    theme(strip.background = element_blank(),
+          strip.text = element_text(hjust = 0, colour = "grey40"))
+
+  ggplotly(p)
 }
 
 
@@ -129,7 +133,8 @@ plotTraj <- function(models, k) {
          x = "Log10 Concentration",
          title = "Average Trajectories") +
     m2araTheme()
-  return(p)
+
+  ggplotly(p)
 }
 
 plotClusterMetrics <- function(models) {
@@ -140,4 +145,6 @@ plotClusterMetrics <- function(models) {
                scales = "free_y",
                nrow = 1) +
     scale_x_continuous(breaks = seq(2, nClust, by = 2))
+
+  ggplotly(p)
 }

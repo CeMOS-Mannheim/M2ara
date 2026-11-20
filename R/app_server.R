@@ -795,21 +795,19 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
-  # static figure: only ggplot draws the facet strips correctly
-  output$clustPlot <- renderPlot({
+  output$clustPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
       plotClusters(appData$clust, k = input$num_cluster)
     }
   })
 
-  # static figures, so all three cluster plots share the same theme and font sizes
-  output$clustCurvesPlot <- renderPlot({
+  output$clustCurvesPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
       plotTraj(appData$clust, k = input$num_cluster)
     }
   })
 
-  output$optNumClust <- renderPlot({
+  output$optNumClust <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
       plotClusterMetrics(appData$clust)
     }
