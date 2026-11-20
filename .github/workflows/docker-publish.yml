@@ -110,9 +110,13 @@ jobs:
       - name: Install the M2ara package
         run: R CMD INSTALL --no-multiarch --no-byte-compile .
 
-      # Runs the test suite (including the shinytest2 workflow test) from a clean
+      # Runs the test suite (including the shinytest2 app tests) from a clean
       # check environment, i.e. the same way a user would install the package.
       - name: Build and check the package
+        # NOT_CRAN lifts skip_on_cran(), so the app tests run as well; they need
+        # a browser, which setup-chrome provides above
+        env:
+          NOT_CRAN: "true"
         run: |
           R CMD build --no-build-vignettes --no-manual .
           R CMD check --no-manual --no-vignettes M2ara_*.tar.gz

@@ -17,6 +17,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   # background processing job and its cache key
   process_job <- reactiveVal(NULL)
+  loading <- reactiveVal(FALSE)
   process_status <- reactiveVal(NULL)
   process_console_bucket <- reactiveVal(-1L)
   process_cache_key <- reactiveVal(NULL)
@@ -27,9 +28,17 @@ appServer <- function(input, output, session, defaults = NULL) {
     appData <- setPreprocessSettings(input, appData)
   })
 
+  ### dataset card in the sidebar #####
+  output$datasetCard <- renderUI({
+    datasetCardUi(appData, input,
+                    running = !is.null(process_job()),
+                    loading = isTRUE(loading()))
+  })
+
   ### Text massage logic ####
-  observeEvent(list(appData$info_state, appData$selected_dir), {
+  observeEvent(list(appData$info_state, appData$selected_dir, appData$load_problem), {
     output <- infoStateMassageHandler(info_state = appData$info_state,
+                                       problem = appData$load_problem,
                                       output = output,
                                       selected_dir = appData$selected_dir)
   })
@@ -63,7 +72,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     if (!is.null(appData$spec_all)) {
       appData$spec_all <- NULL
       appData$spec_idx <- NULL
-      appData$info_state <- if (is.null(appData$selected_dir)) "initial" else "dir_set"
+      setInfoState(appData, if (is.null(appData$selected_dir)) "initial" else "dir_set")
     }
   }, ignoreInit = TRUE)
 
@@ -86,18 +95,40 @@ appServer <- function(input, output, session, defaults = NULL) {
       appData$settings_snapshot <- settingsDataFrame(input)
 
       settings <- processingSettings(input)
+      # remembered, so the sidebar can tell whether the shown result still
+      # belongs to the settings in the form
+      appData$run_time <- Sys.time()
+      appData$run_signature <- list(settings = settings,
+                                    preprocessing = appData$preprocessing,
+                                    concUnits = input$concUnits)
+
+      # a value the widgets accept can still break the pipeline
+      problems <- validateProcessingSettings(settings)
+      if (length(problems) > 0L) {
+        showNotification(paste(problems, collapse = " "), type = "error",
+                         duration = 20)
+        return()
+      }
       cache_key <- processCacheKey(appData$selected_dir, settings,
-                                   appData$preprocessing)
+                                   appData$preprocessing,
+                                   mapping = appData$mapping)
       process_cache_key(cache_key)
 
       # 1) unchanged data and settings: the cached result is used (unless a
       # forced run was requested)
-      cached <- if (isTRUE(appData$force_reprocess)) NULL else processCacheGet(cache_key)
+      cached <- if (isTRUE(appData$force_reprocess)) NULL else processCacheGet(cache_key, appData$selected_dir)
       appData$force_reprocess <- FALSE
       if (!is.null(cached)) {
+        # keep the sidecar of the entry up to date, so the sidebar can tell that
+        # a cached result exists
+        processCacheWriteMeta(cache_key, appData$selected_dir,
+                              created = file.mtime(processCachePath(appData$selected_dir)))
         appData$res <- cached$res
         appData$centroided <- cached$centroided
-        message(MALDIcellassay:::timeNow(), " results loaded from cache\n")
+        # the effective concentration sheet belongs to the result
+        appData$samples <- cached$samples
+        appData$mapping_source <- cached$mapping_source
+        message(m2araTimeNow(), " results loaded from cache\n")
         showNotification("Results loaded from the cache.", duration = 5, type = "message")
         appData <- storeResults(appData, res = cached$res, input,
                                 stats = getStatistics(cached$res))
@@ -109,11 +140,18 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       # 2) the spectra for this folder are not in memory yet: read them first
       if (is.null(appData$spec_all)) {
-        show_spinner()
-        message(MALDIcellassay:::timeNow(), " loading spectra...\n")
+        showM2araSpinner()
+        # the files are read synchronously, so at least say what is going on
+        loading(TRUE)
+        process_status(list(percent = 0,
+                            label = spectraLoadingLabel(appData$selected_dir,
+                                                       input$fileFormat)))
+        message(m2araTimeNow(), " loading spectra...\n")
         appData <- loadSpectraData(input, appData, mapping = appData$mapping)
+        loading(FALSE)
+        process_status(NULL)
         if (!identical(appData$info_state, "loaded")) {
-          hide_spinner()
+          hideM2araSpinner()
           return()
         }
       }
@@ -121,12 +159,26 @@ appServer <- function(input, output, session, defaults = NULL) {
       # change concentrations according to the unit of the UI
       appData <- setConcentrationUnit(appData, input)
 
+      # the normalization m/z has to be inside the measured range
+      if (is.null(appData$mz_range)) {
+        appData$mz_range <- spectraMassRange(appData$spec_all)
+      }
+      mzRange <- appData$mz_range
+      if (!is.null(mzRange) &&
+          (settings$normMz < mzRange[1L] || settings$normMz > mzRange[2L])) {
+        showNotification(
+          sprintf(paste("The normalization m/z (%.2f) is outside the measured range",
+                        "(%.1f - %.1f Da). The run continues, but check the setting."),
+                  settings$normMz, mzRange[1L], mzRange[2L]),
+          type = "warning", duration = 15)
+      }
+
       # 3) process in a background process
-      show_spinner()
+      showM2araSpinner()
       showNotification("Processing started. Please wait.",
                        duration = 5,
                        type = "default")
-      message(MALDIcellassay:::timeNow(), " start processing...\n")
+      message(m2araTimeNow(), " start processing...\n")
 
 
       # no cached result: run the pipeline in a background process, the poll
@@ -147,8 +199,8 @@ appServer <- function(input, output, session, defaults = NULL) {
       )
 
       if (is.null(job)) {
-        appData$info_state <- "fitErrorOther"
-        hide_spinner()
+        setInfoState(appData, "fitErrorOther")
+        hideM2araSpinner()
         showNotification("Processing could not be started.",
                          type = "error", duration = 10)
         return()
@@ -163,6 +215,10 @@ appServer <- function(input, output, session, defaults = NULL) {
   ### processing job: progress, result and cancel ####
   output$processRunning <- reactive({ !is.null(process_job()) })
   outputOptions(output, "processRunning", suspendWhenHidden = FALSE)
+
+  # busy while loading or processing
+  output$processBusy <- reactive({ isTRUE(loading()) || !is.null(process_job()) })
+  outputOptions(output, "processBusy", suspendWhenHidden = FALSE)
 
   output$processStatus <- renderUI({
     status <- process_status()
@@ -209,10 +265,10 @@ appServer <- function(input, output, session, defaults = NULL) {
     process_job(NULL)
     process_status(NULL)
     process_console_bucket(-1L)
-    hide_spinner()
+    hideM2araSpinner()
 
     if (is.null(out)) {
-      appData$info_state <- "fitErrorOther"
+      setInfoState(appData, "fitErrorOther")
       if (nzchar(job_log)) {
         message("processing failed:\n", job_log)
         showNotification(paste0("Processing failed: ",
@@ -226,15 +282,18 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
 
     if (!isTRUE(out$ok)) {
-      appData$info_state <- switch(out$error,
+      setInfoState(appData, switch(out$error,
                                    recal = "fitErrorRecal",
                                    norm = "fitErrorNorm",
-                                   "fitErrorOther")
+                                   "fitErrorOther"))
       return()
     }
 
     processCachePut(process_cache_key(),
-                    list(res = out$res, centroided = isTRUE(appData$centroided)))
+                    value = list(res = out$res,
+                                 centroided = isTRUE(appData$centroided)),
+                    dir = appData$selected_dir)
+    cache_refresh(cache_refresh() + 1L)
     appData <- storeResults(appData, res = out$res, input,
                             stats = getStatistics(out$res))
     session$sendCustomMessage("m2ara_reset_selection", list())
@@ -252,11 +311,18 @@ appServer <- function(input, output, session, defaults = NULL) {
     process_job(NULL)
     process_status(NULL)
     process_console_bucket(-1L)
-    hide_spinner()
+    hideM2araSpinner()
     showNotification("Processing cancelled.", type = "warning", duration = 5)
   })
 
   ### Peak table ####
+
+  # what is in the result cache
+  cache_refresh <- reactiveVal(0L)
+  output$cacheInfo <- renderText({
+    cache_refresh()
+    processCacheSummary()
+  })
 
   # read the files again and ignore the cache, e.g. after an update of M2ara
   observeEvent(input$forceProcess, {
@@ -276,6 +342,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   observeEvent(input$clearCache, {
     removed <- clearProcessCache()
+    cache_refresh(cache_refresh() + 1L)
     showNotification(
       sprintf("Removed %d cached result(s) (%.1f MB).",
               removed, processCacheSize() / 1024^2),
@@ -657,48 +724,167 @@ appServer <- function(input, output, session, defaults = NULL) {
   })
 
   ### clustering tab #####
+  clust_job <- reactiveVal(NULL)
+  clust_status <- reactiveVal(NULL)
+  clust_cancelled <- reactiveVal(FALSE)
+
+  output$clustRunning <- reactive({ !is.null(clust_job()) })
+  outputOptions(output, "clustRunning", suspendWhenHidden = FALSE)
+
+  output$clustStatus <- renderUI({
+    status <- clust_status()
+    if (is.null(status)) {
+      return(NULL)
+    }
+    tags$div(
+      style = "font-size: 85%; margin-bottom: 4px;",
+      status
+    )
+  })
+
   observeEvent(input$doClust, {
-    if (appData$show_plot) {
-      withProgress(
-        message = "Clustering curves...",
-        detail = paste0("Fitting models (k=2..10, centroid=", input$centroid_method, ")"),
-        value = 0.1,
-        expr = {
-          appData$clust <- clusterCurves(appData$res, nClusters = 10,
-                                          centroidMethod = input$centroid_method)
-        }
-      )
-      if (is.null(appData$clust)) {
-        showNotification("Clustering failed. Check console for details.",
-                         duration = 10, type = "error")
-      }
+    req(isTRUE(appData$show_plot))
+    if (!is.null(clust_job())) {
+      showNotification("Clustering is already running.", type = "warning")
+      return()
+    }
+
+    # sampling the fitted curves is fast, the clustering runs in the background
+    curves <- curveClusterData(appData$res)
+    if (is.null(curves)) {
+      showNotification(
+        paste("No usable curves - cannot run clustering.",
+              "At least 10 curves with a reasonable fit are needed."),
+        type = "error", duration = 15)
+      return()
+    }
+
+    features <- attr(curves, "features")
+    if (features < 10L) {
+      showNotification(
+        sprintf("Only %d usable curves - the clustering needs at least 10.", features),
+        type = "error", duration = 15)
+      return()
+    }
+
+    if (features > maxClusterFeatures) {
+      showNotification(
+        sprintf(paste("This would cluster %d features, the limit is %d.",
+                      "Reduce the number of features with the Var. filter first."),
+                features, maxClusterFeatures),
+        type = "error", duration = 20)
+      return()
+    }
+
+    excluded <- c(if (attr(curves, "excludedFit") > 0L)
+                    sprintf("%d with a poor fit", attr(curves, "excludedFit")),
+                  if (attr(curves, "excludedFlat") > 0L)
+                    sprintf("%d without rise", attr(curves, "excludedFlat")))
+    if (length(excluded) > 0L) {
+      showNotification(sprintf("%d curves are left out before the clustering: %s.",
+                               features, paste(excluded, collapse = ", ")),
+                       type = "warning", duration = 12)
+    }
+
+    clust_cancelled(FALSE)
+    appData$clust <- NULL
+    appData$clust_distance <- input$clustDistance
+    appData$clust_centroid <- input$centroid_method
+    clust_status(clusterStageLabel("queued"))
+    clust_job(clusterCurvesAsync(curves, nClusters = 10,
+                                 centroidMethod = input$centroid_method,
+                                 distance = input$clustDistance))
+    showNotification("Clustering started. You can cancel it below.",
+                     type = "message", duration = 5)
+  })
+
+  # poll the background job
+  observe({
+    job <- clust_job()
+    if (is.null(job)) {
+      return()
+    }
+
+    invalidateLater(500)
+
+    if (!clusterJobDone(job)) {
+      clust_status(clusterStageLabel(clusterJobProgress(job)))
+      return()
+    }
+
+    models <- clusterJobResult(job)
+    cancelled <- isTRUE(clust_cancelled())
+    log <- clusterJobLog(job)
+    clusterJobCleanup(job)
+    clust_job(NULL)
+    clust_status(NULL)
+
+    if (cancelled) {
+      showNotification("Clustering cancelled.", type = "message", duration = 5)
+      return()
+    }
+
+    if (is.null(models)) {
+      showNotification(
+        paste0("Clustering failed. ", if (nzchar(log)) log else "See the console."),
+        type = "error", duration = 15)
+      return()
+    }
+
+    appData$clust <- models
+    showNotification("Clustering finished.", type = "message", duration = 5)
+  })
+
+
+  observeEvent(input$cancelClust, {
+    job <- clust_job()
+    if (!is.null(job)) {
+      clust_cancelled(TRUE)
+      clusterJobCancel(job)
+      clust_status("Cancelling clustering ...")
     }
   })
 
   output$clustPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
-      show_spinner()
-      p <- plotClusters(appData$clust, k = input$num_cluster)
-      hide_spinner()
-      return(p)
+      plotClusters(appData$clust, k = input$num_cluster)
     }
   })
 
   output$clustCurvesPlot <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
-      show_spinner()
-      p <- plotTraj(appData$clust, k = input$num_cluster)
-      hide_spinner()
-      return(p)
+      plotTraj(appData$clust, k = input$num_cluster)
     }
+  })
+
+  # the shown result belongs to the settings it was computed with
+  output$clustOutdated <- renderText({
+    if (is.null(appData$clust)) {
+      return("")
+    }
+
+    changed <- c(if (!identical(appData$clust_distance, input$clustDistance))
+                   sprintf("distance (%s -> %s)", appData$clust_distance, input$clustDistance),
+                 if (!identical(appData$clust_centroid, input$centroid_method))
+                   sprintf("centroid (%s -> %s)", appData$clust_centroid, input$centroid_method))
+
+    if (length(changed) == 0L) {
+      return("")
+    }
+
+    sprintf("The plots were computed with a different %s. Press \"Perform clustering\" to apply the new setting.",
+            paste(changed, collapse = " and "))
+  })
+  output$clustSuggestion <- renderText({
+    if (is.null(appData$clust)) {
+      return("")
+    }
+    suggestClustersText(appData$clust)
   })
 
   output$optNumClust <- renderPlotly({
     if (appData$show_plot & !is.null(appData$clust)) {
-      show_spinner()
-      p <- plotClusterMetrics(appData$clust)
-      hide_spinner()
-      return(p)
+      plotClusterMetrics(appData$clust)
     }
   })
 
@@ -750,19 +936,42 @@ appServer <- function(input, output, session, defaults = NULL) {
         stats = appData$stats,
         settings = settings_file,
         centroided = isTRUE(appData$centroided),
-        plot_ready = appData$show_plot
+        plot_ready = appData$show_plot,
+        samples = appData$samples,
+        samples_source = appData$mapping_source
       )
     }
   )
 
-  # mappig of concentrations by external txt
+  # concentration mapping by an external sample sheet
   observeEvent(input$mappingFile, {
-    mapping <- processMappingFile(input$mappingFile)
-    if(is.null(mapping)) {
-      appData$info_state <- "errorMapping"
+    if (is.null(input$mappingFile)) {
+      appData$mapping <- NULL
       return()
     }
+
+    mapping <- tryCatch(processMappingFile(input$mappingFile),
+                        error = function(e) e)
+
+    if (inherits(mapping, "error")) {
+      appData$mapping <- NULL
+      setInfoState(appData, "errorMapping")
+      appData$load_problem <- conditionMessage(mapping)
+      showNotification(conditionMessage(mapping), type = "error", duration = 12)
+      return()
+    }
+
     appData$mapping <- mapping
+    appData$load_problem <- NULL
+
+    if (identical(mapping$kind, "list")) {
+      showNotification(paste("Concentration list read - it is assigned in file order.",
+                             "A sample sheet with file names is safer."),
+                       type = "warning", duration = 10)
+    } else {
+      showNotification(sprintf("Sample sheet read: %d file(s).", nrow(mapping$sheet)),
+                       type = "message", duration = 6)
+    }
   })
 
   exportTestValues(numSpec = length(appData$spec_all),

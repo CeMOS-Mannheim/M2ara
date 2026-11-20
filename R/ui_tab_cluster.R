@@ -21,18 +21,39 @@ clustTab <- function(defaults) {
                                 value = defaults$num_cluster,
                                 step = 1)),
              column(2,
+                    selectInput(inputId = "clustDistance",
+                                label = "Distance",
+                                choices = c("shape only (SBD)" = "sbd",
+                                            "shape + potency (Euclidean)" = "euclidean"),
+                                selected = if (is.null(defaults$clustDistance)) "sbd" else defaults$clustDistance)),
+             column(2,
                     selectInput(inputId = "centroid_method",
                                 label = "Centroid",
-                                choices = c("mean (fast)" = "mean",
-                                            "pam (accurate, slow)" = "pam"),
+                                choices = c("mean (fast, best for Euclidean)" = "mean",
+                                            "pam (robust, any distance, slow)" = "pam",
+                                            "shape / DBA (best for SBD, slow)" = "shape"),
                                 selected = defaults$centroid_method)),
              column(2,
                     createActionButton(inputId = "clust2peaksTable",
                                        label = "Send to Peak Table",
                                        icon = "share-from-square"))
            ),
+           # status and cancel while the clustering runs in the background
+           conditionalPanel(
+             condition = "output.clustRunning",
+             fluidRow(
+               column(12,
+                      uiOutput("clustStatus"),
+                      actionButton("cancelClust", "Cancel clustering",
+                                   icon = icon("stop"),
+                                   class = "btn-sm",
+                                   style = "margin-top: 4px;"))
+             )
+           ),
            fluidRow(
              column(12,
+                    textOutput("clustOutdated", inline = FALSE),
+                    textOutput("clustSuggestion", inline = FALSE),
                     plotlyOutput("optNumClust"))
            )
   )

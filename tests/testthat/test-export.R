@@ -45,3 +45,34 @@ test_that("exportRun refuses to export without results", {
   )
   expect_false(file.exists(zip_file))
 })
+test_that("the export contains the effective sample sheet", {
+  res <- MALDIcellassay::Blank2022res
+  stats <- getStatistics(res)
+  samples <- sampleSheet(files = c("a.mzML", "a.mzML", "b.mzML"),
+                         concentrations = c(1, 1, 2),
+                         spots = c("K11", "L11", "K9"))
+
+  zip_file <- tempfile(fileext = ".zip")
+  exportRun(zip_file, res = res, stats = stats, settings = NULL,
+            centroided = FALSE, plot_ready = TRUE,
+            samples = samples, samples_source = "sample sheet")
+
+  entries <- utils::unzip(zip_file, list = TRUE)$Name
+  expect_true("sample_sheet.csv" %in% entries)
+
+  unpacked <- tempfile()
+  dir.create(unpacked)
+  utils::unzip(zip_file, exdir = unpacked)
+
+  sheet <- utils::read.csv(file.path(unpacked, "sample_sheet.csv"))
+  expect_equal(sheet$file, c("a.mzML", "b.mzML"))
+  expect_equal(sheet$n_spectra, c(2L, 1L))
+  expect_equal(sheet$spots, c("K11;L11", "K9"))
+
+  info <- jsonlite::fromJSON(file.path(unpacked, "run_info.json"))
+  expect_equal(info$samples$file, "sample_sheet.csv")
+  expect_equal(info$samples$source, "sample sheet")
+
+  readme <- readLines(file.path(unpacked, "README.md"))
+  expect_true(any(grepl("sample_sheet.csv", readme)))
+})

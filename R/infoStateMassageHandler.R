@@ -1,4 +1,5 @@
-infoStateMassageHandler <- function(info_state, output, selected_dir = NULL) {
+infoStateMassageHandler <- function(info_state, output, selected_dir = NULL,
+                                     problem = NULL) {
   switch(info_state,
          "initial" = {
            output$info1 <- renderText("Please select\na folder.")
@@ -8,19 +9,19 @@ infoStateMassageHandler <- function(info_state, output, selected_dir = NULL) {
          "dir_set" = {
            output$info1 <- renderText("Selected:")
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Press the process button.")
+           output$info3 <- renderText("")
          },
          "loaded" = {
            output$info1 <- renderText("Loaded:")
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Press the process button.")
+           output$info3 <- renderText("")
            msg <- paste0("Dataset '", basename(selected_dir), "' was successfully loaded.")
            showNotification(msg, duration = 5, type = "default")
          },
          "processed" = {
            output$info1 <- renderText(("Dataset:"))
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Changed settings apply after re-processing.")
+           output$info3 <- renderText("")
            msg <- paste0("Dataset '", basename(selected_dir), "' was successfully processed")
            showNotification(msg, duration = 5, type = "default")
          },
@@ -55,9 +56,10 @@ infoStateMassageHandler <- function(info_state, output, selected_dir = NULL) {
          "loadErrorNum" = {
            output$info1 <- renderText(("Failed to load:"))
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("All folders need to have concentrations as names.")
-           msg <- paste0("Failed to load '", basename(selected_dir), "'. All folders need to have concentrations as names.")
-           showNotification(msg, duration = 15, type = "error")
+           output$info3 <- renderText(problem)
+           msg <- paste0("Failed to load '", basename(selected_dir), "'. ",
+                          problem)
+           showNotification(msg, duration = 20, type = "error")
          },
          "loadErrorFormat" = {
            output$info1 <- renderText(("Failed to load:"))
@@ -76,16 +78,17 @@ infoStateMassageHandler <- function(info_state, output, selected_dir = NULL) {
          "loadErrorMapping" = {
            output$info1 <- renderText(("Failed to load:"))
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Mapping error.")
-           msg <- paste0("Failed to load '", basename(selected_dir), "'. Mapping file error.\nNumber conc. != Number spectra.")
-           showNotification(msg, duration = 15, type = "error")
+           output$info3 <- renderText(problem)
+           msg <- paste0("Failed to load '", basename(selected_dir), "'. ",
+                          problem)
+           showNotification(msg, duration = 20, type = "error")
          },
          "errorMapping" = {
            output$info1 <- renderText(("Failed to load:"))
            output$info2 <- renderText(selected_dir)
-           output$info3 <- renderText("Mapping error.")
-           msg <- paste0("Mapping file error. No concentrations found.")
-           showNotification(msg, duration = 15, type = "error")
+           output$info3 <- renderText(problem)
+           msg <- paste0("Sample sheet error. ", problem)
+           showNotification(msg, duration = 20, type = "error")
          }
   )
 

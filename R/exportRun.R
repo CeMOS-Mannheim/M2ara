@@ -6,7 +6,8 @@
 # README.md inside the archive.
 
 exportRun <- function(file, res, stats, settings = NULL, centroided = FALSE,
-                      plot_ready = FALSE) {
+                      plot_ready = FALSE, samples = NULL,
+                      samples_source = NULL) {
   if (!isTRUE(plot_ready)) {
     warning("Nothing to export. Load and process data.")
     return(invisible(NULL))
@@ -17,6 +18,11 @@ exportRun <- function(file, res, stats, settings = NULL, centroided = FALSE,
   dir.create(root, recursive = TRUE)
 
   exported <- exportTables(res, stats, root)
+
+  samples_file <- exportSampleSheet(samples, root)
+  if (!is.null(samples_file)) {
+    exported <- c(exported, samples_file)
+  }
 
   settings_file <- exportSettings(settings, root)
   if (!is.null(settings_file)) {
@@ -30,11 +36,12 @@ exportRun <- function(file, res, stats, settings = NULL, centroided = FALSE,
   )
 
   writeLines(
-    runInfoJson(res, centroided, settings_file, manifest, dataset),
+    runInfoJson(res, centroided, settings_file, manifest, dataset, samples_file, samples,
+                samples_source),
     file.path(root, "run_info.json")
   )
   writeLines(
-    exportReadme(res, stats, centroided, manifest, dataset),
+    exportReadme(res, stats, centroided, manifest, dataset, samples_file),
     file.path(root, "README.md")
   )
 
@@ -82,6 +89,17 @@ exportTables <- function(res, stats, root) {
 }
 
 # the settings of this run -----------------------------------------------------
+# effective assignment of files to concentrations, so a result can be traced
+# back later
+exportSampleSheet <- function(samples, root) {
+  if (is.null(samples) || nrow(samples) == 0L) {
+    return(NULL)
+  }
+
+  readr::write_excel_csv(samples, file.path(root, "sample_sheet.csv"))
+  "sample_sheet.csv"
+}
+
 exportSettings <- function(settings, root) {
   if (is.null(settings) || length(settings) == 0L || !file.exists(settings)) {
     return(NULL)
@@ -91,7 +109,9 @@ exportSettings <- function(settings, root) {
 }
 
 # machine readable run information ---------------------------------------------
-runInfoJson <- function(res, centroided, settings_file, manifest, dataset) {
+runInfoJson <- function(res, centroided, settings_file, manifest, dataset,
+                        samples_file = NULL, samples = NULL,
+                        samples_source = NULL) {
   version_of <- function(package) {
     tryCatch(
       as.character(utils::packageVersion(package)),
@@ -124,6 +144,13 @@ runInfoJson <- function(res, centroided, settings_file, manifest, dataset) {
     settings = list(
       file = if (is.null(settings_file)) NA_character_ else settings_file
     ),
+    samples = list(
+      file = if (is.null(samples_file)) NA_character_ else samples_file,
+      source = if (is.null(samples_source)) NA_character_ else samples_source,
+      files = if (is.null(samples)) NA_integer_ else nrow(samples),
+      concentrations = if (is.null(samples)) NA_integer_ else length(unique(samples$concentration)),
+      spectra = if (is.null(samples)) NA_integer_ else sum(samples$n_spectra)
+    ),
     created_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
     files = file_entries
   )
@@ -132,7 +159,8 @@ runInfoJson <- function(res, centroided, settings_file, manifest, dataset) {
 }
 
 # human readable documentation inside the archive ------------------------------
-exportReadme <- function(res, stats, centroided, manifest, dataset) {
+exportReadme <- function(res, stats, centroided, manifest, dataset,
+                         samples_file = NULL) {
   created <- format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")
 
   c(
@@ -156,6 +184,9 @@ exportReadme <- function(res, stats, centroided, manifest, dataset) {
     "| `fitting_parameters.csv` | fitted curve parameters per feature |",
     "| `intensity_matrix.csv` | intensities per concentration and m/z |",
     "| `run_info.json` | versions, session information and checksums of all files |",
+    if (!is.null(samples_file)) {
+      "| `sample_sheet.csv` | which file had which concentration and which spots |"
+    },
     "",
     "## Columns of peak_table.csv",
     "",

@@ -19,5 +19,14 @@ emptyAppDataObject <- function(){
                  centroided = NULL,
                  settings_snapshot = NULL, # settings of the last run (export)
                  pending_selection = integer(0), # features from a share link
-                 force_reprocess = FALSE) # next run ignores the cache
+                 force_reprocess = FALSE, # next run ignores the cache
+                 samples = NULL, # effective concentration sheet
+                 load_problem = NULL, # reason when loading failed
+                 skipped = character(0), # entries that are no dataset
+                 mapping_source = NULL, # 'file names', 'uploaded' or the sheet file
+                 mz_range = NULL, # mass range of the loaded spectra
+                 clust_distance = NULL, # distance of the current clustering
+                 clust_centroid = NULL, # centroid of the current clustering
+                 run_signature = NULL, # settings of the last run
+                 run_time = NULL) # when the last run finished
 }
