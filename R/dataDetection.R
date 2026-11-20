@@ -6,7 +6,7 @@
 
 # "mzml", "bruker", "both" or NA when nothing was recognised
 detectDataFormat <- function(dir) {
-  if (is.null(dir) || length(dir) == 0L || is.na(dir) || !dir.exists(dir)) {
+  if (!hasUsableDir(dir)) {
     return(NA_character_)
   }
 
@@ -39,7 +39,7 @@ detectConcentrationSource <- function(dir, fileFormat = NA_character_) {
   empty <- list(kind = "missing", sheet = NULL, nFiles = 0L,
                 missing = character(0), upload = NULL)
 
-  if (is.null(dir) || length(dir) == 0L || is.na(dir) || !dir.exists(dir)) {
+  if (!hasUsableDir(dir)) {
     return(empty)
   }
 

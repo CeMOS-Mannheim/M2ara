@@ -8,7 +8,7 @@
 # the dataset as two lines: parent folder (the name that says something) and the
 # last folder, which on its own is often just "curve" or "data"
 datasetNameParts <- function(dir) {
-  if (is.null(dir) || length(dir) == 0L || !nzchar(dir)) {
+  if (length(dir) != 1L || is.na(dir) || !nzchar(dir)) {
     return(list(parent = "", last = "", full = ""))
   }
 
@@ -34,7 +34,7 @@ datasetNameParts <- function(dir) {
 
 # how many entries are in the folder (cheap listing, nothing is read)
 datasetEntryCount <- function(dir) {
-  if (is.null(dir) || length(dir) == 0L || !dir.exists(dir)) {
+  if (!hasUsableDir(dir)) {
     return(NA_integer_)
   }
   length(list.files(dir))
@@ -185,7 +185,7 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
 # sidecar file is read, not the result itself.
 cacheLookup <- function(appData, input) {
   dir <- appData$selected_dir
-  if (is.null(dir) || !nzchar(dir)) {
+  if (!hasUsableDir(dir)) {
     return(NULL)
   }
 
@@ -199,4 +199,9 @@ cacheLookup <- function(appData, input) {
   }
 
   processCacheMeta(key, dir)
+}
+# TRUE when a usable folder is selected (the path can be NULL, character(0) or NA
+# while the user changes it)
+hasUsableDir <- function(dir) {
+  length(dir) == 1L && !is.na(dir) && nzchar(dir) && dir.exists(dir)
 }

@@ -19,9 +19,15 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
 
   observeEvent(input$dir, {
     # check if folder was selected
-    # prepare info massage
-    appData$selected_dir <- parseDirPath(vol, input$dir)
-    if (length(appData$selected_dir) > 0) {
+    # the shinyFiles dialog can return nothing, an empty string or NA (e.g. when
+    # it is cancelled); the app must never store a path that cannot be used
+    chosen <- parseDirPath(vol, input$dir)
+    if (length(chosen) != 1L || is.na(chosen) || !nzchar(chosen)) {
+      return()
+    }
+
+    appData$selected_dir <- chosen
+    {
       # a different folder invalidates the loaded spectra and the results
       appData$spec_all <- NULL
       appData$spec_idx <- NULL
