@@ -8,7 +8,7 @@
 # the dataset as two lines: parent folder (the name that says something) and the
 # last folder, which on its own is often just "curve" or "data"
 datasetNameParts <- function(dir) {
-  if (is.null(dir) || length(dir) == 0L || !nzchar(dir)) {
+  if (length(dir) != 1L || is.na(dir) || !nzchar(dir)) {
     return(list(parent = "", last = "", full = ""))
   }
 
@@ -34,7 +34,7 @@ datasetNameParts <- function(dir) {
 
 # how many entries are in the folder (cheap listing, nothing is read)
 datasetEntryCount <- function(dir) {
-  if (is.null(dir) || length(dir) == 0L || !dir.exists(dir)) {
+  if (!hasUsableDir(dir)) {
     return(NA_integer_)
   }
   length(list.files(dir))
@@ -128,6 +128,35 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
 
   facts <- paste(facts, collapse = " \u00b7 ")
 
+  # what the folder contains and where the concentrations come from
+  dataFormat <- detectDataFormat(appData$selected_dir)
+  dataSource <- detectConcentrationSource(appData$selected_dir, dataFormat)
+  formatText <- switch(
+    ifelse(is.na(dataFormat), "none", dataFormat),
+    "mzml" = "mzML",
+    "bruker" = "Bruker flex",
+    "both" = "mzML and Bruker",
+    "unknown format"
+  )
+  # an assignment made in this session wins over what the folder shows
+  assigned <- appData$mapping
+  sourceText <- if (!is.null(assigned) && identical(assigned$kind, "sheet")) {
+    sprintf("concentrations from your assignment (%d files)", nrow(assigned$sheet))
+  } else {
+    switch(
+      dataSource$kind,
+      "file names" = "concentrations from the file names",
+      "sample sheet" = sprintf("concentrations from %s", dataSource$sheet),
+      "missing" = sprintf("concentrations missing for %d file(s)",
+                          length(dataSource$missing))
+    )
+  }
+  dataClass <- if (identical(dataSource$kind, "missing")) {
+    "m2ara-dataset-meta m2ara-dataset-warn"
+  } else {
+    "m2ara-dataset-meta"
+  }
+
   # the card shows the last two folders (the path would be too long and is
   # repeated in Details anyway)
   tags$div(
@@ -137,6 +166,8 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
     if (nzchar(parts$last))
       tags$div(class = "m2ara-dataset-meta", title = parts$full, parts$last),
     tags$div(class = "m2ara-dataset-meta", title = facts, facts),
+    tags$div(class = dataClass, title = paste(formatText, sourceText, sep = " - "),
+             sprintf("%s \u00b7 %s", formatText, sourceText)),
     tags$div(class = paste("m2ara-status", status$class),
              tags$span(class = "m2ara-status-dot"),
              status$text),
@@ -154,7 +185,7 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
 # sidecar file is read, not the result itself.
 cacheLookup <- function(appData, input) {
   dir <- appData$selected_dir
-  if (is.null(dir) || !nzchar(dir)) {
+  if (!hasUsableDir(dir)) {
     return(NULL)
   }
 
@@ -168,4 +199,9 @@ cacheLookup <- function(appData, input) {
   }
 
   processCacheMeta(key, dir)
+}
+# TRUE when a usable folder is selected (the path can be NULL, character(0) or NA
+# while the user changes it)
+hasUsableDir <- function(dir) {
+  length(dir) == 1L && !is.na(dir) && nzchar(dir) && dir.exists(dir)
 }

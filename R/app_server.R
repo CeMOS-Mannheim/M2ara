@@ -28,6 +28,67 @@ appServer <- function(input, output, session, defaults = NULL) {
     appData <- setPreprocessSettings(input, appData)
   })
 
+  ### assign concentrations by hand #####
+  output$hasFolder <- reactive({ !is.null(appData$selected_dir) && nzchar(appData$selected_dir) })
+  outputOptions(output, "hasFolder", suspendWhenHidden = FALSE)
+
+  conc_data <- reactiveVal(NULL)
+
+  observeEvent(input$setConcentrations, {
+    req(appData$selected_dir)
+    table <- concentrationTable(appData$selected_dir, detectDataFormat(appData$selected_dir))
+    if (nrow(table) == 0L) {
+      showNotification("No spectra in this folder.", type = "error", duration = 10)
+      return()
+    }
+    conc_data(table)
+    showModal(concentrationDialog(table))
+  })
+
+  observeEvent(input$applyConcentrations, {
+    table <- concentrationDialogTable(conc_data(), input)
+    problem <- concentrationTableProblem(table)
+    if (!is.null(problem)) {
+      showNotification(problem, type = "error", duration = 15)
+      return()
+    }
+
+    sheet <- concentrationSheet(table)
+    appData$mapping <- list(kind = "sheet", sheet = sheet)
+    appData$mapping_source <- "sample sheet"
+
+    if (isTRUE(input$concWriteSheet)) {
+      path <- file.path(appData$selected_dir, "samples.csv")
+      ok <- tryCatch({
+        utils::write.csv(sheet, path, row.names = FALSE)
+        TRUE
+      }, error = function(e) FALSE)
+      if (!ok) {
+        showNotification("Could not write samples.csv.", type = "error", duration = 10)
+      }
+    }
+
+    removeModal()
+    showNotification(
+      sprintf("Concentrations for %d file(s) taken over - press Process spectra to use them.",
+              nrow(sheet)),
+      type = "message", duration = 8)
+  })
+  ### enable/disable buttons #####
+  # a button that cannot do anything should not look clickable
+  observe({
+    ready <- appData$info_state %in% c("dir_set", "loaded", "processed")
+    busy <- isTRUE(loading()) || !is.null(process_job())
+    shinyjs::toggleState("process", condition = ready && !busy)
+  })
+
+  observe({
+    hasData <- isTRUE(appData$show_plot)
+    shinyjs::toggleState("doClust",
+                         condition = hasData && is.null(clust_job()))
+    shinyjs::toggleState("clust2peaksTable",
+                         condition = hasData && !is.null(appData$clust))
+  })
   ### dataset card in the sidebar #####
   output$datasetCard <- renderUI({
     datasetCardUi(appData, input,
@@ -177,7 +238,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       showM2araSpinner()
       showNotification("Processing started. Please wait.",
                        duration = 5,
-                       type = "default")
+                       type = "message")
       message(m2araTimeNow(), " start processing...\n")
 
 
@@ -317,6 +378,16 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### Peak table ####
 
+  # where the settings live and when they were saved last
+  settings_saved <- reactiveVal(NULL)
+  output$settingsInfo <- renderText({
+    path <- file.path(getwd(), "settings.csv")
+    saved <- settings_saved()
+    if (is.null(saved) || !file.exists(path)) {
+      return("settings.csv (saved when you press the button)")
+    }
+    sprintf("settings.csv - saved %s", format(saved, "%Y-%m-%d %H:%M"))
+  })
   # what is in the result cache
   cache_refresh <- reactiveVal(0L)
   output$cacheInfo <- renderText({
@@ -417,9 +488,10 @@ appServer <- function(input, output, session, defaults = NULL) {
                                           normalize = isTRUE(input$normalizeCompare))))
       }
 
-      p_curve <- plotCurves(appData$res,
-                            mzIdx = selected_features()[1],
-                            errorbars = input$errorbars) +
+      # one feature uses the same overlay, so "normalize curves" works here too
+      p_curve <- plotCurvesOverlay(appData$res, sel,
+                                   errorbars = input$errorbars,
+                                   normalize = isTRUE(input$normalizeCompare)) +
         labs(title = paste0("m/z = ",
                             round(
                               getMzFromMzIdx(appData$res,
@@ -783,7 +855,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     if (length(excluded) > 0L) {
       showNotification(sprintf("%d curves are left out before the clustering: %s.",
                                features, paste(excluded, collapse = ", ")),
-                       type = "warning", duration = 12)
+                       type = "warning", duration = 10)
     }
 
     clust_cancelled(FALSE)
@@ -901,7 +973,8 @@ appServer <- function(input, output, session, defaults = NULL) {
   ### save settings ####
   observeEvent(input$saveSettings, {
     saveSettings(input, filename = "settings.csv", info_state = appData$info_state)
-
+    settings_saved(Sys.time())
+    showNotification("Settings saved to settings.csv.", type = "message", duration = 5)
   })
 
   ### download handler ####
@@ -957,7 +1030,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       appData$mapping <- NULL
       setInfoState(appData, "errorMapping")
       appData$load_problem <- conditionMessage(mapping)
-      showNotification(conditionMessage(mapping), type = "error", duration = 12)
+      showNotification(conditionMessage(mapping), type = "error", duration = 10)
       return()
     }
 

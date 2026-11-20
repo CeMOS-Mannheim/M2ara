@@ -11,7 +11,7 @@ clustTab <- function(defaults) {
            fluidRow(
              column(2,
                     createActionButton(inputId = "doClust",
-                                       label = "Perform clustering",
+                                       label = "Cluster curves",
                                        icon = "circle-nodes")),
              column(2,
                     sliderInput(inputId = "num_cluster",
@@ -25,7 +25,7 @@ clustTab <- function(defaults) {
                                 label = "Distance",
                                 choices = c("shape only (SBD)" = "sbd",
                                             "shape + potency (Euclidean)" = "euclidean"),
-                                selected = if (is.null(defaults$clustDistance)) "sbd" else defaults$clustDistance)),
+                                selected = if (is.null(defaults[["clustDistance"]])) "sbd" else defaults[["clustDistance"]])),
              column(2,
                     selectInput(inputId = "centroid_method",
                                 label = "Centroid",
@@ -35,7 +35,7 @@ clustTab <- function(defaults) {
                                 selected = defaults$centroid_method)),
              column(2,
                     createActionButton(inputId = "clust2peaksTable",
-                                       label = "Send to Peak Table",
+                                       label = "Send to peak table",
                                        icon = "share-from-square"))
            ),
            # status and cancel while the clustering runs in the background

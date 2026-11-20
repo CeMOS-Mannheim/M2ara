@@ -90,3 +90,19 @@ test_that("a running job and reading are shown", {
   appData$info_state <- "processed"
   expect_equal(datasetStatus(appData, input, running = TRUE)$class, "pending")
 })
+test_that("a broken path does not break the card", {
+  input <- controlInput()
+
+  # while the folder dialog is open the path can be NA, empty or missing
+  for (broken in list(NA_character_, character(0), "", file.path(tempdir(), "nope"))) {
+    appData <- list(selected_dir = broken, info_state = "initial",
+                    preprocessing = list(), run_signature = NULL)
+    expect_silent(card <- datasetCardUi(appData, input))
+    expect_s3_class(card, "shiny.tag")
+    expect_null(cacheLookup(appData, input))
+  }
+
+  # and the name parts never error
+  expect_equal(datasetNameParts(NA_character_)$full, "")
+  expect_equal(datasetNameParts(character(0))$full, "")
+})

@@ -13,7 +13,7 @@ createDataTable <- function(stats, plot_ready) {
       ))
     }
 
-    cbind(tibble(" " = rep("", nrow(stats))), stats)
+    cbind(tibble(" " = rep("", nrow(stats))), displayStats(stats))
 
   },
   server = FALSE,
@@ -90,3 +90,39 @@ createDataTable <- function(stats, plot_ready) {
   selection = "none"
   )
 }
+# The table is for reading, not for computing: m/z keeps its decimals, the rest
+# is rounded so a column of similar numbers can be compared at a glance. Only the
+# displayed copy is rounded, the values behind it stay untouched.
+displayStats <- function(stats) {
+  out <- as.data.frame(stats)
+  if (nrow(out) == 0L) {
+    return(out)
+  }
+
+  roundColumn <- function(name, digits) {
+    if (name %in% names(out) && is.numeric(out[[name]])) {
+      out[[name]] <<- round(out[[name]], digits)
+    }
+  }
+  sigColumn <- function(name, digits) {
+    if (name %in% names(out) && is.numeric(out[[name]])) {
+      out[[name]] <<- signif(out[[name]], digits)
+    }
+  }
+
+  roundColumn("mz", 4)
+  roundColumn("SNR", 1)
+  roundColumn("pEC50", 2)
+  roundColumn("R2", 3)
+  roundColumn("log2FC", 2)
+
+  for (nm in c("Z'", "V'", "SSMD", "FZ", "FV", "FS", "CRS", "CRS_pEC50")) {
+    roundColumn(nm, 2)
+  }
+  for (nm in c("TIC", "peak_intensity", "Norm_factor", "intensity")) {
+    sigColumn(nm, 3)
+  }
+
+  out
+}
+

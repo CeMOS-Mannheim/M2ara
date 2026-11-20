@@ -49,3 +49,6 @@ test_that("setInfoState stores the state and warns on unexpected changes", {
   # the state is set anyway, so the app does not get stuck
   expect_equal(appData$info_state, "loaded")
 })
+test_that("a cache hit may go straight from the folder to the result", {
+  expect_true(isAllowedTransition("dir_set", "processed"))
+})
