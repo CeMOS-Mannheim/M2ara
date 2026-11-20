@@ -138,13 +138,19 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
     "both" = "mzML and Bruker",
     "unknown format"
   )
-  sourceText <- switch(
-    dataSource$kind,
-    "file names" = "concentrations from the file names",
-    "sample sheet" = sprintf("concentrations from %s", dataSource$sheet),
-    "missing" = sprintf("concentrations missing for %d file(s)",
-                        length(dataSource$missing))
-  )
+  # an assignment made in this session wins over what the folder shows
+  assigned <- appData$mapping
+  sourceText <- if (!is.null(assigned) && identical(assigned$kind, "sheet")) {
+    sprintf("concentrations from your assignment (%d files)", nrow(assigned$sheet))
+  } else {
+    switch(
+      dataSource$kind,
+      "file names" = "concentrations from the file names",
+      "sample sheet" = sprintf("concentrations from %s", dataSource$sheet),
+      "missing" = sprintf("concentrations missing for %d file(s)",
+                          length(dataSource$missing))
+    )
+  }
   dataClass <- if (identical(dataSource$kind, "missing")) {
     "m2ara-dataset-meta m2ara-dataset-warn"
   } else {

@@ -28,6 +28,75 @@ appServer <- function(input, output, session, defaults = NULL) {
     appData <- setPreprocessSettings(input, appData)
   })
 
+  ### assign concentrations by hand #####
+  output$hasFolder <- reactive({ !is.null(appData$selected_dir) && nzchar(appData$selected_dir) })
+  outputOptions(output, "hasFolder", suspendWhenHidden = FALSE)
+
+  conc_data <- reactiveVal(NULL)
+
+  observeEvent(input$setConcentrations, {
+    req(appData$selected_dir)
+    table <- concentrationTable(appData$selected_dir, detectDataFormat(appData$selected_dir))
+    if (nrow(table) == 0L) {
+      showNotification("No spectra in this folder.", type = "error", duration = 10)
+      return()
+    }
+    conc_data(table)
+    showModal(concentrationDialog())
+  })
+
+  output$concTable <- DT::renderDT({
+    req(conc_data())
+    DT::datatable(
+      conc_data(),
+      rownames = FALSE,
+      editable = list(target = "cell", disable = list(columns = 0)),
+      options = list(pageLength = 15, lengthChange = FALSE, searching = FALSE,
+                     ordering = FALSE)
+    )
+  }, server = FALSE)
+
+  observeEvent(input$concTable_cell_edit, {
+    edit <- input$concTable_cell_edit
+    table <- conc_data()
+    req(table)
+    row <- as.integer(edit$row) + 1L
+    value <- suppressWarnings(as.numeric(edit$value))
+    if (!is.na(row) && row <= nrow(table) && edit$col == 1) {
+      table$concentration[row] <- value
+      conc_data(table)
+    }
+  })
+
+  observeEvent(input$applyConcentrations, {
+    table <- conc_data()
+    problem <- concentrationTableProblem(table)
+    if (!is.null(problem)) {
+      showNotification(problem, type = "error", duration = 15)
+      return()
+    }
+
+    sheet <- concentrationSheet(table)
+    appData$mapping <- list(kind = "sheet", sheet = sheet)
+    appData$mapping_source <- "sample sheet"
+
+    if (isTRUE(input$concWriteSheet)) {
+      path <- file.path(appData$selected_dir, "samples.csv")
+      ok <- tryCatch({
+        utils::write.csv(sheet, path, row.names = FALSE)
+        TRUE
+      }, error = function(e) FALSE)
+      if (!ok) {
+        showNotification("Could not write samples.csv.", type = "error", duration = 10)
+      }
+    }
+
+    removeModal()
+    showNotification(
+      sprintf("Concentrations for %d file(s) taken over - press Process spectra to use them.",
+              nrow(sheet)),
+      type = "message", duration = 8)
+  })
   ### enable/disable buttons #####
   # a button that cannot do anything should not look clickable
   observe({

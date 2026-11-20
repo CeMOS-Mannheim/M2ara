@@ -34,6 +34,14 @@ appSidebar <- function(defaults) {
                       width = "80%"))
     ),
 
+    #### concentration assignment ####
+    conditionalPanel(
+      condition = "output.hasFolder",
+      actionButton("setConcentrations", "Set concentrations ...",
+                   icon = icon("table"),
+                   style = 'padding:6px; font-size:80%; margin-top: 6px;')
+    ),
+
     #### preprocessing ####
     sidebarGroup(
       "Preprocess",
