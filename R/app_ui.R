@@ -36,6 +36,10 @@ appUI <- function(defaults) {
        #m2araShortcuts kbd { background: #f7f7f7; border: 1px solid #cccccc;
          border-radius: 3px; padding: 0 4px; font-size: 90%; }
 
+       .m2ara-data-status {
+         font-size: 80%; color: #6b6b6b; margin-top: 5px; line-height: 1.3;
+       }
+
        /* labelled groups in the sidebar */
        .m2ara-group {
          border: 1px solid #ececec; border-radius: 8px;
