@@ -45,17 +45,7 @@ appUI <- function(defaults) {
          font-size: 85%; font-weight: 600; color: #555;
          margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
        }
-       .m2ara-group-help { color: #9a9a9a; font-weight: normal; }
-       .m2ara-group-help summary {
-         cursor: pointer; list-style: none; display: inline;
-         color: #9a9a9a; outline: none;
-       }
-       .m2ara-group-help summary::-webkit-details-marker { display: none; }
-       .m2ara-group-help summary:hover { color: #3f7ecb; }
-       .m2ara-group-hint {
-         font-size: 90%; font-weight: normal; color: #6b6b6b;
-         margin: 3px 0 2px; line-height: 1.3;
-       }
+
        /* the buttons of the settings row start on the same line */
        .m2ara-action { margin-top: 21px; }
        .m2ara-group .form-group { margin-bottom: 6px; }

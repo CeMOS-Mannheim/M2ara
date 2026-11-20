@@ -1,17 +1,9 @@
 # a labelled group of controls (preprocess, aggregate, ...), so the sidebar does
 # not read as one long list
-sidebarGroup <- function(title, help = NULL, ...) {
+sidebarGroup <- function(title, ...) {
   div(
     class = "m2ara-group",
-    div(class = "m2ara-group-title", title,
-        if (!is.null(help)) {
-          tags$details(
-            class = "m2ara-group-help",
-            tags$summary(icon("circle-question")),
-            tags$div(class = "m2ara-group-hint", help)
-          )
-        }
-    ),
+    div(class = "m2ara-group-title", title),
     list(...)
   )
 }
@@ -27,7 +19,6 @@ appSidebar <- function(defaults) {
     #### data ####
     sidebarGroup(
       "Data",
-      help = "The folder with the spectra and the unit of the concentrations.",
       shinyDirButton('dir',
                      'Select folder',
                      'Please select a folder',
@@ -46,22 +37,19 @@ appSidebar <- function(defaults) {
     #### preprocessing ####
     sidebarGroup(
       "Preprocess",
-      help = paste("Smoothing, baseline removal and the sqrt transform are applied",
-                   "to the spectra before peaks are detected."),
       checkboxGroupInput(inputId = "preproc_settings",
                          label = NULL,
                          choices = c("Smooth" = "smooth",
                                      "Remove baseline" = "rmBl",
                                      "Sqrt transform" = "sqrtTrans",
                                      "Monoisotopic" = "monoisotopicFilter"),
-                         selected = unlist(defaults$preproc_settings))
+                         selected = unlist(defaults$preproc_settings)) %>%
+        helper(type = "markdown", content = "preprocessing")
     ),
 
     #### peak detection ####
     sidebarGroup(
       "Peaks",
-      help = paste("How the replicates are aggregated and how strict a peak has to",
-                   "be (signal to noise ratio)."),
       fluidRow(
         column(6,
                selectInput(inputId = "avgMethod",
@@ -74,27 +62,30 @@ appSidebar <- function(defaults) {
                             min = 1,
                             max = 100,
                             step = 1,
-                            value = defaults$SNR))
+                            value = defaults$SNR) %>%
+                 helper(type = "markdown", content = "peakdetection"))
       )
     ),
 
     #### normalization / filter / calibration ####
     sidebarGroup(
       "Normalize",
-      help = paste("Normalisation of the intensities, the variance filter and the",
-                   "m/z used for the single point recalibration."),
       fluidRow(
         column(6,
                selectInput(inputId = "normMeth",
                            label = "Method",
                            selected = defaults$normMeth,
-                           choices = c("mz", "TIC", "median", "none"))),
+                           choices = c("mz", "TIC", "median", "none")) %>%
+                 helper(type = "markdown", content = "normalization")),
         column(6,
                selectInput("VarFilterMethod", label = "Var. filter",
                            selected = defaults$VarFilterMethod,
-                           choices = c("mean", "q75", "median", "q25", "none")))
+                           choices = c("mean", "q75", "median", "q25", "none")) %>%
+                 helper(type = "markdown", content = "filtering"))
       ),
-      checkboxInput("SinglePointRecal", "Recalibrate", value = defaults$SinglePointRecal),
+      checkboxInput("SinglePointRecal", "Recalibrate",
+                    value = defaults$SinglePointRecal) %>%
+        helper(type = "markdown", content = "recalibration"),
       fluidRow(
         column(7,
                numericInput("normMz", label = "m/z [Da]", min = 0, max = 10000,
@@ -108,8 +99,6 @@ appSidebar <- function(defaults) {
     #### alignment/binning ####
     sidebarGroup(
       "Align",
-      help = paste("Tolerance for aligning the peaks across spectra and the binning",
-                   "of the m/z axis."),
       fluidRow(
         column(6,
                numericInput("alignTol",
@@ -117,7 +106,8 @@ appSidebar <- function(defaults) {
                             min = 0,
                             max = 1000,
                             value = defaults$alignTol,
-                            step = 1)),
+                            step = 1) %>%
+                 helper(type = "markdown", content = "alignment")),
         column(6,
                numericInput("binTol",
                             label = "Binning [ppm]",
