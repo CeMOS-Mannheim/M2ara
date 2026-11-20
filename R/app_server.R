@@ -795,12 +795,10 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
-  output$clustPlot <- renderPlotly({
+  # static figure: only ggplot draws the facet strips correctly
+  output$clustPlot <- renderPlot({
     if (appData$show_plot & !is.null(appData$clust)) {
-      show_spinner()
-      p <- plotClusters(appData$clust, k = input$num_cluster)
-      hide_spinner()
-      return(p)
+      plotClusters(appData$clust, k = input$num_cluster)
     }
   })
 

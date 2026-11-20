@@ -105,39 +105,20 @@ extractLaClusters <- function(models, k = 2) {
   return(df)
 }
 
-# All fitted curves coloured by cluster, in one panel.
+# Fitted curves per cluster, the way latrend plots them (one facet per cluster).
 #
-# latrend::plot() facets the curves, but plotly does not clip traces to the facet
-# panel: in a small widget the curves end up in the strip of the next panel. One
-# panel avoids that and reads better at small sizes; the cluster shares are part
-# of the legend, like in the trajectory plot.
+# Returned as ggplot and rendered as a static figure: plotly does not clip traces
+# to the facet panel and would draw the curves over the strips of the
+# neighbouring panels, ggplot clips them.
 plotClusters <- function(models, k) {
   model <- models[[k - 1]]
 
-  curves <- tryCatch({
-    base <- latrend::plot(model)
-    base$layers[[1]]$data
-  }, error = function(e) NULL)
-
-  if (is.null(curves) || !all(c("x", "y", "mzIdx", "Cluster") %in% names(curves))) {
-    # fall back to the facetted plot of latrend
-    return(ggplotly(latrend::plot(model) +
-                      labs(y = "rel. Intensity [arb. u.]",
-                           x = "Log10 Concentration",
-                           title = NULL)))
-  }
-
-  # the averages are shown in the trajectory plot next to this one
-  p <- ggplot(curves, aes(x = .data$x, y = .data$y, group = .data$mzIdx,
-                          colour = .data$Cluster)) +
-    geom_line(linewidth = 0.35, alpha = 0.55) +
+  latrend::plot(model) +
     labs(y = "rel. Intensity [arb. u.]",
          x = "Log10 Concentration",
-         title = NULL) +
-    coord_cartesian(clip = "on")
-
-  ggplotly(p)
+         title = NULL)
 }
+
 
 plotTraj <- function(models, k) {
   model <- models[[k-1]]

@@ -4,7 +4,7 @@ clustTab <- function(defaults) {
            h4("Curve clustering"),
            fluidRow(
              column(6,
-                    plotlyOutput("clustPlot")),
+                    plotOutput("clustPlot", height = "360px")),
              column(6,
                     plotlyOutput("clustCurvesPlot"))
            ),
