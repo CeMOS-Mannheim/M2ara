@@ -38,7 +38,10 @@ test_that("progress is reported while clustering", {
   clusterCurvesFromData(curves, nClusters = 3, centroidMethod = "mean",
                         progress = function(step) stages <<- c(stages, step))
 
-  expect_equal(stages, c("curves", "distances", "clustering", "done"))
+  # one stage per k, so the app can show how many are done
+  expect_equal(stages[1:2], c("curves", "distances"))
+  expect_match(stages[3:4], "^clustering [12]/2 \\(k = [23]\\)$")
+  expect_equal(tail(stages, 1), "done")
 })
 
 test_that("the clustering runs in a background process", {
