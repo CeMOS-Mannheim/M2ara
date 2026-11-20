@@ -52,6 +52,7 @@ clustTab <- function(defaults) {
            ),
            fluidRow(
              column(12,
+                    textOutput("clustOutdated", inline = FALSE),
                     textOutput("clustSuggestion", inline = FALSE),
                     plotlyOutput("optNumClust"))
            )

@@ -818,22 +818,6 @@ appServer <- function(input, output, session, defaults = NULL) {
     showNotification("Clustering finished.", type = "message", duration = 5)
   })
 
-  # switching distance or centroid re-runs the clustering (the previous result
-  # belongs to the old settings)
-  observeEvent(list(input$clustDistance, input$centroid_method), {
-    req(appData$show_plot, !is.null(appData$clust))
-    if (identical(input$clustDistance, appData$clust_distance) &&
-        identical(input$centroid_method, appData$clust_centroid)) {
-      return()
-    }
-    if (!is.null(clust_job())) {
-      return()  # a run is in progress
-    }
-
-    showNotification("Settings changed - clustering again.", type = "message",
-                     duration = 5)
-    shinyjs::click("doClust")
-  }, ignoreInit = TRUE)
 
   observeEvent(input$cancelClust, {
     job <- clust_job()
@@ -856,6 +840,24 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
+  # the shown result belongs to the settings it was computed with
+  output$clustOutdated <- renderText({
+    if (is.null(appData$clust)) {
+      return("")
+    }
+
+    changed <- c(if (!identical(appData$clust_distance, input$clustDistance))
+                   sprintf("distance (%s -> %s)", appData$clust_distance, input$clustDistance),
+                 if (!identical(appData$clust_centroid, input$centroid_method))
+                   sprintf("centroid (%s -> %s)", appData$clust_centroid, input$centroid_method))
+
+    if (length(changed) == 0L) {
+      return("")
+    }
+
+    sprintf("The plots were computed with a different %s. Press \"Perform clustering\" to apply the new setting.",
+            paste(changed, collapse = " and "))
+  })
   output$clustSuggestion <- renderText({
     if (is.null(appData$clust)) {
       return("")
