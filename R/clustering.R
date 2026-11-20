@@ -155,7 +155,7 @@ plotClusters <- function(models, k) {
     theme(strip.background = element_blank(),
           strip.text = element_text(hjust = 0, colour = "grey40"))
 
-    ggplotly(p) %>% plotly::layout(margin = m2araPlotMargin())
+  ggplotly(normaliseCentroids(p)) %>% plotly::layout(margin = m2araPlotMargin())
 }
 
 
@@ -168,7 +168,7 @@ plotTraj <- function(models, k) {
          title = "Average Trajectories") +
     m2araTheme()
 
-    ggplotly(p) %>% plotly::layout(margin = m2araPlotMargin())
+  ggplotly(normaliseCentroids(p)) %>% plotly::layout(margin = m2araPlotMargin())
 }
 
 plotClusterMetrics <- function(models) {
@@ -257,4 +257,27 @@ suggestClustersText <- function(models) {
           paste(label, collapse = " and "),
           if (length(agree) == 1L) "suggests" else "agree",
           suggestion$asw)
+}
+# The centroid of the SBD/DBA clustering is a shape prototype, not the mean of
+# its members, so its values can lie outside the 0..1 range of the curves. It is
+# scaled to the same range as the individual curves, which puts it in the middle
+# of its cluster again.
+normaliseCentroids <- function(p) {
+  for (i in seq_along(p$layers)) {
+    d <- p$layers[[i]]$data
+    if (is.null(d) || !all(c("x", "y", "Cluster") %in% names(d)) ||
+        "mzIdx" %in% names(d)) {
+      next
+    }
+
+    p$layers[[i]]$data <- d %>%
+      dplyr::group_by(.data$Cluster) %>%
+      dplyr::mutate(
+        y = (y - min(y, na.rm = TRUE)) /
+          (max(y, na.rm = TRUE) - min(y, na.rm = TRUE))
+      ) %>%
+      dplyr::ungroup()
+  }
+
+  p
 }
