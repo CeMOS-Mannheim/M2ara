@@ -25,7 +25,7 @@ clustTab <- function(defaults) {
                                 label = "Distance",
                                 choices = c("shape only (SBD)" = "sbd",
                                             "shape + potency (Euclidean)" = "euclidean"),
-                                selected = if (is.null(defaults$clustDistance)) "sbd" else defaults$clustDistance)),
+                                selected = if (is.null(defaults[["clustDistance"]])) "sbd" else defaults[["clustDistance"]])),
              column(2,
                     selectInput(inputId = "centroid_method",
                                 label = "Centroid",
