@@ -11,7 +11,7 @@ clustTab <- function(defaults) {
            fluidRow(
              column(2,
                     createActionButton(inputId = "doClust",
-                                       label = "Perform clustering",
+                                       label = "Cluster curves",
                                        icon = "circle-nodes")),
              column(2,
                     sliderInput(inputId = "num_cluster",
@@ -35,7 +35,7 @@ clustTab <- function(defaults) {
                                 selected = defaults$centroid_method)),
              column(2,
                     createActionButton(inputId = "clust2peaksTable",
-                                       label = "Send to Peak Table",
+                                       label = "Send to peak table",
                                        icon = "share-from-square"))
            ),
            # status and cancel while the clustering runs in the background

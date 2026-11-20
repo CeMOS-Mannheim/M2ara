@@ -36,6 +36,20 @@ appUI <- function(defaults) {
        #m2araShortcuts kbd { background: #f7f7f7; border: 1px solid #cccccc;
          border-radius: 3px; padding: 0 4px; font-size: 90%; }
 
+       /* labelled groups in the sidebar */
+       .m2ara-group {
+         border: 1px solid #ececec; border-radius: 8px;
+         padding: 6px 8px 2px; margin-bottom: 8px;
+       }
+       .m2ara-group-title {
+         font-size: 85%; font-weight: 600; color: #555;
+         margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
+       }
+       .m2ara-group-title .m2ara-group-help {
+         color: #9a9a9a; font-weight: normal; cursor: help;
+       }
+       .m2ara-group .form-group { margin-bottom: 6px; }
+
        /* dataset card in the sidebar */
        .m2ara-dataset {
          border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa;
