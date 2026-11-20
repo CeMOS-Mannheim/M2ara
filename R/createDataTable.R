@@ -13,7 +13,13 @@ createDataTable <- function(stats, plot_ready) {
       ))
     }
 
-    cbind(tibble(" " = rep("", nrow(stats))), stats)
+    shown <- displayStats(stats)
+    help <- vapply(names(shown), function(nm) {
+      txt <- columnHelp(nm)
+      if (is.null(txt)) "" else txt
+    }, character(1))
+
+    cbind(tibble(" " = rep("", nrow(stats))), shown)
 
   },
   server = FALSE,
@@ -52,6 +58,19 @@ createDataTable <- function(stats, plot_ready) {
         )
       )
     ),
+    # full column names as tooltip in the header
+    headerCallback = DT::JS(sprintf(
+      paste0(
+        "function(thead, data, start, end, display) {",
+        "  var help = [%s];",
+        "  var cells = thead.getElementsByTagName('th');",
+        "  for (var i = 0; i < cells.length && i < help.length; i++) {",
+        "    if (help[i]) { cells[i].setAttribute('title', help[i]); }",
+        "  }",
+        "}"
+      ),
+      paste0('"', gsub('"', '\\\\"', help), '"', collapse = ", ")
+    )),
     # tint the rows (feature colour when comparing, neutral for a single one)
     rowCallback = DT::JS(
       "function(row, data) {
@@ -89,4 +108,61 @@ createDataTable <- function(stats, plot_ready) {
   ),
   selection = "none"
   )
+}
+# The table is for reading, not for computing: m/z keeps its decimals, the rest
+# is rounded so a column of similar numbers can be compared at a glance.
+displayStats <- function(stats) {
+  out <- as.data.frame(stats)
+  if (nrow(out) == 0L) {
+    return(out)
+  }
+
+  roundColumn <- function(name, digits) {
+    if (name %in% names(out) && is.numeric(out[[name]])) {
+      out[[name]] <<- round(out[[name]], digits)
+    }
+  }
+  sigColumn <- function(name, digits) {
+    if (name %in% names(out) && is.numeric(out[[name]])) {
+      out[[name]] <<- signif(out[[name]], digits)
+    }
+  }
+
+  roundColumn("mz", 4)
+  roundColumn("SNR", 1)
+  roundColumn("pEC50", 2)
+  roundColumn("R2", 3)
+  roundColumn("log2FC", 2)
+
+  # scores and quality metrics
+  for (nm in c("Z'", "V'", "SSMD", "FZ", "FV", "FS", "CRS", "CRS_pEC50")) {
+    roundColumn(nm, 2)
+  }
+
+  for (nm in c("TIC", "peak_intensity", "Norm_factor", "intensity")) {
+    sigColumn(nm, 3)
+  }
+
+  out
+}
+
+# the full name of a column, shown as tooltip in the header
+columnHelp <- function(name) {
+  help <- c(
+    "mz" = "m/z of the feature [Da]",
+    "mzIdx" = "index of the feature in the dataset",
+    "pEC50" = "-log10 of the half maximal concentration",
+    "R2" = "goodness of fit of the curve",
+    "log2FC" = "log2 fold change between the highest and lowest concentration",
+    "Z'" = "Z' factor (assay quality)",
+    "V'" = "V' factor (assay quality, robust)",
+    "SSMD" = "strictly standardised mean difference",
+    "FZ" = "Z' of the fitted curve",
+    "FV" = "V' of the fitted curve",
+    "FS" = "SSMD of the fitted curve",
+    "CRS" = "curve response score (0-100)",
+    "SNR" = "signal to noise ratio of the peak detection",
+    "cluster" = "cluster from the clustering tab"
+  )
+  if (name %in% names(help)) help[[name]] else NULL
 }
