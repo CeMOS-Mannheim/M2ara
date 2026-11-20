@@ -24,7 +24,8 @@ clustTab <- function(defaults) {
                     selectInput(inputId = "centroid_method",
                                 label = "Centroid",
                                 choices = c("mean (fast)" = "mean",
-                                            "pam (accurate, slow)" = "pam"),
+                                            "pam (accurate, slow)" = "pam",
+                                            "shape / DBA (best for SBD, slow)" = "shape"),
                                 selected = defaults$centroid_method)),
              column(2,
                     createActionButton(inputId = "clust2peaksTable",
@@ -45,6 +46,7 @@ clustTab <- function(defaults) {
            ),
            fluidRow(
              column(12,
+                    textOutput("clustSuggestion", inline = FALSE),
                     plotlyOutput("optNumClust"))
            )
   )

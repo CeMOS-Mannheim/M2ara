@@ -735,9 +735,38 @@ appServer <- function(input, output, session, defaults = NULL) {
     # sampling the fitted curves is fast, the clustering runs in the background
     curves <- curveClusterData(appData$res)
     if (is.null(curves)) {
-      showNotification("No fitted curves found - cannot run clustering.",
-                       type = "error", duration = 10)
+      showNotification(
+        paste("No usable curves - cannot run clustering.",
+              "At least 10 curves with a reasonable fit are needed."),
+        type = "error", duration = 15)
       return()
+    }
+
+    features <- attr(curves, "features")
+    if (features < 10L) {
+      showNotification(
+        sprintf("Only %d usable curves - the clustering needs at least 10.", features),
+        type = "error", duration = 15)
+      return()
+    }
+
+    if (features > maxClusterFeatures) {
+      showNotification(
+        sprintf(paste("This would cluster %d features, the limit is %d.",
+                      "Reduce the number of features with the Var. filter first."),
+                features, maxClusterFeatures),
+        type = "error", duration = 20)
+      return()
+    }
+
+    excluded <- c(if (attr(curves, "excludedFit") > 0L)
+                    sprintf("%d with a poor fit", attr(curves, "excludedFit")),
+                  if (attr(curves, "excludedFlat") > 0L)
+                    sprintf("%d without rise", attr(curves, "excludedFlat")))
+    if (length(excluded) > 0L) {
+      showNotification(sprintf("%d curves are left out before the clustering: %s.",
+                               features, paste(excluded, collapse = ", ")),
+                       type = "warning", duration = 12)
     }
 
     clust_cancelled(FALSE)
@@ -805,6 +834,13 @@ appServer <- function(input, output, session, defaults = NULL) {
     if (appData$show_plot & !is.null(appData$clust)) {
       plotTraj(appData$clust, k = input$num_cluster)
     }
+  })
+
+  output$clustSuggestion <- renderText({
+    if (is.null(appData$clust)) {
+      return("")
+    }
+    suggestClustersText(appData$clust)
   })
 
   output$optNumClust <- renderPlotly({

@@ -3,15 +3,38 @@
 # The fitted curves are sampled and normalised here (fast, in the app), the
 # clustering itself runs in a background process (clusterAsync.R).
 
+# curves with a poor fit carry no usable shape, and curves without rise cannot be
+# normalised at all. Both are dropped before the clustering and reported.
+minClusterFitGoodness <- 0.8
+
+# above this the distance matrix (n^2 doubles) becomes too large for the app;
+# a MALDI dataset has a few hundred real signals, the rest is noise
+maxClusterFeatures <- 2000L
+
 curveClusterData <- function(res) {
   fits <- getCurveFits(res)
   if (length(fits) == 0) {
     return(NULL)
   }
 
+  goodness <- vapply(fits, function(f) {
+    g <- tryCatch(nplr::getGoodness(f$model), error = function(e) NULL)
+    if (is.null(g) || is.null(g[["wgof"]])) NA_real_ else as.numeric(g[["wgof"]])
+  }, numeric(1))
+
+  ycurves <- lapply(fits, function(f) nplr::getYcurve(f$model))
+  flat <- vapply(ycurves, function(y) diff(range(y, na.rm = TRUE)) < 1e-6, logical(1))
+  poorFit <- !is.na(goodness) & goodness < minClusterFitGoodness
+
+  keep <- !flat & !poorFit
+
+  if (sum(keep) < 2L) {
+    return(NULL)
+  }
+
   # subsample smooth fitted curve values (200 pts) to ~50 pts
-  l <- lapply(seq_along(fits), function(i) {
-    y <- nplr::getYcurve(fits[[i]]$model)
+  l <- lapply(which(keep), function(i) {
+    y <- ycurves[[i]]
     x <- nplr::getXcurve(fits[[i]]$model)
 
     # every 4th point gives ~50 pts for a smooth sigmoid
@@ -20,14 +43,20 @@ curveClusterData <- function(res) {
     tibble(y = y[sel], x = x[sel])
   })
 
-  names(l) <- seq_along(fits)
+  names(l) <- which(keep)
 
-  l %>%
+  curves <- l %>%
     bind_rows(.id = "mzIdx") %>%
     group_by(mzIdx) %>%
     mutate(y = (y - min(y, na.rm = TRUE)) /
              (max(y, na.rm = TRUE) - min(y, na.rm = TRUE))) %>%
     ungroup()
+
+  attr(curves, "excludedFlat") <- sum(flat)
+  attr(curves, "excludedFit") <- sum(poorFit)
+  attr(curves, "features") <- sum(keep)
+
+  curves
 }
 
 # the clustering itself (runs in the background process)
@@ -139,7 +168,7 @@ plotTraj <- function(models, k) {
 
 plotClusterMetrics <- function(models) {
   nClust <- length(models) + 1  # models go from k=2..n
-  p <- latrend::plotMetric(models, c("Dunn", "ASW", "WMAE", "WRSS", "CalinskiHarabasz")) +
+  p <- latrend::plotMetric(models, c("ASW", "Dunn", "DaviesBouldin", "WRSS")) +
     m2araTheme() +
     facet_wrap(~Metric,
                scales = "free_y",
@@ -147,4 +176,40 @@ plotClusterMetrics <- function(models) {
     scale_x_continuous(breaks = seq(2, nClust, by = 2))
 
     ggplotly(p) %>% plotly::layout(margin = m2araPlotMargin())
+}
+# Which k do the metrics suggest?
+#
+# The silhouette (ASW) works with the SBD distances and is the most reliable
+# index here; Dunn supports it. The suggestion is the k with the best ASW; when
+# Dunn agrees, that is mentioned.
+suggestClusters <- function(models) {
+  ks <- seq_len(length(models)) + 1L  # models are k = 2..n
+
+  asw <- tryCatch(as.numeric(latrend::metric(models, "ASW")),
+                  error = function(e) rep(NA_real_, length(ks)))
+  dunn <- tryCatch(as.numeric(latrend::metric(models, "Dunn")),
+                   error = function(e) rep(NA_real_, length(ks)))
+
+  if (length(asw) != length(ks) || all(is.na(asw))) {
+    return(NULL)
+  }
+
+  bestAsW <- ks[which.max(asw)]
+  bestDunn <- if (all(is.na(dunn))) NA_integer_ else ks[which.max(dunn)]
+
+  list(k = bestAsW,
+       asw = asw[which.max(asw)],
+       dunnAgrees = identical(as.integer(bestAsW), as.integer(bestDunn)))
+}
+
+# text for the app
+suggestClustersText <- function(models) {
+  suggestion <- suggestClusters(models)
+  if (is.null(suggestion)) {
+    return("")
+  }
+
+  sprintf("Suggested k: %d (best silhouette at %.2f%s)",
+          suggestion$k, suggestion$asw,
+          if (isTRUE(suggestion$dunnAgrees)) ", Dunn agrees" else "")
 }
