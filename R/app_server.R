@@ -332,6 +332,16 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### Peak table ####
 
+  # where the settings live and when they were saved last
+  settings_saved <- reactiveVal(NULL)
+  output$settingsInfo <- renderText({
+    path <- file.path(getwd(), "settings.csv")
+    saved <- settings_saved()
+    if (is.null(saved) || !file.exists(path)) {
+      return("settings.csv (saved when you press the button)")
+    }
+    sprintf("settings.csv - saved %s", format(saved, "%Y-%m-%d %H:%M"))
+  })
   # what is in the result cache
   cache_refresh <- reactiveVal(0L)
   output$cacheInfo <- renderText({
@@ -916,7 +926,8 @@ appServer <- function(input, output, session, defaults = NULL) {
   ### save settings ####
   observeEvent(input$saveSettings, {
     saveSettings(input, filename = "settings.csv", info_state = appData$info_state)
-
+    settings_saved(Sys.time())
+    showNotification("Settings saved to settings.csv.", type = "message", duration = 5)
   })
 
   ### download handler ####

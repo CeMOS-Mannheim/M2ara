@@ -30,6 +30,12 @@ mainTab <- function(defaults) {
                                                  style='padding:6px; font-size:80%; margin-top:28px',
                                                  icon = icon("download"))
                            ),
+                           column(2,
+                                  downloadButton(outputId = "exportRun",
+                                                 label = "Export results (ZIP)",
+                                                 style='padding:6px; font-size:80%; margin-top:28px',
+                                                 icon = icon("file-zipper"))
+                           ),
                            column(3,
                                   div(
                                     checkboxInput(inputId = "showPeaks",
@@ -98,12 +104,6 @@ mainTab <- function(defaults) {
              fluidRow(
                DT::DTOutput("mzTable") %>%
                  withSpinner(color="#0dc5c1")
-             ),
-             fluidRow(
-               downloadButton(outputId = "exportRun",
-                              label = "Export results (ZIP)",
-                              icon = icon("download"),
-                              style = 'padding:6px; font-size:80%')
              )
       )
     ),

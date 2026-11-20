@@ -7,46 +7,63 @@ appMainPanel <- function(defaults) {
                        clustTab(defaults),
                        #### Settings ####
                        tabPanel("Settings",
-                                fluidRow(
-                                  column(3,
-                                         createActionButton(inputId = "saveSettings",
-                                                            label = "Save settings",
-                                                            icon = "floppy-disk")
-                                  ),
-                                  column(3,
-                                         actionButton("clearCache",
-                                                      "Clear result cache",
-                                                      icon = icon("trash"),
-                                                      style = 'padding:6px; font-size:80%'),
-                                         tags$div(
-                                           tags$small(textOutput("cacheInfo")),
-                                           style = "margin-top: 4px; color: #777;"
-                                         )
-                                  ),
-                                  column(3,
-                                         actionButton("forceProcess",
-                                                      "Read files again (ignore cache)",
-                                                      icon = icon("rotate"),
-                                                      style = 'padding:6px; font-size:80%')
-                                  ),
-                                  column(3,
-                                         actionButton("copyLink",
-                                                      "Copy link to this view",
-                                                      icon = icon("link"),
-                                                      style = 'padding:6px; font-size:80%')
-                                  ),
-                                  column(3,
-                                         tags$div(
-                                           tags$label("Open shared view", `for` = "m2araOpenInput",
-                                                      style = "font-weight: normal; font-size: 80%;"),
-                                           tags$div(style = "display: flex; gap: 4px;",
-                                                    tags$input(id = "m2araOpenInput", type = "text",
-                                                               placeholder = "paste a share link",
-                                                               style = "flex: 1; font-size: 80%;"),
-                                                    tags$button(id = "m2araOpenButton", type = "button",
-                                                                class = "btn btn-default btn-sm", "Open"))
-                                         )
-                                  )
+                                div(class = "m2ara-group", style = "margin-bottom: 10px;",
+                                    div(class = "m2ara-group-title", "Session"),
+                                    fluidRow(
+                                      column(3,
+                                             createActionButton(inputId = "saveSettings",
+                                                                label = "Save settings",
+                                                                icon = "floppy-disk"),
+                                             tags$div(
+                                               tags$small(textOutput("settingsInfo")),
+                                               style = "margin-top: 4px; color: #777;"
+                                             )
+                                      )
+                                    )
+                                ),
+                                div(class = "m2ara-group", style = "margin-bottom: 10px;",
+                                    div(class = "m2ara-group-title", "Result cache"),
+                                    fluidRow(
+                                      column(3,
+                                             actionButton("clearCache",
+                                                          "Clear result cache",
+                                                          icon = icon("trash"),
+                                                          style = 'padding:6px; font-size:80%'),
+                                             tags$div(
+                                               tags$small(textOutput("cacheInfo")),
+                                               style = "margin-top: 4px; color: #777;"
+                                             )
+                                      ),
+                                      column(3,
+                                             actionButton("forceProcess",
+                                                          "Read files again (ignore cache)",
+                                                          icon = icon("rotate"),
+                                                          style = 'padding:6px; font-size:80%')
+                                      )
+                                    )
+                                ),
+                                div(class = "m2ara-group", style = "margin-bottom: 10px;",
+                                    div(class = "m2ara-group-title", "Share"),
+                                    fluidRow(
+                                      column(3,
+                                             actionButton("copyLink",
+                                                          "Copy link to this view",
+                                                          icon = icon("link"),
+                                                          style = 'padding:6px; font-size:80%')
+                                      ),
+                                      column(4,
+                                             tags$div(
+                                               tags$label("Open shared view", `for` = "m2araOpenInput",
+                                                          style = "font-weight: normal; font-size: 80%;"),
+                                               tags$div(style = "display: flex; gap: 4px;",
+                                                        tags$input(id = "m2araOpenInput", type = "text",
+                                                                   placeholder = "paste a share link",
+                                                                   style = "flex: 1; font-size: 80%;"),
+                                                        tags$button(id = "m2araOpenButton", type = "button",
+                                                                    class = "btn btn-default btn-sm", "Open"))
+                                             )
+                                      )
+                                    )
                                 ),
                                 fluidRow(
                                   column(3,
