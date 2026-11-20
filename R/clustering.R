@@ -129,8 +129,6 @@ plotTraj <- function(models, k) {
          x = "Log10 Concentration",
          title = "Average Trajectories") +
     m2araTheme()
-  p <- ggplotly(p)
-
   return(p)
 }
 
@@ -142,6 +140,4 @@ plotClusterMetrics <- function(models) {
                scales = "free_y",
                nrow = 1) +
     scale_x_continuous(breaks = seq(2, nClust, by = 2))
-  p <- ggplotly(p)
-  return(p)
 }

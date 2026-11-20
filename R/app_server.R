@@ -802,21 +802,16 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
   })
 
-  output$clustCurvesPlot <- renderPlotly({
+  # static figures, so all three cluster plots share the same theme and font sizes
+  output$clustCurvesPlot <- renderPlot({
     if (appData$show_plot & !is.null(appData$clust)) {
-      show_spinner()
-      p <- plotTraj(appData$clust, k = input$num_cluster)
-      hide_spinner()
-      return(p)
+      plotTraj(appData$clust, k = input$num_cluster)
     }
   })
 
-  output$optNumClust <- renderPlotly({
+  output$optNumClust <- renderPlot({
     if (appData$show_plot & !is.null(appData$clust)) {
-      show_spinner()
-      p <- plotClusterMetrics(appData$clust)
-      hide_spinner()
-      return(p)
+      plotClusterMetrics(appData$clust)
     }
   })
 

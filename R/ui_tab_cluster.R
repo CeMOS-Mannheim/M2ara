@@ -6,7 +6,7 @@ clustTab <- function(defaults) {
              column(6,
                     plotOutput("clustPlot", height = "360px")),
              column(6,
-                    plotlyOutput("clustCurvesPlot"))
+                    plotOutput("clustCurvesPlot", height = "360px"))
            ),
            fluidRow(
              column(2,
@@ -45,7 +45,7 @@ clustTab <- function(defaults) {
            ),
            fluidRow(
              column(12,
-                    plotlyOutput("optNumClust"))
+                    plotOutput("optNumClust", height = "300px"))
            )
   )
 }
