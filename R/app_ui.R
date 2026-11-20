@@ -42,9 +42,16 @@ appUI <- function(defaults) {
          padding: 7px 9px; margin-top: 8px; font-size: 85%;
          line-height: 1.35; overflow: hidden;
        }
-       .m2ara-dataset-name {
-         font-weight: 600; white-space: nowrap; overflow: hidden;
-         text-overflow: ellipsis;
+       /* cut the path on its left side, so the end (the dataset) stays visible */
+       .m2ara-path {
+         direction: rtl; text-align: left; white-space: nowrap;
+         overflow: hidden; text-overflow: ellipsis;
+         font-family: monospace; font-size: 92%; color: #333;
+       }
+       .m2ara-path > span { direction: ltr; unicode-bidi: embed; }
+       .m2ara-dataset-label {
+         color: #9a9a9a; font-size: 85%; margin-top: 4px;
+         text-transform: uppercase; letter-spacing: 0.04em;
        }
        .m2ara-dataset-meta {
          color: #6b6b6b; white-space: nowrap; overflow: hidden;

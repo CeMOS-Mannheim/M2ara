@@ -97,18 +97,22 @@ datasetCardUi <- function(appData, input) {
   )
 
   runs <- if (is.null(appData$run_signature)) {
-    "no run yet"
+    "No run yet."
+  } else if (is.null(appData$run_time)) {
+    "The shown result was computed with the settings in the form."
   } else {
-    paste(parts$full, "was processed with the settings shown in Details")
+    sprintf("Last run: %s.", format(appData$run_time, "%Y-%m-%d %H:%M"))
   }
 
   facts <- paste(facts, collapse = " \u00b7 ")
 
+  # the path is cut on its left side, so its end (the dataset) always stays
+  # visible, however long the path is
   tags$div(
     class = "m2ara-dataset",
     title = parts$full,
-    tags$div(class = "m2ara-dataset-name", parts$parent),
-    if (nzchar(parts$last)) tags$div(class = "m2ara-dataset-meta", title = parts$full, parts$last),
+    tags$div(class = "m2ara-path", dir = "rtl",
+             tags$span(dir = "ltr", parts$full)),
     tags$div(class = "m2ara-dataset-meta", title = facts, facts),
     tags$div(class = paste("m2ara-status", status$class),
              tags$span(class = "m2ara-status-dot"),
@@ -116,7 +120,9 @@ datasetCardUi <- function(appData, input) {
     tags$details(
       class = "m2ara-dataset-details",
       tags$summary("Details"),
+      tags$div(class = "m2ara-dataset-label", "Folder"),
       tags$div(class = "m2ara-dataset-path", parts$full),
+      tags$div(class = "m2ara-dataset-label", "Last run"),
       tags$div(class = "m2ara-dataset-note", runs)
     )
   )

@@ -27,5 +27,6 @@ emptyAppDataObject <- function(){
                  mz_range = NULL, # mass range of the loaded spectra
                  clust_distance = NULL, # distance of the current clustering
                  clust_centroid = NULL, # centroid of the current clustering
-                 run_signature = NULL) # settings of the last run
+                 run_signature = NULL, # settings of the last run
+                 run_time = NULL) # when the last run finished
 }

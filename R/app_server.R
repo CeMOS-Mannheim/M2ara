@@ -95,6 +95,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       settings <- processingSettings(input)
       # remembered, so the sidebar can tell whether the shown result still
       # belongs to the settings in the form
+      appData$run_time <- Sys.time()
       appData$run_signature <- list(settings = settings,
                                     preprocessing = appData$preprocessing,
                                     concUnits = input$concUnits)
