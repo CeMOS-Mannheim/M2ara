@@ -106,13 +106,14 @@ datasetCardUi <- function(appData, input) {
 
   facts <- paste(facts, collapse = " \u00b7 ")
 
-  # the path is cut on its left side, so its end (the dataset) always stays
-  # visible, however long the path is
+  # the card shows the last two folders (the path would be too long and is
+  # repeated in Details anyway)
   tags$div(
     class = "m2ara-dataset",
     title = parts$full,
-    tags$div(class = "m2ara-path", dir = "rtl",
-             tags$span(dir = "ltr", parts$full)),
+    tags$div(class = "m2ara-dataset-name", title = parts$full, parts$parent),
+    if (nzchar(parts$last))
+      tags$div(class = "m2ara-dataset-meta", title = parts$full, parts$last),
     tags$div(class = "m2ara-dataset-meta", title = facts, facts),
     tags$div(class = paste("m2ara-status", status$class),
              tags$span(class = "m2ara-status-dot"),
