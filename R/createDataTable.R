@@ -13,11 +13,7 @@ createDataTable <- function(stats, plot_ready) {
       ))
     }
 
-    shown <- displayStats(stats)
-    # readable column names; the values behind them are unchanged
-    names(shown) <- vapply(names(shown), columnLabel, character(1))
-
-    cbind(tibble(" " = rep("", nrow(stats))), shown)
+    cbind(tibble(" " = rep("", nrow(stats))), displayStats(stats))
 
   },
   server = FALSE,
@@ -130,54 +126,3 @@ displayStats <- function(stats) {
   out
 }
 
-# the full name of a column, shown as tooltip in the header
-columnHelp <- function(name) {
-  help <- c(
-    "mz" = "m/z of the feature [Da]",
-    "mzIdx" = "index of the feature in the dataset",
-    "pEC50" = "-log10 of the half maximal concentration",
-    "R2" = "goodness of fit of the curve",
-    "log2FC" = "log2 fold change between the highest and lowest concentration",
-    "Z'" = "Z' factor (assay quality)",
-    "V'" = "V' factor (assay quality, robust)",
-    "SSMD" = "strictly standardised mean difference",
-    "FZ" = "Z' of the fitted curve",
-    "FV" = "V' of the fitted curve",
-    "FS" = "SSMD of the fitted curve",
-    "CRS" = "curve response score (0-100)",
-    "cluster" = "cluster from the clustering tab"
-  )
-  if (name %in% names(help)) help[[name]] else NULL
-}
-
-# help texts of all columns as JS array
-tableColumnHelp <- function(stats) {
-  columns <- c(" ", if (is.data.frame(stats)) names(stats) else character(0))
-  vapply(columns, function(nm) {
-    txt <- columnHelp(nm)
-    if (is.null(txt)) "" else txt
-  }, character(1))
-}
-
-columnHelpJs <- function(help) {
-  paste0("\"", gsub("\"", "\\\\\"", help), "\"", collapse = ", ")
-}
-
-# readable column names for the table (the values behind it are unchanged)
-columnLabel <- function(name) {
-  labels <- c(
-    "mz" = "m/z [Da]",
-    "mzIdx" = "feature",
-    "R2" = "R2 (fit)",
-    "log2FC" = "log2 FC",
-    "Z'" = "Z (assay)",
-    "V'" = "V (assay)",
-    "FZ" = "Z (fit)",
-    "FV" = "V (fit)",
-    "FS" = "SSMD (fit)",
-    "CRS" = "CRS (0-100)",
-    "SNR" = "SNR",
-    "cluster" = "cluster"
-  )
-  if (name %in% names(labels)) labels[[name]] else name
-}

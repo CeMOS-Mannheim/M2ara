@@ -37,10 +37,10 @@ appSidebar <- function(defaults) {
                      class = "btn-default"),
       div(style = "margin-top: 6px;",
           selectInput(inputId = "concUnits",
-                      label = "Concentration unit",
+                      label = "Conc. unit",
                       choices = c("M", "mM", "uM", "nM", "pM"),
                       selected = defaults$concUnits, multiple = FALSE,
-                      width = "100%"))
+                      width = "80%"))
     ),
 
     #### preprocessing ####
@@ -62,18 +62,20 @@ appSidebar <- function(defaults) {
       "Peaks",
       help = paste("How the replicates are aggregated and how strict a peak has to",
                    "be (signal to noise ratio)."),
-      selectInput(inputId = "avgMethod",
-                  label = "Aggregate",
-                  selected = defaults$avgMethod,
-                  choices = c("mean", "median", "sum"),
-                  width = "100%"),
-      numericInput("SNR",
-                   label = "Signal to noise (SNR)",
-                   min = 1,
-                   max = 100,
-                   step = 1,
-                   value = defaults$SNR,
-                   width = "100%")
+      fluidRow(
+        column(6,
+               selectInput(inputId = "avgMethod",
+                           label = "Aggregate",
+                           selected = defaults$avgMethod,
+                           choices = c("mean", "median", "sum"))),
+        column(6,
+               numericInput("SNR",
+                            label = "SNR",
+                            min = 1,
+                            max = 100,
+                            step = 1,
+                            value = defaults$SNR))
+      )
     ),
 
     #### normalization / filter / calibration ####
@@ -81,20 +83,26 @@ appSidebar <- function(defaults) {
       "Normalize",
       help = paste("Normalisation of the intensities, the variance filter and the",
                    "m/z used for the single point recalibration."),
-      selectInput(inputId = "normMeth",
-                  label = "Method",
-                  selected = defaults$normMeth,
-                  choices = c("mz", "TIC", "median", "none"),
-                  width = "100%"),
-      selectInput("VarFilterMethod", label = "Variance filter",
-                  selected = defaults$VarFilterMethod,
-                  choices = c("mean", "q75", "median", "q25", "none"),
-                  width = "100%"),
+      fluidRow(
+        column(6,
+               selectInput(inputId = "normMeth",
+                           label = "Method",
+                           selected = defaults$normMeth,
+                           choices = c("mz", "TIC", "median", "none"))),
+        column(6,
+               selectInput("VarFilterMethod", label = "Var. filter",
+                           selected = defaults$VarFilterMethod,
+                           choices = c("mean", "q75", "median", "q25", "none")))
+      ),
       checkboxInput("SinglePointRecal", "Recalibrate", value = defaults$SinglePointRecal),
-      numericInput("normMz", label = "m/z [Da]", min = 0, max = 10000,
-                   value = defaults$normMz, step = 0.05, width = "100%"),
-      numericInput("normTol", label = "Tolerance [Da]", min = 0, max = 10,
-                   value = defaults$normTol, step = 0.05, width = "100%")
+      fluidRow(
+        column(7,
+               numericInput("normMz", label = "m/z [Da]", min = 0, max = 10000,
+                            value = defaults$normMz, step = 0.05)),
+        column(5,
+               numericInput("normTol", label = "Tol. [Da]", min = 0, max = 10,
+                            value = defaults$normTol, step = 0.05))
+      )
     ),
 
     #### alignment/binning ####
@@ -102,20 +110,22 @@ appSidebar <- function(defaults) {
       "Align",
       help = paste("Tolerance for aligning the peaks across spectra and the binning",
                    "of the m/z axis."),
-      numericInput("alignTol",
-                   label = "Tolerance [mDa]",
-                   min = 0,
-                   max = 1000,
-                   value = defaults$alignTol,
-                   step = 1,
-                   width = "100%"),
-      numericInput("binTol",
-                   label = "Binning [ppm]",
-                   min = 0,
-                   max = 1000,
-                   value = defaults$binTol,
-                   step = 5,
-                   width = "100%")
+      fluidRow(
+        column(6,
+               numericInput("alignTol",
+                            label = "Tol. [mDa]",
+                            min = 0,
+                            max = 1000,
+                            value = defaults$alignTol,
+                            step = 1)),
+        column(6,
+               numericInput("binTol",
+                            label = "Binning [ppm]",
+                            min = 0,
+                            max = 1000,
+                            value = defaults$binTol,
+                            step = 5))
+      )
     ),
 
     #### process button/info text
