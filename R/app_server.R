@@ -70,6 +70,14 @@ appServer <- function(input, output, session, defaults = NULL) {
     }
 
     removeModal()
+
+    # the assignment is what the last load was missing, so the app is ready to
+    # process again (the card must not keep saying "last load failed")
+    state <- appData$info_state
+    if (startsWith(state, "loadError") || identical(state, "errorMapping")) {
+      setInfoState(appData, "dir_set")
+    }
+
     showNotification(
       sprintf(paste("Concentrations for %d file(s) taken over%s - press Process spectra",
                     "to use them."),
@@ -81,7 +89,9 @@ appServer <- function(input, output, session, defaults = NULL) {
   ### enable/disable buttons #####
   # a button that cannot do anything should not look clickable
   observe({
-    ready <- appData$info_state %in% c("dir_set", "loaded", "processed")
+    # pressing Process is also how a failed load is retried, so a usable folder
+    # is enough - the error states must not lock the button
+    ready <- hasUsableDir(appData$selected_dir)
     busy <- isTRUE(loading()) || !is.null(process_job())
     shinyjs::toggleState("process", condition = ready && !busy)
   })
