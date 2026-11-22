@@ -34,6 +34,14 @@ appSidebar <- function(defaults) {
                       width = "80%"))
     ),
 
+    # the format is detected from the folder; the input stays because the
+    # loader needs it, but it is not shown any more
+    shinyjs::hidden(
+      selectInput(inputId = "fileFormat", label = NULL,
+                  choices = c("Bruker flex (.fid)" = "bruker", "mzML" = "mzml"),
+                  selected = defaults$fileFormat, multiple = FALSE)
+    ),
+
     #### concentration assignment ####
     conditionalPanel(
       condition = "output.hasFolder",

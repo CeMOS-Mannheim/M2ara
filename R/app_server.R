@@ -36,7 +36,10 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   observeEvent(input$setConcentrations, {
     req(appData$selected_dir)
-    table <- concentrationTable(appData$selected_dir, detectDataFormat(appData$selected_dir))
+    table <- concentrationTable(appData$selected_dir,
+                                detectDataFormat(appData$selected_dir),
+                                mapping = appData$mapping,
+                                excluded = appData$excluded_files)
     if (nrow(table) == 0L) {
       showNotification("No spectra in this folder.", type = "error", duration = 10)
       return()
@@ -78,12 +81,18 @@ appServer <- function(input, output, session, defaults = NULL) {
       setInfoState(appData, "dir_set")
     }
 
+    # the spectra have to be read again when they were already loaded
+    if (isTRUE(hadSpectra)) {
+      updateActionButton(inputId = "process", label = "Re-process")
+    }
+
     showNotification(
-      sprintf(paste("Concentrations for %d file(s) taken over%s - press Process spectra",
-                    "to use them."),
+      sprintf(paste("Concentrations for %d file(s) taken over%s - press Process",
+                    "spectra to use them%s."),
               nrow(sheet),
               if (length(appData$excluded_files) > 0L)
-                sprintf(", %d file(s) left out", length(appData$excluded_files)) else ""),
+                sprintf(", %d file(s) left out", length(appData$excluded_files)) else "",
+              if (isTRUE(hadSpectra)) ", the spectra are read again" else ""),
       type = "message", duration = 8)
   })
   ### enable/disable buttons #####
@@ -143,7 +152,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   # settings that are applied while the spectra are read: changing them means
   # the spectra have to be read again on the next run
-  observeEvent(list(input$fileFormat, input$mappingFile, input$checkEmpty), {
+  observeEvent(list(input$fileFormat, input$checkEmpty), {
     if (!is.null(appData$spec_all)) {
       appData$spec_all <- NULL
       appData$spec_idx <- NULL
@@ -175,7 +184,9 @@ appServer <- function(input, output, session, defaults = NULL) {
       # actually produced a result)
       appData$run_signature <- list(settings = settings,
                                     preprocessing = appData$preprocessing,
-                                    concUnits = input$concUnits)
+                                    concUnits = input$concUnits,
+                                    mapping = mappingHash(appData$mapping),
+                                    excluded = sort(as.character(appData$excluded_files)))
 
       # a value the widgets accept can still break the pipeline
       problems <- validateProcessingSettings(settings)
@@ -1035,35 +1046,7 @@ appServer <- function(input, output, session, defaults = NULL) {
   )
 
   # concentration mapping by an external sample sheet
-  observeEvent(input$mappingFile, {
-    if (is.null(input$mappingFile)) {
-      appData$mapping <- NULL
-      return()
-    }
 
-    mapping <- tryCatch(processMappingFile(input$mappingFile),
-                        error = function(e) e)
-
-    if (inherits(mapping, "error")) {
-      appData$mapping <- NULL
-      setInfoState(appData, "errorMapping")
-      appData$load_problem <- conditionMessage(mapping)
-      showNotification(conditionMessage(mapping), type = "error", duration = 10)
-      return()
-    }
-
-    appData$mapping <- mapping
-    appData$load_problem <- NULL
-
-    if (identical(mapping$kind, "list")) {
-      showNotification(paste("Concentration list read - it is assigned in file order.",
-                             "A sample sheet with file names is safer."),
-                       type = "warning", duration = 10)
-    } else {
-      showNotification(sprintf("Sample sheet read: %d file(s).", nrow(mapping$sheet)),
-                       type = "message", duration = 6)
-    }
-  })
 
   exportTestValues(numSpec = length(appData$spec_all),
                    isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),

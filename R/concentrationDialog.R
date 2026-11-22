@@ -6,11 +6,12 @@
 # where the assignment came from.
 
 # the files of a folder with the concentration we know already
-concentrationTable <- function(dir, fileFormat = NA_character_) {
+concentrationTable <- function(dir, fileFormat = NA_character_, mapping = NULL,
+                               excluded = character(0)) {
   empty <- data.frame(file = character(0), concentration = numeric(0),
-                      stringsAsFactors = FALSE)
+                      use = logical(0), stringsAsFactors = FALSE)
 
-  if (is.null(dir) || length(dir) == 0L || is.na(dir) || !dir.exists(dir)) {
+  if (!hasUsableDir(dir)) {
     return(empty)
   }
 
@@ -27,24 +28,35 @@ concentrationTable <- function(dir, fileFormat = NA_character_) {
     return(empty)
   }
 
-  # a sheet in the folder already knows more than the names
-  sheet <- findSampleSheet(dir)
-  if (!is.null(sheet$mapping) && identical(sheet$mapping$kind, "sheet")) {
-    known <- sheet$mapping$sheet
-    key <- function(x) tolower(stripDataExtension(basename(x)))
-    match <- match(key(files), key(known$file))
-    return(data.frame(
-      file = files,
-      concentration = as.numeric(known$concentration[match]),
-      stringsAsFactors = FALSE
-    ))
+  key <- function(x) tolower(stripDataExtension(basename(x)))
+
+  # 1) an assignment made in this session wins, so reopening the dialog shows
+  #    what the user typed instead of the guess from the names
+  sheet <- NULL
+  if (!is.null(mapping) && identical(mapping$kind, "sheet")) {
+    sheet <- mapping$sheet
+  } else {
+    # 2) a sheet in the folder
+    found <- findSampleSheet(dir)
+    if (!is.null(found$mapping) && identical(found$mapping$kind, "sheet")) {
+      sheet <- found$mapping$sheet
+    }
   }
 
-  guessed <- suppressWarnings(as.numeric(stripDataExtension(files)))
-  table <- data.frame(file = files, concentration = guessed,
+  excludedKey <- key(excluded)
+  use <- !(key(files) %in% excludedKey)
+
+  concentration <- if (!is.null(sheet)) {
+    known <- sheet
+    as.numeric(known$concentration[match(key(files), key(known$file))])
+  } else {
+    suppressWarnings(as.numeric(stripDataExtension(files)))
+  }
+
+  table <- data.frame(file = files, concentration = concentration, use = use,
                       stringsAsFactors = FALSE)
-  table[order(is.na(table$concentration), table$concentration, table$file), ,
-        drop = FALSE]
+  table[order(!table$use, is.na(table$concentration), table$concentration,
+              table$file), , drop = FALSE]
 }
 
 # can this table be used? NULL when it is fine, otherwise the reason
@@ -84,7 +96,8 @@ concentrationDialog <- function(table) {
     div(
       class = "m2ara-conc-row",
       div(class = "m2ara-conc-use",
-          checkboxInput(inputId = paste0("concUse", i), label = NULL, value = TRUE)),
+          checkboxInput(inputId = paste0("concUse", i), label = NULL,
+                        value = if ("use" %in% names(table)) isTRUE(table$use[i]) else TRUE)),
       tags$span(class = "m2ara-conc-file", title = table$file[i], table$file[i]),
       div(class = "m2ara-conc-input",
           numericInput(inputId = paste0("concValue", i),

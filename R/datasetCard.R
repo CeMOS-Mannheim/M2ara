@@ -71,9 +71,12 @@ datasetStatus <- function(appData, input, running = FALSE, loading = FALSE,
   }
 
   if (identical(state, "processed")) {
+    # the concentrations and the left out files belong to a run as well
     current <- list(settings = processingSettings(input),
                     preprocessing = appData$preprocessing,
-                    concUnits = input$concUnits)
+                    concUnits = input$concUnits,
+                    mapping = mappingHash(appData$mapping),
+                    excluded = sort(as.character(appData$excluded_files)))
     if (!is.null(appData$run_signature) &&
         !identical(current, appData$run_signature)) {
       return(list(class = "changed", text = "Settings changed - press Re-process"))

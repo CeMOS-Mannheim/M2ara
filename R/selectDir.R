@@ -27,6 +27,19 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
     }
 
     appData$selected_dir <- chosen
+
+    # the format is read from the folder, the user does not have to choose it
+    detected <- detectDataFormat(chosen)
+    if (identical(detected, "both")) {
+      showNotification(
+        paste("The folder contains mzML and Bruker data - using mzML.",
+              "Move the files you do not want into another folder."),
+        type = "warning", duration = 15)
+      detected <- "mzml"
+    }
+    if (detected %in% c("mzml", "bruker")) {
+      updateSelectInput(session, "fileFormat", selected = detected)
+    }
     {
       # a different folder invalidates the loaded spectra and the results
       appData$spec_all <- NULL

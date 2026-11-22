@@ -20,24 +20,6 @@ appMainPanel <- function(defaults) {
                                              )
                                       ),
                                       column(3,
-                                             selectInput(inputId = "fileFormat",
-                                                         label = "File format",
-                                                         choices = c("Bruker flex (.fid)" = "bruker",
-                                                                     "mzML" = "mzml"),
-                                                         selected = defaults$fileFormat,
-                                                         multiple = FALSE, width = "100%")
-                                      ),
-                                      column(3,
-                                             fileInput(inputId = "mappingFile",
-                                                       label = "Conc. mapping",
-                                                       multiple = FALSE,
-                                                       accept = ".txt",
-                                                       buttonLabel = "Select (txt)",
-                                                       width = "100%")
-                                      )
-                                    ),
-                                    fluidRow(
-                                      column(3,
                                              numericInput(inputId = "halfWindowSize",
                                                           label = "Peak window size",
                                                           value = defaults$halfWindowSize,

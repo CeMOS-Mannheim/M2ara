@@ -88,3 +88,56 @@ test_that("spectra without names never match an exclusion", {
   names(named) <- c("a", "b")
   expect_equal(excludedSpectrum(named, c("b.mzML")), c(FALSE, TRUE))
 })
+test_that("reopening the dialog shows the assignment of this session", {
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "sampleA.mzML"))
+  writeLines("x", file.path(dir, "sampleB.mzML"))
+
+  mapping <- list(kind = "sheet",
+                  sheet = data.frame(file = c("sampleA.mzML", "sampleB.mzML"),
+                                     concentration = c(0.25, 25),
+                                     stringsAsFactors = FALSE))
+
+  table <- concentrationTable(dir, "mzml", mapping = mapping,
+                              excluded = "sampleB.mzML")
+
+  # the typed values win over the names, the excluded file is unticked
+  expect_equal(table$concentration[table$file == "sampleA.mzML"], 0.25)
+  expect_false(table$use[table$file == "sampleB.mzML"])
+  expect_true(table$use[table$file == "sampleA.mzML"])
+})
+
+test_that("a changed assignment makes the shown result outdated", {
+  input <- list(SNR = 3, avgMethod = "mean", normMeth = "TIC",
+                VarFilterMethod = "none", SinglePointRecal = FALSE,
+                normMz = 208.1, normTol = 0.1, alignTol = 0, binTol = 100,
+                halfWindowSize = 20, peakMethod = "SuperSmoother",
+                checkEmpty = TRUE, concUnits = "uM", fileFormat = "mzml")
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "1.mzML"))
+
+  mapping <- list(kind = "sheet",
+                  sheet = data.frame(file = "1.mzML", concentration = 1,
+                                     stringsAsFactors = FALSE))
+  appData <- list(selected_dir = dir, info_state = "processed",
+                  preprocessing = list(), show_plot = TRUE,
+                  excluded_files = character(0), mapping = mapping,
+                  run_time = Sys.time(),
+                  run_signature = list(settings = processingSettings(input),
+                                       preprocessing = list(),
+                                       concUnits = "uM",
+                                       mapping = mappingHash(mapping),
+                                       excluded = character(0)))
+
+  expect_equal(datasetStatus(appData, input, running = FALSE,
+                             loading = FALSE, cached = NULL)$text,
+               "Up to date")
+
+  # new concentrations -> the result does not belong to them any more
+  changed <- appData
+  changed$mapping <- list(kind = "sheet",
+                          sheet = data.frame(file = "1.mzML", concentration = 2,
+                                             stringsAsFactors = FALSE))
+  expect_equal(datasetStatus(changed, input, running = FALSE, loading = FALSE,
+                             cached = NULL)$class, "changed")
+})
