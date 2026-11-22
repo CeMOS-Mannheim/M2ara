@@ -53,9 +53,10 @@ appServer <- function(input, output, session, defaults = NULL) {
       return()
     }
 
-    sheet <- concentrationSheet(table)
+    sheet <- includedSheet(table)
     appData$mapping <- list(kind = "sheet", sheet = sheet)
     appData$mapping_source <- "sample sheet"
+    appData$excluded_files <- excludedFiles(table)
 
     if (isTRUE(input$concWriteSheet)) {
       path <- file.path(appData$selected_dir, "samples.csv")
@@ -70,8 +71,11 @@ appServer <- function(input, output, session, defaults = NULL) {
 
     removeModal()
     showNotification(
-      sprintf("Concentrations for %d file(s) taken over - press Process spectra to use them.",
-              nrow(sheet)),
+      sprintf(paste("Concentrations for %d file(s) taken over%s - press Process spectra",
+                    "to use them."),
+              nrow(sheet),
+              if (length(appData$excluded_files) > 0L)
+                sprintf(", %d file(s) left out", length(appData$excluded_files)) else ""),
       type = "message", duration = 8)
   })
   ### enable/disable buttons #####

@@ -91,6 +91,16 @@ loadSpectraData <- function(input, appData, mapping) {
               if (length(appData$skipped) > 5L) " ..." else "")
     }
     
+    # files the user left out in the concentration dialog are not used at all
+    if (length(appData$excluded_files) > 0L) {
+      keep <- !excludedSpectrum(spec_raw, appData$excluded_files)
+      if (any(!keep)) {
+        message(m2araTimeNow(), " left out ", sum(!keep), " file(s): ",
+                paste(utils::head(unique(names(spec_raw)[!keep]), 5), collapse = ", "),
+                "\n")
+        spec_raw <- spec_raw[keep]
+      }
+    }
     unique_mz <- purrr::map_lgl(spec_raw, function(x) {
       mz <- mass(x)
       umz <- unique(mz)

@@ -28,5 +28,6 @@ emptyAppDataObject <- function(){
                  clust_distance = NULL, # distance of the current clustering
                  clust_centroid = NULL, # centroid of the current clustering
                  run_signature = NULL, # settings of the last run
-                 run_time = NULL) # when the last run finished
+                 run_time = NULL, # when the last run finished
+                 excluded_files = character(0)) # files left out by the user
 }

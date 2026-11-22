@@ -48,3 +48,35 @@ test_that("the table becomes a sample sheet", {
   expect_equal(names(sheet), c("file", "concentration"))
   expect_equal(sheet$concentration, c(1, 2))
 })
+test_that("files can be left out of the assignment", {
+  table <- data.frame(file = c("a.mzML", "b.mzML", "c.mzML"),
+                      concentration = c(1, 2, NA),
+                      stringsAsFactors = FALSE)
+
+  # read what the dialog collected: b is left out
+  input <- list(concValue1 = 1, concValue2 = 2, concValue3 = NA,
+                concUse1 = TRUE, concUse2 = FALSE, concUse3 = TRUE)
+  filled <- concentrationDialogTable(table, input)
+
+  expect_equal(filled$use, c(TRUE, FALSE, TRUE))
+  expect_equal(excludedFiles(filled), "b.mzML")
+  expect_equal(includedSheet(filled)$file, c("a.mzML", "c.mzML"))
+
+  # c has no concentration but stays in, so the table is not usable
+  expect_match(concentrationTableProblem(filled), "No concentration for 1 file")
+
+  # nothing left in the analysis is reported
+  none <- filled
+  none$use <- FALSE
+  expect_match(concentrationTableProblem(none), "No file is left")
+})
+
+test_that("spectra of left out files are found by name", {
+  spectra <- list(1, 2, 3)
+  names(spectra) <- c("0.5", "sampleA", "sampleB")
+
+  left <- excludedSpectrum(spectra, c("sampleA.mzML"))
+  expect_equal(left, c(FALSE, TRUE, FALSE))
+
+  expect_equal(excludedSpectrum(spectra, character(0)), c(FALSE, FALSE, FALSE))
+})

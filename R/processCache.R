@@ -82,7 +82,8 @@ mappingHash <- function(mapping) {
 }
 
 # key of the cache entry, NULL when the dataset cannot be fingerprinted
-processCacheKey <- function(dir, settings, preprocessing, mapping = NULL) {
+processCacheKey <- function(dir, settings, preprocessing, mapping = NULL,
+                            excluded = NULL) {
   fingerprint <- datasetFingerprint(dir)
   if (is.null(fingerprint)) {
     return(NULL)
@@ -95,6 +96,7 @@ processCacheKey <- function(dir, settings, preprocessing, mapping = NULL) {
       settings = settings,
       preprocessing = preprocessing,
       mapping = mappingHash(mapping),
+      excluded = sort(as.character(excluded)),
       pipeline = processPipelineVersion()
     ),
     auto_unbox = TRUE,

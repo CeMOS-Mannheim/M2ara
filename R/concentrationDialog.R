@@ -52,6 +52,13 @@ concentrationTableProblem <- function(table) {
   if (is.null(table) || nrow(table) == 0L) {
     return("The table is empty.")
   }
+
+  used <- if ("use" %in% names(table)) table$use else rep(TRUE, nrow(table))
+  if (!any(used)) {
+    return("No file is left in the analysis.")
+  }
+
+  table <- table[used, , drop = FALSE]
   if (anyNA(table$concentration)) {
     missing <- table$file[is.na(table$concentration)]
     return(sprintf("No concentration for %d file(s): %s",
@@ -76,6 +83,8 @@ concentrationDialog <- function(table) {
   rows <- lapply(seq_len(nrow(table)), function(i) {
     div(
       class = "m2ara-conc-row",
+      div(class = "m2ara-conc-use",
+          checkboxInput(inputId = paste0("concUse", i), label = NULL, value = TRUE)),
       tags$span(class = "m2ara-conc-file", title = table$file[i], table$file[i]),
       div(class = "m2ara-conc-input",
           numericInput(inputId = paste0("concValue", i),
@@ -92,7 +101,8 @@ concentrationDialog <- function(table) {
     easyClose = FALSE,
     tags$p(style = "font-size: 90%; color: #555;",
            paste("Type the concentration of every file. Where the name is a",
-                 "number it is already filled in.")),
+                 "number it is already filled in. Untick a file to leave it out",
+                 "of the analysis.")),
     div(class = "m2ara-conc-list", rows),
     checkboxInput("concWriteSheet",
                   "Save as samples.csv in the data folder (remembered next time)",
@@ -112,6 +122,26 @@ concentrationDialogTable <- function(table, input) {
     if (is.null(value)) NA_real_ else suppressWarnings(as.numeric(value))
   }, numeric(1))
 
+  used <- vapply(seq_len(nrow(table)), function(i) {
+    value <- input[[paste0("concUse", i)]]
+    if (is.null(value)) TRUE else isTRUE(value)
+  }, logical(1))
+
   table$concentration <- values
+  table$use <- used
   table
+}
+
+# files that were switched off
+excludedFiles <- function(table) {
+  if (is.null(table) || !"use" %in% names(table)) {
+    return(character(0))
+  }
+  as.character(table$file[!table$use])
+}
+
+# the sheet of the files that stay in
+includedSheet <- function(table) {
+  keep <- if ("use" %in% names(table)) table$use else rep(TRUE, nrow(table))
+  concentrationSheet(table[keep, , drop = FALSE])
 }

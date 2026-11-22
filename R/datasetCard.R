@@ -168,6 +168,10 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
     tags$div(class = "m2ara-dataset-meta", title = facts, facts),
     tags$div(class = dataClass, title = paste(formatText, sourceText, sep = " - "),
              sprintf("%s \u00b7 %s", formatText, sourceText)),
+    if (length(appData$excluded_files) > 0L) {
+      tags$div(class = "m2ara-dataset-meta m2ara-dataset-warn",
+               sprintf("%d file(s) left out", length(appData$excluded_files)))
+    },
     tags$div(class = paste("m2ara-status", status$class),
              tags$span(class = "m2ara-status-dot"),
              status$text),
