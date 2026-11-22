@@ -171,8 +171,8 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       settings <- processingSettings(input)
       # remembered, so the sidebar can tell whether the shown result still
-      # belongs to the settings in the form
-      appData$run_time <- Sys.time()
+      # belongs to the settings in the form (the run time is only set when a run
+      # actually produced a result)
       appData$run_signature <- list(settings = settings,
                                     preprocessing = appData$preprocessing,
                                     concUnits = input$concUnits)
@@ -196,8 +196,8 @@ appServer <- function(input, output, session, defaults = NULL) {
       if (!is.null(cached)) {
         # keep the sidecar of the entry up to date, so the sidebar can tell that
         # a cached result exists
-        processCacheWriteMeta(cache_key, appData$selected_dir,
-                              created = file.mtime(processCachePath(appData$selected_dir)))
+        created <- file.mtime(processCachePath(appData$selected_dir))
+        processCacheWriteMeta(cache_key, appData$selected_dir, created = created)
         appData$res <- cached$res
         appData$centroided <- cached$centroided
         # the effective concentration sheet belongs to the result
@@ -207,6 +207,8 @@ appServer <- function(input, output, session, defaults = NULL) {
         showNotification("Results loaded from the cache.", duration = 5, type = "message")
         appData <- storeResults(appData, res = cached$res, input,
                                 stats = getStatistics(cached$res))
+        # "Last run" is when the result was computed, not when it was loaded
+        appData$run_time <- created
         session$sendCustomMessage("m2ara_reset_selection", list())
         applyPendingSelection()
         updateActionButton(inputId = "process", label = "Re-process")

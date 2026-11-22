@@ -14,6 +14,9 @@ storeResults <- function(appData, res, input, stats) {
 
   setInfoState(appData, "processed")
   appData$show_plot <- TRUE
+  # only a result that reached this point was a run - a failed load must not
+  # show up as "Last run"
+  appData$run_time <- Sys.time()
 
   return(appData)
 }

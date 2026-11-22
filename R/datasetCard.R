@@ -121,7 +121,8 @@ datasetCardUi <- function(appData, input, running = FALSE, loading = FALSE) {
       sprintf("Cached result from %s - not used yet.", format(cached$created, "%Y-%m-%d %H:%M"))
     }
   } else if (is.null(appData$run_time)) {
-    "Unknown (result from the cache)."
+    # a run was started but never produced a result (the status above says why)
+    "Never."
   } else {
     format(appData$run_time, "%Y-%m-%d %H:%M")
   }

@@ -106,3 +106,21 @@ test_that("a broken path does not break the card", {
   expect_equal(datasetNameParts(NA_character_)$full, "")
   expect_equal(datasetNameParts(character(0))$full, "")
 })
+test_that("last run only shows a run that produced a result", {
+  input <- controlInput()
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "1.mzML"))
+
+  base <- list(selected_dir = dir, info_state = "dir_set",
+               preprocessing = list(), show_plot = FALSE)
+
+  # started a run, no result: never
+  started <- c(base, list(run_signature = list(settings = list())))
+  html <- as.character(datasetCardUi(started, input))
+  expect_match(html, "Never\\.")
+
+  # a result with a time
+  done <- c(started, list(run_time = as.POSIXct("2026-11-20 07:45", tz = "UTC")))
+  html <- as.character(datasetCardUi(done, input))
+  expect_match(html, "2026-11-20 07:45")
+})
