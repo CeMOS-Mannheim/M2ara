@@ -285,7 +285,7 @@ jobs:
           & $python.Source -m pip install --quiet --disable-pip-version-check pillow
           if ($LASTEXITCODE -ne 0) { throw 'pip install pillow failed' }
 
-          & $python.Source './installer/scripts/make-ico.py' './figures/logo_resized.png' './installer/M2ara.ico'
+          & $python.Source './installer/scripts/make-ico.py' './inst/figures/logo_resized.png' './installer/M2ara.ico'
           if ($LASTEXITCODE -ne 0) { throw 'icon conversion failed' }
 
           $iconPath = (Resolve-Path -LiteralPath './installer/M2ara.ico').Path

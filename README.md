@@ -1,4 +1,4 @@
-# M2ara <img src="figures/logo_resized.png" align="right" height="120"/>
+# M2ara <img src="inst/figures/logo_resized.png" align="right" height="120"/>
 
 M²ara is a software tool to facilitate the exploration of metabolomic responses in complex matrix-assisted laser desorption/ionization mass spectrometry (MALDI MS) bioassays. The app is intended for the evaluation of metabolomic drug actions by using the mass-to-charge ratios of hundreds of metabolites and it is particularly useful in defining novel pharmacodynamic biomarkers for high-throughput applications.
 
@@ -6,7 +6,7 @@ M²ara is based on the R package [MALDIcellassay](https://github.com/CeMOS-Mannh
 
 For more information please check out the [publication](https://doi.org/10.1093/bioinformatics/btae694).
 
-<img src="figures/Workflow_figure.png" alt="M²ara workflow overview" width="100%"/>
+<img src="inst/figures/Workflow_figure.png" alt="M²ara workflow overview" width="100%"/>
 
 ## How to use
 
@@ -16,7 +16,7 @@ This app is specifically designed for use with Bruker flex series raw data but a
 
 For more detailed information please take a look at the [Manual](manual.md) that is also available inside the app.
 
-<img src="figures/gui_example.png" alt="M²ara GUI overview" width="100%"/>
+<img src="inst/figures/gui_example.png" alt="M²ara GUI overview" width="100%"/>
 
 ## Quality metrics
 
@@ -26,7 +26,7 @@ In M²ara the following quality metrics might be used (see Figure for an graphic
 -   $F_Z$: Incorporates the inherent variability of the measurements given by the standard deviation ($σ_u$ and $σ_l$) and the upper ($µ_u$) and lower ($µ_l$) mean values of the two highest and lowest concentrations.
 -   $F_V$: Takes into account the residuals and relating them to the difference between the upper ($a_u$) and lower ($a_l$) asymptotes.
 
-<img src="figures/curve_figure.png" alt="Graphical explation of quality factors" width="100%"/>
+<img src="inst/figures/curve_figure.png" alt="Graphical explation of quality factors" width="100%"/>
 
 Finally, the Curve response score (CRS) combines the tree quality factors above to give a ranking of the features and a decision boundary from which on a curve can be surely classified as non-artificial.
 
