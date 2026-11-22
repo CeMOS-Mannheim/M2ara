@@ -7,3 +7,13 @@ rsconnect/
 .Rproj.user
 renv.lock
 renv
+research/
+pub.pdf
+pub_extracted.txt
+pubpdf.pdf
+.dsh_tmp_dump.R
+exampledata/
+*.Rcheck/
+M2ara_*.tar.gz
+docs/
+inst/figures/*.tmp.png
