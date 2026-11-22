@@ -492,10 +492,12 @@ appServer <- function(input, output, session, defaults = NULL) {
                                           normalize = isTRUE(input$normalizeCompare))))
       }
 
-      # one feature uses the same overlay, so "normalize curves" works here too
+      # one feature uses the same overlay, so "normalize curves" works here too;
+      # a single curve stays black like in the original curve plot
       p_curve <- plotCurvesOverlay(appData$res, sel,
                                    errorbars = input$errorbars,
-                                   normalize = isTRUE(input$normalizeCompare)) +
+                                   normalize = isTRUE(input$normalizeCompare),
+                                   colour = "black") +
         labs(title = paste0("m/z = ",
                             round(
                               getMzFromMzIdx(appData$res,

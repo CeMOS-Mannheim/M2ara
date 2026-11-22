@@ -80,3 +80,11 @@ test_that("spectra of left out files are found by name", {
 
   expect_equal(excludedSpectrum(spectra, character(0)), c(FALSE, FALSE, FALSE))
 })
+test_that("spectra without names never match an exclusion", {
+  spectra <- list(1, 2)
+  expect_equal(excludedSpectrum(spectra, c("a.mzML")), c(FALSE, FALSE))
+
+  named <- list(1, 2)
+  names(named) <- c("a", "b")
+  expect_equal(excludedSpectrum(named, c("b.mzML")), c(FALSE, TRUE))
+})

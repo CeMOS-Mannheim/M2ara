@@ -46,7 +46,8 @@ loadSpectraData <- function(input, appData, mapping) {
              }, logical(1))
              skipped <- basename(dirs)[!isDataset]
              appData$skipped <- skipped
-             spec_raw <- loadSpectra(appData$selected_dir, filter = skipped)
+             spec_raw <- loadSpectra(appData$selected_dir,
+                                     filter = c(skipped, appData$excluded_files))
              # at the moment we assume Bruker flex data to always be continuous
              appData$centroided <- FALSE
            },
@@ -70,7 +71,8 @@ loadSpectraData <- function(input, appData, mapping) {
              # the mzML files may contain chromatograms, the parser warns for
              # every one of them - that is noise and not actionable
              spec_raw <- withCallingHandlers(
-               loadSpectraMzML(appData$selected_dir, filter = skipped,
+               loadSpectraMzML(appData$selected_dir,
+                               filter = c(skipped, appData$excluded_files),
                                centroided = centroided),
                warning = function(w) {
                  if (grepl("tag is not supported", conditionMessage(w), fixed = TRUE)) {
@@ -91,10 +93,11 @@ loadSpectraData <- function(input, appData, mapping) {
               if (length(appData$skipped) > 5L) " ..." else "")
     }
     
-    # files the user left out in the concentration dialog are not used at all
+    # safety net: the files are already left out while loading, but if a name
+    # carries the file name anyway, drop it here as well
     if (length(appData$excluded_files) > 0L) {
       keep <- !excludedSpectrum(spec_raw, appData$excluded_files)
-      if (any(!keep)) {
+      if (length(keep) == length(spec_raw) && any(!keep)) {
         message(m2araTimeNow(), " left out ", sum(!keep), " file(s): ",
                 paste(utils::head(unique(names(spec_raw)[!keep]), 5), collapse = ", "),
                 "\n")

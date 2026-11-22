@@ -35,7 +35,8 @@ singlePeakStats <- function(res, mz) {
 #' @param normalize scale every curve to its own min/max
 #'
 #' @return ggplot object
-plotCurvesOverlay <- function(res, mzIdxs, errorbars = "none", normalize = FALSE) {
+plotCurvesOverlay <- function(res, mzIdxs, errorbars = "none", normalize = FALSE,
+                               colour = NULL) {
   errorbars <- match.arg(errorbars, c("none", "sd", "sem"))
   mzIdxs <- mzIdxs[!is.na(mzIdxs)]
   if (length(mzIdxs) == 0L) {
@@ -106,7 +107,11 @@ plotCurvesOverlay <- function(res, mzIdxs, errorbars = "none", normalize = FALSE
       ggplot2::aes(x = .data$x, y = .data$y, col = .data$mz),
       size = 2, shape = 1, stroke = 0.8
     ) +
-    ggplot2::scale_colour_manual(values = featureColours(length(mz_vals))) +
+    ggplot2::scale_colour_manual(values = if (is.null(colour)) {
+    featureColours(length(mz_vals))
+  } else {
+    rep(colour, length(mz_vals))
+  }) +
     ggplot2::scale_x_continuous(labels = function(b) scales::label_scientific()(10^b),
                                 breaks = unique(points$x)) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)) +

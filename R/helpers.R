@@ -187,6 +187,11 @@ excludedSpectrum <- function(spectra, excluded) {
     return(rep(FALSE, length(spectra)))
   }
 
+  # without names nothing can be matched (the loader filters by file list instead)
+  if (is.null(names(spectra)) || length(names(spectra)) != length(spectra)) {
+    return(rep(FALSE, length(spectra)))
+  }
+
   key <- function(x) tolower(stripDataExtension(basename(x)))
   keys <- key(names(spectra))
   wanted <- key(unique(excluded))
