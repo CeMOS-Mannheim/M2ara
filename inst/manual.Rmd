@@ -68,7 +68,7 @@ For the curve fitting to work all spectra must have an associated concentration.
 
 ## Sample sheet {#sample-sheet}
 
-A sample sheet maps every file to its concentration and can be uploaded in the `Settings` tab (*Conc. mapping*) or placed in the data folder as `samples.csv`. It needs the columns `file` and `concentration`, optionally `spot` and `group`:
+A sample sheet maps every file to its concentration. It can be placed in the data folder as `samples.csv` or filled in with **Set concentrations ...** in the sidebar, which also writes `samples.csv` if you want to keep it. It needs the columns `file` and `concentration`, optionally `spot` and `group`:
 
 ```
 file,concentration,spot,group
@@ -137,7 +137,7 @@ knitr::include_graphics("figures/interface.png")
    A click on a row shows that feature alone; for a comparison tick the checkboxes in the first column of the table (up to 4; the remaining boxes are disabled once four are ticked, and clicking a row does not change an explicit comparison): the curves are then drawn as one overlay (colour = *m/z*, tick **Normalize curves** to scale every curve to its own range) and the peak profiles as a 2 x 2 grid - each with the same order and colours.
 The spectra are read once per folder: changing settings and pressing **Process spectra** again only redoes the calculations, the files are not read again. A different folder starts from scratch. Results are cached per dataset and settings, so pressing **Process spectra** with unchanged settings and unchanged files returns the previous result immediately - without reading the spectra. The cache lives in the user cache directory (`tools::R_user_dir("M2ara")`) and can be cleared in the `Settings` tab. It is keyed by the data, the settings and the version of M2ara/MALDIcellassay, so results of an older version are never reused; **Re-process from scratch** in the `Settings` tab reads the files and processes them again regardless of the cache.
 
-5.  If you want to save the curve fit and peak profile of a given *m/z*-value you can click the download button in the *Curve*-tab to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** below the peak table: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
+5.  If you want to save the curve fit and peak profile of a given *m/z*-value use **Save plot** above the plots to save the current plot as PNG. All results of the run are exported together with **Export results (ZIP)** in the same row: the peak table, the fitted parameters, the intensity matrix, the settings and a `run_info.json` with the software versions.
 
 
 **Share a view.** In the `Settings` tab, **Copy link to this view** puts a link with all settings, the folder and the compared features into the clipboard and into the address bar. Opening the link restores them; the run itself still has to be started with **Process spectra**. The link stores the absolute path of the folder, so on another computer it is only used when that folder exists there - otherwise the settings are restored and a note asks for the local folder. Because the link contains the host and port of the machine where it was created, a link from a local installation only works locally: paste it into **Open shared view** in the `Settings` tab of the app on the other machine, which applies the settings there regardless of address and port.
@@ -318,7 +318,7 @@ The cluster tab enables to cluster curves based on their shape to enable to dete
 knitr::include_graphics("figures/clustering_curves.png")
 ```
 
-On the right the individual (black) curves for all signals are shown together with their average curves trajectory (colored). The left plot shows all trajectories in direct comparison.
+On the left the individual curves are grouped by cluster and drawn in the colour of their cluster; the thick black line is the centroid of the cluster. On the right the average trajectories of all clusters are compared in the same colour.
 
 **Distance.** *shape only (SBD)* compares the shape of the curves and allows them to be shifted along the concentration axis, so a signal with the same behaviour but a different potency still counts as similar. *shape + potency (Euclidean)* requires the curves to run alike at the same concentration, so the potency matters as well. The distance is not a quality setting: which one is right depends on the question. The centroid should match the distance: `mean` is the least-squares centre of the Euclidean distance (fast, correct for *shape + potency*), `shape`/DBA is the prototype of SBD (correct for *shape only*), and `pam` (a real member curve) works for both but is slower.
 
@@ -334,9 +334,9 @@ knitr::include_graphics("figures/clustering_metrics.png")
 knitr::include_graphics("figures/settings.png")
 ```
 
-The `File format`-menu can be used to select between Bruker raw data of mzML format (see [Requirements to the raw data](#requirements-to-the-raw-data)).
+The file format is detected from the selected folder: `mzML` files or Bruker datasets (sub folders with a `fid` file) are recognised automatically, see [Requirements to the raw data](#requirements-to-the-raw-data).
 
-The `Conc. mapping` upload button enables the upload of a mapping file containing one concentration for each spectrum. It needs to be in the \*.txt-format and needs to contain one concentration (dont include units!) per line, one for each spectrum. The file needs to be uploaded before the spectra are loaded using the button on the sidebar if the mapping should be used.
+The concentrations come from the file names, a `samples.csv` in the data folder, or from **Set concentrations ...** in the sidebar: a dialog with one field per file, where files can also be left out of the analysis.
 
 The `Peak window size` and `Peak method` setting enables to change the peak detection. Usually a `Peak window size` of 20 and the *SuperSmoother* method should lead to good results. Sometimes, especially if a small peak is close to a large one, this small peak might not be detected. In this cases the `Peak window size` can be decreased or if this is still not enough the *MAD* peak detection method can be chosen. Please note that both will lead to much more signals being considered as valid peaks, so it makes sense to increase SNR at the same time.
 
@@ -354,7 +354,7 @@ As processing is typically fast, this is a more efficient (time & disk-space) pr
 
 ## Export of the results {#export-of-the-results}
 
-**Export results (ZIP)** (below the peak table) writes one archive with
+**Export results (ZIP)** (above the plots) writes one archive with
 
 - `peak_table.csv` - the table from the app,
 - `fitting_parameters.csv` and `intensity_matrix.csv`,
