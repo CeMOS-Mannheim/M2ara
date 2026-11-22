@@ -64,7 +64,9 @@ test_that("a processed dataset knows whether the settings still fit", {
   appData$run_signature <- list(
     settings = processingSettings(input),
     preprocessing = list(),
-    concUnits = input$concUnits
+    concUnits = input$concUnits,
+    mapping = mappingHash(NULL),
+    excluded = character(0)
   )
   expect_equal(datasetStatus(appData, input)$class, "ok")
 
@@ -89,4 +91,54 @@ test_that("a running job and reading are shown", {
   # both take precedence over the plain state
   appData$info_state <- "processed"
   expect_equal(datasetStatus(appData, input, running = TRUE)$class, "pending")
+})
+test_that("a broken path does not break the card", {
+  input <- controlInput()
+
+  # while the folder dialog is open the path can be NA, empty or missing
+  for (broken in list(NA_character_, character(0), "", file.path(tempdir(), "nope"))) {
+    appData <- list(selected_dir = broken, info_state = "initial",
+                    preprocessing = list(), run_signature = NULL)
+    expect_silent(card <- datasetCardUi(appData, input))
+    expect_s3_class(card, "shiny.tag")
+    expect_null(cacheLookup(appData, input))
+  }
+
+  # and the name parts never error
+  expect_equal(datasetNameParts(NA_character_)$full, "")
+  expect_equal(datasetNameParts(character(0))$full, "")
+})
+test_that("last run only shows a run that produced a result", {
+  input <- controlInput()
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "1.mzML"))
+
+  base <- list(selected_dir = dir, info_state = "dir_set",
+               preprocessing = list(), show_plot = FALSE)
+
+  # started a run, no result: never
+  started <- c(base, list(run_signature = list(settings = list())))
+  html <- as.character(datasetCardUi(started, input))
+  expect_match(html, "Never\\.")
+
+  # a result with a time
+  done <- c(started, list(run_time = as.POSIXct("2026-11-20 07:45", tz = "UTC")))
+  html <- as.character(datasetCardUi(done, input))
+  expect_match(html, "2026-11-20 07:45")
+})
+test_that("a failed load says why it failed", {
+  input <- controlInput()
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "blank.mzML"))
+
+  failing <- list(selected_dir = dir, info_state = "loadErrorMapping",
+                  preprocessing = list(), show_plot = FALSE,
+                  load_problem = "The sample sheet has no concentration for these files: blank.")
+  html <- as.character(datasetCardUi(failing, input))
+  expect_match(html, "no concentration for these files: blank")
+
+  # without a stored reason the generic text is used
+  generic <- failing
+  generic$load_problem <- NULL
+  expect_match(as.character(datasetCardUi(generic, input)), "Last load failed")
 })

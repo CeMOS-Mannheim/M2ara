@@ -36,6 +36,39 @@ appUI <- function(defaults) {
        #m2araShortcuts kbd { background: #f7f7f7; border: 1px solid #cccccc;
          border-radius: 3px; padding: 0 4px; font-size: 90%; }
 
+       .m2ara-dataset-warn { color: #a86b00; }
+       .m2ara-conc-list {
+         max-height: 50vh; overflow-y: auto; margin-bottom: 8px;
+         border-top: 1px solid #eee;
+       }
+       .m2ara-conc-row {
+         display: flex; align-items: center; gap: 10px;
+         padding: 3px 2px; border-bottom: 1px solid #f3f3f3;
+       }
+       .m2ara-conc-file {
+         flex: 1; white-space: nowrap; overflow: hidden;
+         text-overflow: ellipsis; font-family: monospace; font-size: 85%;
+       }
+       .m2ara-conc-input { width: 130px; flex: 0 0 130px; }
+       .m2ara-conc-input .form-group { margin-bottom: 0; }
+       .m2ara-data-status {
+         font-size: 80%; color: #6b6b6b; margin-top: 5px; line-height: 1.3;
+       }
+
+       /* labelled groups in the sidebar */
+       .m2ara-group {
+         border: 1px solid #ececec; border-radius: 8px;
+         padding: 6px 8px 2px; margin-bottom: 8px;
+       }
+       .m2ara-group-title {
+         font-size: 85%; font-weight: 600; color: #555;
+         margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
+       }
+
+       /* the buttons of the settings row start on the same line */
+       .m2ara-action { margin-top: 21px; }
+       .m2ara-group .form-group { margin-bottom: 6px; }
+
        /* dataset card in the sidebar */
        .m2ara-dataset {
          border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa;

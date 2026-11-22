@@ -180,3 +180,21 @@ hideM2araSpinner <- function() {
   try(shinybusy::hide_spinner(), silent = TRUE)
   invisible(NULL)
 }
+# which spectra belong to a file the user left out (names carry the file name
+# without its extension, Bruker uses the dataset folder)
+excludedSpectrum <- function(spectra, excluded) {
+  if (length(excluded) == 0L) {
+    return(rep(FALSE, length(spectra)))
+  }
+
+  # without names nothing can be matched (the loader filters by file list instead)
+  if (is.null(names(spectra)) || length(names(spectra)) != length(spectra)) {
+    return(rep(FALSE, length(spectra)))
+  }
+
+  key <- function(x) tolower(stripDataExtension(basename(x)))
+  keys <- key(names(spectra))
+  wanted <- key(unique(excluded))
+
+  keys %in% wanted
+}

@@ -21,6 +21,11 @@ loadSpectraData <- function(input, appData, mapping) {
     # checkSpecNames needs to return indices of the numeric folders
     if(!length(mapping)>0) {
       if (!checkSpecNamesNumeric(appData$selected_dir, input$fileFormat)) {
+        badNames <- nonNumericNames(appData$selected_dir, input$fileFormat)
+        appData$load_problem <- paste0(
+          "These names are not numeric concentrations: ",
+          paste(badNames, collapse = ", "),
+          ". Load a sample sheet, or use \"Set concentrations ...\".")
         warning("Found folder names that could not be converted to numeric and no mapping file found.
                 All folders/spectra need to have concentrations as names or mapping file with conc. needed.\n")
         setInfoState(appData, "loadErrorNum")
@@ -46,7 +51,8 @@ loadSpectraData <- function(input, appData, mapping) {
              }, logical(1))
              skipped <- basename(dirs)[!isDataset]
              appData$skipped <- skipped
-             spec_raw <- loadSpectra(appData$selected_dir, filter = skipped)
+             spec_raw <- loadSpectra(appData$selected_dir,
+                                     filter = c(skipped, appData$excluded_files))
              # at the moment we assume Bruker flex data to always be continuous
              appData$centroided <- FALSE
            },
@@ -70,7 +76,8 @@ loadSpectraData <- function(input, appData, mapping) {
              # the mzML files may contain chromatograms, the parser warns for
              # every one of them - that is noise and not actionable
              spec_raw <- withCallingHandlers(
-               loadSpectraMzML(appData$selected_dir, filter = skipped,
+               loadSpectraMzML(appData$selected_dir,
+                               filter = c(skipped, appData$excluded_files),
                                centroided = centroided),
                warning = function(w) {
                  if (grepl("tag is not supported", conditionMessage(w), fixed = TRUE)) {
@@ -91,6 +98,17 @@ loadSpectraData <- function(input, appData, mapping) {
               if (length(appData$skipped) > 5L) " ..." else "")
     }
     
+    # safety net: the files are already left out while loading, but if a name
+    # carries the file name anyway, drop it here as well
+    if (length(appData$excluded_files) > 0L) {
+      keep <- !excludedSpectrum(spec_raw, appData$excluded_files)
+      if (length(keep) == length(spec_raw) && any(!keep)) {
+        message(m2araTimeNow(), " left out ", sum(!keep), " file(s): ",
+                paste(utils::head(unique(names(spec_raw)[!keep]), 5), collapse = ", "),
+                "\n")
+        spec_raw <- spec_raw[keep]
+      }
+    }
     unique_mz <- purrr::map_lgl(spec_raw, function(x) {
       mz <- mass(x)
       umz <- unique(mz)

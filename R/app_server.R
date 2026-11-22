@@ -22,12 +22,105 @@ appServer <- function(input, output, session, defaults = NULL) {
   process_console_bucket <- reactiveVal(-1L)
   process_cache_key <- reactiveVal(NULL)
 
-  appData <- selectDir(appData, input, output, defaults = defaults)
+  appData <- selectDir(appData, input, output, defaults = defaults, session = session)
 
   observeEvent(input$preproc_settings, {
     appData <- setPreprocessSettings(input, appData)
   })
 
+  ### assign concentrations by hand #####
+  output$hasFolder <- reactive({ !is.null(appData$selected_dir) && nzchar(appData$selected_dir) })
+  outputOptions(output, "hasFolder", suspendWhenHidden = FALSE)
+
+  conc_data <- reactiveVal(NULL)
+
+  observeEvent(input$setConcentrations, {
+    req(appData$selected_dir)
+    table <- concentrationTable(appData$selected_dir,
+                                detectDataFormat(appData$selected_dir),
+                                mapping = appData$mapping,
+                                excluded = appData$excluded_files)
+    if (nrow(table) == 0L) {
+      showNotification("No spectra in this folder.", type = "error", duration = 10)
+      return()
+    }
+    conc_data(table)
+    showModal(concentrationDialog(table))
+  })
+
+  observeEvent(input$applyConcentrations, {
+    table <- concentrationDialogTable(conc_data(), input)
+    problem <- concentrationTableProblem(table)
+    if (!is.null(problem)) {
+      showNotification(problem, type = "error", duration = 15)
+      return()
+    }
+
+    sheet <- includedSheet(table)
+    appData$mapping <- list(kind = "sheet", sheet = sheet)
+    appData$mapping_source <- "sample sheet"
+    appData$excluded_files <- excludedFiles(table)
+
+    if (isTRUE(input$concWriteSheet)) {
+      path <- file.path(appData$selected_dir, "samples.csv")
+      ok <- tryCatch({
+        utils::write.csv(sheet, path, row.names = FALSE)
+        TRUE
+      }, error = function(e) FALSE)
+      if (!ok) {
+        showNotification("Could not write samples.csv.", type = "error", duration = 10)
+      }
+    }
+
+    removeModal()
+
+    # the assignment is what the last load was missing, so the app is ready to
+    # process again (the card must not keep saying "last load failed")
+    state <- appData$info_state
+    if (startsWith(state, "loadError") || identical(state, "errorMapping")) {
+      setInfoState(appData, "dir_set")
+    }
+
+    # the concentrations are part of the loaded spectra, so they have to be read
+    # again with the new assignment on the next run
+    hadSpectra <- !is.null(appData$spec_all)
+    appData$spec_all <- NULL
+    appData$spec_idx <- NULL
+    if (hadSpectra) {
+      message(m2araTimeNow(), " concentrations changed; spectra will be read again\n")
+    }
+
+    # the spectra have to be read again when they were already loaded
+    if (isTRUE(hadSpectra)) {
+      updateActionButton(inputId = "process", label = "Re-process")
+    }
+
+    showNotification(
+      sprintf(paste("Concentrations for %d file(s) taken over%s - press Process",
+                    "spectra to use them%s."),
+              nrow(sheet),
+              if (length(appData$excluded_files) > 0L)
+                sprintf(", %d file(s) left out", length(appData$excluded_files)) else "",
+              if (isTRUE(hadSpectra)) ", the spectra are read again" else ""),
+      type = "message", duration = 8)
+  })
+  ### enable/disable buttons #####
+  # a button that cannot do anything should not look clickable
+  observe({
+    # pressing Process is also how a failed load is retried, so a usable folder
+    # is enough - the error states must not lock the button
+    ready <- hasUsableDir(appData$selected_dir)
+    busy <- isTRUE(loading()) || !is.null(process_job())
+    shinyjs::toggleState("process", condition = ready && !busy)
+  })
+
+  observe({
+    hasData <- isTRUE(appData$show_plot)
+    shinyjs::toggleState("doClust",
+                         condition = hasData && is.null(clust_job()))
+    shinyjs::toggleState("clust2peaksTable",
+                         condition = hasData && !is.null(appData$clust))
+  })
   ### dataset card in the sidebar #####
   output$datasetCard <- renderUI({
     datasetCardUi(appData, input,
@@ -68,7 +161,7 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   # settings that are applied while the spectra are read: changing them means
   # the spectra have to be read again on the next run
-  observeEvent(list(input$fileFormat, input$mappingFile, input$checkEmpty), {
+  observeEvent(list(input$fileFormat, input$checkEmpty), {
     if (!is.null(appData$spec_all)) {
       appData$spec_all <- NULL
       appData$spec_idx <- NULL
@@ -96,11 +189,13 @@ appServer <- function(input, output, session, defaults = NULL) {
 
       settings <- processingSettings(input)
       # remembered, so the sidebar can tell whether the shown result still
-      # belongs to the settings in the form
-      appData$run_time <- Sys.time()
+      # belongs to the settings in the form (the run time is only set when a run
+      # actually produced a result)
       appData$run_signature <- list(settings = settings,
                                     preprocessing = appData$preprocessing,
-                                    concUnits = input$concUnits)
+                                    concUnits = input$concUnits,
+                                    mapping = mappingHash(appData$mapping),
+                                    excluded = sort(as.character(appData$excluded_files)))
 
       # a value the widgets accept can still break the pipeline
       problems <- validateProcessingSettings(settings)
@@ -121,8 +216,8 @@ appServer <- function(input, output, session, defaults = NULL) {
       if (!is.null(cached)) {
         # keep the sidecar of the entry up to date, so the sidebar can tell that
         # a cached result exists
-        processCacheWriteMeta(cache_key, appData$selected_dir,
-                              created = file.mtime(processCachePath(appData$selected_dir)))
+        created <- file.mtime(processCachePath(appData$selected_dir))
+        processCacheWriteMeta(cache_key, appData$selected_dir, created = created)
         appData$res <- cached$res
         appData$centroided <- cached$centroided
         # the effective concentration sheet belongs to the result
@@ -132,6 +227,8 @@ appServer <- function(input, output, session, defaults = NULL) {
         showNotification("Results loaded from the cache.", duration = 5, type = "message")
         appData <- storeResults(appData, res = cached$res, input,
                                 stats = getStatistics(cached$res))
+        # "Last run" is when the result was computed, not when it was loaded
+        appData$run_time <- created
         session$sendCustomMessage("m2ara_reset_selection", list())
         applyPendingSelection()
         updateActionButton(inputId = "process", label = "Re-process")
@@ -177,7 +274,7 @@ appServer <- function(input, output, session, defaults = NULL) {
       showM2araSpinner()
       showNotification("Processing started. Please wait.",
                        duration = 5,
-                       type = "default")
+                       type = "message")
       message(m2araTimeNow(), " start processing...\n")
 
 
@@ -317,6 +414,16 @@ appServer <- function(input, output, session, defaults = NULL) {
 
   ### Peak table ####
 
+  # where the settings live and when they were saved last
+  settings_saved <- reactiveVal(NULL)
+  output$settingsInfo <- renderText({
+    path <- file.path(getwd(), "settings.csv")
+    saved <- settings_saved()
+    if (is.null(saved) || !file.exists(path)) {
+      return("settings.csv (saved when you press the button)")
+    }
+    sprintf("settings.csv - saved %s", format(saved, "%Y-%m-%d %H:%M"))
+  })
   # what is in the result cache
   cache_refresh <- reactiveVal(0L)
   output$cacheInfo <- renderText({
@@ -417,9 +524,12 @@ appServer <- function(input, output, session, defaults = NULL) {
                                           normalize = isTRUE(input$normalizeCompare))))
       }
 
-      p_curve <- plotCurves(appData$res,
-                            mzIdx = selected_features()[1],
-                            errorbars = input$errorbars) +
+      # one feature uses the same overlay, so "normalize curves" works here too;
+      # a single curve stays black like in the original curve plot
+      p_curve <- plotCurvesOverlay(appData$res, sel,
+                                   errorbars = input$errorbars,
+                                   normalize = isTRUE(input$normalizeCompare),
+                                   colour = "black") +
         labs(title = paste0("m/z = ",
                             round(
                               getMzFromMzIdx(appData$res,
@@ -783,7 +893,7 @@ appServer <- function(input, output, session, defaults = NULL) {
     if (length(excluded) > 0L) {
       showNotification(sprintf("%d curves are left out before the clustering: %s.",
                                features, paste(excluded, collapse = ", ")),
-                       type = "warning", duration = 12)
+                       type = "warning", duration = 10)
     }
 
     clust_cancelled(FALSE)
@@ -901,7 +1011,8 @@ appServer <- function(input, output, session, defaults = NULL) {
   ### save settings ####
   observeEvent(input$saveSettings, {
     saveSettings(input, filename = "settings.csv", info_state = appData$info_state)
-
+    settings_saved(Sys.time())
+    showNotification("Settings saved to settings.csv.", type = "message", duration = 5)
   })
 
   ### download handler ####
@@ -944,35 +1055,7 @@ appServer <- function(input, output, session, defaults = NULL) {
   )
 
   # concentration mapping by an external sample sheet
-  observeEvent(input$mappingFile, {
-    if (is.null(input$mappingFile)) {
-      appData$mapping <- NULL
-      return()
-    }
 
-    mapping <- tryCatch(processMappingFile(input$mappingFile),
-                        error = function(e) e)
-
-    if (inherits(mapping, "error")) {
-      appData$mapping <- NULL
-      setInfoState(appData, "errorMapping")
-      appData$load_problem <- conditionMessage(mapping)
-      showNotification(conditionMessage(mapping), type = "error", duration = 12)
-      return()
-    }
-
-    appData$mapping <- mapping
-    appData$load_problem <- NULL
-
-    if (identical(mapping$kind, "list")) {
-      showNotification(paste("Concentration list read - it is assigned in file order.",
-                             "A sample sheet with file names is safer."),
-                       type = "warning", duration = 10)
-    } else {
-      showNotification(sprintf("Sample sheet read: %d file(s).", nrow(mapping$sheet)),
-                       type = "message", duration = 6)
-    }
-  })
 
   exportTestValues(numSpec = length(appData$spec_all),
                    isSpectrumList = MALDIquant::isMassSpectrumList(appData$spec_all),

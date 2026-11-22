@@ -17,7 +17,8 @@ infoStateRules <- list(
               "loadErrorMapping", "errorMapping",
               "fitErrorRecal", "fitErrorNorm", "fitErrorOther"),
   loaded = c("dir_set", "loaded"),
-  processed = c("loaded", "processed"),
+  # a cache hit goes from a selected folder straight to the result
+  processed = c("dir_set", "loaded", "processed"),
   loadErrorNum = c("dir_set", "loadErrorNum"),
   loadErrorFormat = c("dir_set", "loadErrorFormat"),
   loadErrorUniqueMz = c("dir_set", "loadErrorUniqueMz"),

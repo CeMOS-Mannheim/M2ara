@@ -163,7 +163,7 @@ plotClusters <- function(models, k) {
     theme(strip.background = element_blank(),
           strip.text = element_text(hjust = 0, colour = "grey40"))
 
-  ggplotly(normaliseCentroids(p)) %>% plotly::layout(margin = m2araPlotMargin())
+  ggplotly(normaliseCentroids(applyClusterColours(p))) %>% plotly::layout(margin = m2araPlotMargin())
 }
 
 
@@ -176,7 +176,7 @@ plotTraj <- function(models, k) {
          title = "Average Trajectories") +
     m2araTheme()
 
-  ggplotly(normaliseCentroids(p)) %>% plotly::layout(margin = m2araPlotMargin())
+  ggplotly(normaliseCentroids(applyClusterColours(p))) %>% plotly::layout(margin = m2araPlotMargin())
 }
 
 plotClusterMetrics <- function(models) {
@@ -288,4 +288,49 @@ normaliseCentroids <- function(p) {
   }
 
   p
+}
+# Cluster colours from the Okabe-Ito palette.
+#
+# The feature comparison uses the first four Okabe-Ito colours (#D55E00, #009E73,
+# #CC79A7, #0072B2), so the clusters take the remaining ones: a feature and a
+# cluster never share a colour, which would suggest a relation that does not
+# exist. The colours follow the cluster labels (A first), so a cluster keeps its
+# colour when k changes.
+clusterPalette <- function(n) {
+  palette <- c(
+    "#E69F00", "#56B4E9", "#F0E442", "#8C564B", "#999999",
+    "#000000", "#0072B2", "#D55E00", "#009E73", "#CC79A7"
+  )
+  rep(palette, length.out = n)
+}
+
+# colours named by cluster label, ordered as the labels appear
+clusterColourScale <- function(labels) {
+  labels <- sort(unique(labels))
+  stats::setNames(clusterPalette(length(labels)), labels)
+}
+# cluster labels used by a latrend plot (the data sits in p$data or a layer)
+plotClusterLabels <- function(p) {
+  d <- p$data
+  if (is.null(d) || !"Cluster" %in% names(d)) {
+    for (layer in p$layers) {
+      if (!is.null(layer$data) && "Cluster" %in% names(layer$data)) {
+        d <- layer$data
+        break
+      }
+    }
+  }
+  if (is.null(d) || !"Cluster" %in% names(d)) {
+    return(NULL)
+  }
+  as.character(d$Cluster)
+}
+
+# give a plot the cluster colours of the app palette
+applyClusterColours <- function(p) {
+  labels <- plotClusterLabels(p)
+  if (is.null(labels) || length(labels) == 0L) {
+    return(p)
+  }
+  p + ggplot2::scale_colour_manual(values = clusterColourScale(labels))
 }

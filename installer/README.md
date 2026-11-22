@@ -64,7 +64,7 @@ Steps and scripts:
 | download Chrome, copy the app, install the launcher | `scripts/prepare-payload.ps1` |
 | open the browser window (fallback chain, foreground) | `open-browser.ps1` |
 | verify that the payload starts the app and renders the manual | `scripts/smoke-test.R` |
-| optional installer icon from `figures/logo_resized.png` | `scripts/make-ico.py` |
+| optional installer icon from `inst/figures/logo_resized.png` | `scripts/make-ico.py` |
 
 ## Configuration
 
@@ -119,7 +119,7 @@ $payload = "$env:TEMP\payload"
 & "$payload\R\bin\x64\Rscript.exe" --vanilla ./installer/scripts/install-packages.R $payload $PWD
 ./installer/scripts/prepare-payload.ps1 -PayloadDir $payload -RepoDir $PWD
 & "$payload\R\bin\x64\Rscript.exe" --vanilla ./installer/scripts/smoke-test.R $payload
-python ./installer/scripts/make-ico.py ./figures/logo_resized.png ./installer/M2ara.ico
+python ./installer/scripts/make-ico.py ./inst/figures/logo_resized.png ./installer/M2ara.ico
 
 & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
     /DMyAppVersion=1.5.0 `

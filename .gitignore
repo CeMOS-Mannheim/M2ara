@@ -17,3 +17,8 @@ installer/M2ara.ico
 M2ara_*.tar.gz
 *.Rcheck/
 exampledata/
+pub.pdf
+# temporary files of local tooling
+.dsh_tmp_dump.R
+pub_extracted.txt
+pubpdf.pdf

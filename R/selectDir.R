@@ -1,4 +1,4 @@
-selectDir <- function(appData, input, output = NULL, defaults = NULL) {
+selectDir <- function(appData, input, output = NULL, defaults = NULL, session = NULL) {
   vol <- getVolumes()
   userSelectedDir <- FALSE  # flag to skip initial trigger
 
@@ -19,9 +19,28 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
 
   observeEvent(input$dir, {
     # check if folder was selected
-    # prepare info massage
-    appData$selected_dir <- parseDirPath(vol, input$dir)
-    if (length(appData$selected_dir) > 0) {
+    # the shinyFiles dialog can return nothing, an empty string or NA (e.g. when
+    # it is cancelled); the app must never store a path that cannot be used
+    chosen <- parseDirPath(vol, input$dir)
+    if (length(chosen) != 1L || is.na(chosen) || !nzchar(chosen)) {
+      return()
+    }
+
+    appData$selected_dir <- chosen
+
+    # the format is read from the folder, the user does not have to choose it
+    detected <- detectDataFormat(chosen)
+    if (identical(detected, "both")) {
+      showNotification(
+        paste("The folder contains mzML and Bruker data - using mzML.",
+              "Move the files you do not want into another folder."),
+        type = "warning", duration = 15)
+      detected <- "mzml"
+    }
+    if (detected %in% c("mzml", "bruker") && !is.null(session)) {
+      updateSelectInput(session, "fileFormat", selected = detected)
+    }
+    {
       # a different folder invalidates the loaded spectra and the results
       appData$spec_all <- NULL
       appData$spec_idx <- NULL
@@ -33,7 +52,7 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
       # show notification only on actual user interaction, not on init
       if (userSelectedDir && !is.null(output) && is.character(appData$selected_dir)) {
         msg <- paste0("Folder '", basename(appData$selected_dir), "' selected.")
-        showNotification(msg, duration = 5, type = "default")
+        showNotification(msg, duration = 5, type = "message")
       }
       userSelectedDir <- TRUE
     }

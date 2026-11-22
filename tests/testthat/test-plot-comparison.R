@@ -78,3 +78,33 @@ test_that("the plate map switches to a log scale", {
   # the transformed scale is applied (the scales differ)
   expect_false(identical(lin$scales$scales, log$scales$scales))
 })
+test_that("the overlay works for a single feature and can normalize it", {
+  res <- MALDIcellassay::Blank2022res
+  # just take the first feature of the dataset
+  sel <- 1L
+
+  p <- plotCurvesOverlay(res, sel, errorbars = "none")
+  expect_s3_class(p, "ggplot")
+
+  pNorm <- plotCurvesOverlay(res, sel, errorbars = "none", normalize = TRUE)
+  expect_s3_class(pNorm, "ggplot")
+
+  # after normalizing, the curve runs from 0 to 1
+  built <- ggplot2::ggplot_build(pNorm)
+  ys <- unlist(lapply(built$data, function(d) d$y))
+  expect_true(min(ys) >= 0 && max(ys) <= 1)
+})
+test_that("a single curve can be drawn in black", {
+  res <- MALDIcellassay::Blank2022res
+
+  p <- plotCurvesOverlay(res, 1, colour = "black")
+  built <- ggplot2::ggplot_build(p)
+  colours <- unique(unlist(lapply(built$data, function(d) d$colour)))
+  expect_true(all(colours == "black"))
+
+  # several curves keep the feature palette
+  multi <- plotCurvesOverlay(res, c(1, 2))
+  mcols <- unique(unlist(lapply(ggplot2::ggplot_build(multi)$data,
+                                function(d) d$colour)))
+  expect_true(any(mcols != "black"))
+})
