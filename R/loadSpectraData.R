@@ -21,6 +21,11 @@ loadSpectraData <- function(input, appData, mapping) {
     # checkSpecNames needs to return indices of the numeric folders
     if(!length(mapping)>0) {
       if (!checkSpecNamesNumeric(appData$selected_dir, input$fileFormat)) {
+        badNames <- nonNumericNames(appData$selected_dir, input$fileFormat)
+        appData$load_problem <- paste0(
+          "These names are not numeric concentrations: ",
+          paste(badNames, collapse = ", "),
+          ". Load a sample sheet, or use \"Set concentrations ...\".")
         warning("Found folder names that could not be converted to numeric and no mapping file found.
                 All folders/spectra need to have concentrations as names or mapping file with conc. needed.\n")
         setInfoState(appData, "loadErrorNum")

@@ -124,3 +124,19 @@ test_that("last run only shows a run that produced a result", {
   html <- as.character(datasetCardUi(done, input))
   expect_match(html, "2026-11-20 07:45")
 })
+test_that("a failed load says why it failed", {
+  input <- controlInput()
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "blank.mzML"))
+
+  failing <- list(selected_dir = dir, info_state = "loadErrorMapping",
+                  preprocessing = list(), show_plot = FALSE,
+                  load_problem = "The sample sheet has no concentration for these files: blank.")
+  html <- as.character(datasetCardUi(failing, input))
+  expect_match(html, "no concentration for these files: blank")
+
+  # without a stored reason the generic text is used
+  generic <- failing
+  generic$load_problem <- NULL
+  expect_match(as.character(datasetCardUi(generic, input)), "Last load failed")
+})

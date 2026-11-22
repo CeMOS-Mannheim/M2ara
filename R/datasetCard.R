@@ -54,7 +54,13 @@ datasetStatus <- function(appData, input, running = FALSE, loading = FALSE,
 
   if (state %in% c("loadErrorNum", "loadErrorFormat", "loadErrorUniqueMz",
                    "loadErrorMapping", "errorMapping")) {
-    return(list(class = "error", text = "Last load failed"))
+    # the loader knows what exactly went wrong (e.g. which files have no
+    # concentration), so say that instead of a bare "failed"
+    reason <- appData$load_problem
+    if (is.null(reason) || !nzchar(reason)) {
+      reason <- "Last load failed"
+    }
+    return(list(class = "error", text = reason))
   }
   if (state %in% c("fitErrorRecal", "fitErrorNorm", "fitErrorOther")) {
     return(list(class = "error", text = "Last run failed"))
