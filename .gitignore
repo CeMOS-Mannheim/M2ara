@@ -17,3 +17,4 @@ installer/M2ara.ico
 M2ara_*.tar.gz
 *.Rcheck/
 exampledata/
+pub.pdf

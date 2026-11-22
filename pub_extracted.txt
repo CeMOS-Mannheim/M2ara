@@ -1,0 +1,302 @@
+Bioinformatics, 2024, 40(11), btae694
+https://doi.org/10.1093/bioinformatics/btae694
+Advance Access Publication Date: 18 November 2024
+
+Applications Note
+
+Data and text mining                                                                                                                                          Downloaded from academic.oup.com/bioinformatics/article/40/11/btae694/7903287 by Hochschule Mannheim user on 22 November 2026
+
+M2ara: unraveling metabolomic drug responses in
+
+whole-cell MALDI mass spectrometry bioassays
+
+Thomas Enzlein 1, Alexander Geisel1, Carsten Hopf 1,2,3,�, Stefan Schmidt 1,�
+
+1Center for Mass Spectrometry and Optical Spectroscopy (CeMOS), Mannheim University of Applied Sciences, Mannheim 68165, Germany
+2Medical Faculty, Heidelberg University, Heidelberg 69117, Germany
+3Mannheim Center for Translational Neuroscience (MCTN), Medical Faculty Mannheim, Heidelberg University, Mannheim 68167, Germany
+�Corresponding authors. Center for Mass Spectrometry and Optical Spectroscopy (CeMOS), Mannheim University of Applied Sciences, Mannheim 68165,
+Germany. E-mails: c.hopf@hs-mannheim.de (C.H.) and s.schmidt@hs-mannheim.de (S.S.)
+
+Associate Editor: Macha Nikolski
+
+Abstract
+
+Summary: Fast computational evaluation and classification of concentration responses for hundreds of metabolites represented by their mass-
+to-charge (m/z) ratios is indispensable for unraveling complex metabolomic drug actions in label-free, whole-cell Matrix-Assisted Laser
+Desorption/Ionization Mass Spectrometry (MALDI MS) bioassays. In particular, the identification of novel pharmacodynamic biomarkers to de­
+termine target engagement, potency, and potential polypharmacology of drug-like compounds in high-throughput applications requires robust
+data interpretation pipelines. Given the large number of mass features in cell-based MALDI MS bioassays, reliable identification of true biologi­
+cal response patterns and their differentiation from any measurement artefacts that may be present is critical. To facilitate the exploration of
+metabolomic responses in complex MALDI MS datasets, we present a novel software tool, M2ara. Implemented as a user-friendly R-based
+shiny application, it enables rapid evaluation of Molecular High Content Screening (MHCS) assay data. Furthermore, we introduce the concept
+of Curve Response Score (CRS) and CRS fingerprints to enable rapid visual inspection and ranking of mass features. In addition, these CRS fin­
+gerprints allow direct comparison of cellular effects among different compounds. Beyond cellular assays, our computational framework can
+also be applied to MALDI MS-based (cell-free) biochemical assays in general.
+
+Availability and implementation: The software tool, code, and examples are available at https://github.com/CeMOS-Mannheim/M2ara and
+https://dx.doi.org/10.6084/m9.figshare.25736541.
+
+1 Introduction                                                        classification and characterization using given assay metrics.
+                                                                      Understanding metabolomic responses can enable the identifica­
+Whole-cell MALDI MS assays are a versatile Molecular High             tion of useful pharmacodynamic biomarkers and thus allows
+Content Screening (MHCS) technology that unravels the metab­          the determination of potencies and effect sizes of test com­
+olomic complexity of drug responses in a biological system            pounds in early drug discovery including early drug safety test­
+(Weigt et al. 2018, 2019, Unger et al. 2020, 2021, Duen~as et al.     ing. Nevertheless, there is no common open-source or
+2023). In contrast to conventional HCS technologies that focus        proprietary software tool capable of performing concentration–
+primarily on morphometric or functional measures such as cell         response regression analysis in an easy-to-use fashion of com­
+size, neurite length, dendrite branching, or calcium signaling        plex MALDI MS data. Moreover, implementations designed
+(Yeyeodu et al. 2010, Wu et al. 2019), MHCS refers to the fact        for the classification and scoring of cellular metabolomic finger­
+that MS cell assays can monitor hundreds of metabolites simul­        prints across compound libraries or cell lines are missing (Di
+taneously, providing a snapshot of the metabolome. This ena­          Veroli et al. 2015, Ritz et al. 2015, Wang et al. 2020, Unger
+bles targeted, i.e. known target molecules, as well as untargeted     et al. 2021). Recently, a method has been introduced to address
+analysis, i.e. identification of potential cellular response markers  the issue of statistical significance in concentration–response
+or the discovery of phenotypic changes upon treatment.                curve analysis, allowing concentration–response relationships
+However, to date, the interpretation and classification of hyper­     for e.g. large proteomics datasets to be visualized, evaluated,
+spectral MS assay data remains a computational challenge in           and understood (Bayer et al. 2023).
+bioanalytics, pharmacology as well as chemical biology and life
+science research. In particular, in phenotypic assays where the          To facilitate the exploration of cellular drug effects in com­
+mode of action of drugs can be investigated in a target-agnostic      prehensive MALDI MS metabolomic datasets and to link
+manner, sophisticated data interpretation pipelines are essential     measured effects to multiple drug-targets in high-throughput
+to transform individual cellular metabolomic fingerprints into a      screens, we introduce a novel software tool, M2ara, for the
+meaningful and simple form that can be classified, sorted, and        interpretation of whole-cell MALDI MS bioassays, which
+visualized based on well-defined scores. Hereby, mass-specific        includes a scoring system to filter for significant mass fea­
+concentration response curves are deduced, followed by their          tures. It is implemented as an open-source R-based shiny ap­
+                                                                      plication, including several modifications and additions
+
+Received: 7 May 2024; Revised: 6 November 2024; Editorial Decision: 12 November 2024; Accepted: 14 November 2024
+
+© The Author(s) 2024. Published by Oxford University Press.
+
+This is an Open Access article distributed under the terms of the Creative Commons Attribution License (https://creativecommons.org/licenses/by/4.0/), which
+permits unrestricted reuse, distribution, and reproduction in any medium, provided the original work is properly cited.
+2                                                                                                                                               Enzlein et al.  Downloaded from academic.oup.com/bioinformatics/article/40/11/btae694/7903287 by Hochschule Mannheim user on 22 November 2026
+
+compared to our previously published MALDIcellassay R                 create a dedicated list of regulated and nonregulated features. It
+package (Unger et al. 2021). Specifically, we generated a             offers a relative ranking of all regulated features within one
+shiny based graphical user interface, including insightful plots      dataset and allows the user to make an initial judgement of their
+to visualize spectra, dose-response curves, assay metrics, and ex­    data in terms of assay quality. Based on the given shape, e.g.
+perimental parameters, introduced metrics for assay quality,          slope, and results of the used score, response curves are classi­
+and added functionalities for outlier detection, clustering of        fied as either up- or down-regulated or even nonregulated.
+curves with similar shape as well as the option to perform sparse     Results are presented to the user in a convenient table format
+principal component analysis (PCA) as a multivariate alterna­         and plots, including response curves as well as MS spectra. All
+tive to univariate dose-response curves. In addition, M2ara           performance measures can be exported as a .csv file for fur­
+allows to import data in the Bruker Flex (�.fid) format as well       ther analysis.
+as the open mzML standard. All modifications are included in
+the latest version of the MALDIcellassay R package and are               We introduce and benchmark M2ara by presenting previously
+available in the Comprehensive R Archive Network (CRAN).              published data (Supplementary Table S1), ranging from a cell-
+                                                                      based MALDI MS fatty acid synthase (FASN) inhibitor assay
+2 Results                                                             (Weigt et al. 2019), a MALDI MS cellular screening assay for
+                                                                      compounds that block the uptake of the substrate estrone-3-
+The computational pipeline of M2ara (Fig. 1a, Supplementary           sulfate via the OATP2B1 transporter (Unger et al. 2020), and a
+Fig. S1) is designed to decipher the molecular complexity of          phenotypic, i.e. target-agnostic cell-based assay for tyrosine-
+drug responses and to provide response characteristics in cellu­      kinase inhibitors (Weigt et al. 2018) to a complement dependent
+lar systems. To this end, raw MS data (Bruker raw data or             cytotoxicity (CDC) assay for potency assignment of therapeutic
+mzML) is first imported using the MALDIquantForeign R-                antibodies (Schmidt et al. 2024). For the purposes of compari­
+package (Gibb and Strimmer 2012) followed by (user-defined)           son, the pre-processed assay data from Weigt et al. (2019),
+data pre-processing such as baseline removal using the TopHat         Unger et al. (2020), and Schmidt et al. (2024) were processed
+method, Savitzky-Golay smoothing of the spectra, square-root          using CurveCurator (Bayer et al. 2023).
+transformation to stabilize variance of the data and filtering for
+monoisotopic peaks (Fig. 1a, i). Next, M2ara offers recalibra­           The direct comparison yielded similar results (see
+tion of the data to a selected peak, e.g. using a m/z value of an     Supplementary Figs S3–S5), with the method proposed by
+internal standard, normalization (total ion current, internal         Bayer et al. (2023) being more inclusive. M2ara was developed
+standard, etc.) and alignment of the spectra. Since the MALDI         with cell-based assays in mind, yet it can be utilized for any ex­
+target plate layout commonly includes several technical repli­        periment involving treatments at different concentrations and
+cates per condition, potential outliers are highlighted in the plate  MALDI MS as a means of detection. Hence, beyond cellular
+map using Chauvenet’s Criterion (Chauvenet 1871) as well as           assays, our computational framework can be used for MALDI
+information on the total ion current or signal intensity for a        MS-based biochemical assays in general. Examples of a previ­
+given feature per spot. After pre-processing, the mean spectra        ously published γ-secretase in vitro inhibition assay (Koch et al.
+for all concentrations are calculated and a four-parametric logis­    2023) (Supplementary Fig. S6) and cell-free caspase-6 inhibitor
+tic regression curve is fitted for each m/z feature (Fig. 1a, ii).    assay (Supplementary Fig. S6, https://www.ppscreeningcentre.
+                                                                      com/label-free-mass-spectrometry-ultra-highthroughput-screen
+   Subsequently, the curve characteristics, i.e. the effect size and  ing/) are provided.
+the effect potency, are derived using a four-parameter log-logis­
+tic regression model, as detailed in the Supplementary                   Overall, results for each case study re-evaluated with
+Information. In this model, the effect potency is determined by       M2ara are summarized in Supplementary Table S2 including
+the negative logarithmic value of the half-maximal effective con­     the number of m/z features that are either up- or down-
+centration pEC50. The magnitude (ratio between upper and              regulated (CRS > 0). Moreover, the values for the quality
+lower asymptotes) and the sign of the slope, both of which are        scores of the m/z feature with the highest CRS are also pre­
+directly deduced from the fit, provide the effect size. In order to   sented for each case. Exemplarily and in agreement with
+assess the variability within the assay data relative to the effec­   Weigt et al. (2019) the CRS fingerprint of the FASN bioassay
+tive window size determined by the end-points for high- and           (Fig. 1b) features a CRS for the up-regulated metabolite
+low-concentrations and to obtain the root-mean-square devia­          malonyl-CoA (m/z 854.1, [M þ H]þ, annotation taken from
+tion of the response data relative to the log-logistic model fit,     original publication) of the fatty acid synthesis pathway of
+two factors, FZ and FV, respectively, were introduced (see            94.0%, whose corresponding response curve is depicted in
+Supplementary Information and Supplementary Fig. S3). Both            Fig. 1b. Furthermore, the m/z feature with the second-highest
+factors are based on the original definitions of assay quality        CRS is reported to be the downstream metabolite cytidine di­
+measures, as proposed by Zhang et al. and Ravkin et al., and          phosphate (CDP)-choline of the phospholipid biosynthesis
+are applied for the judgement of the curve-response data              (Supplementary Fig. S8). In addition, a nonregulated mass
+(Fig. 1a, iii). In addition, we implemented a Curve Response          feature (m/z 760.6, likely PC34:1 [M þ H]þ) with a CRS of
+Score (CRS) to yield a dedicated feature reduction and thus a fo­     0% is presented for comparison. Assessment of the CRS fin­
+cused selection and ranking of significant mass features (Fig. 1a,    gerprints for the three technical replicates reported in Weigt
+iv). The corresponding CRS fingerprint provides a unique visu­        et al. (2019: 20) yield similar patterns (Supplementary Fig.
+alization of regulated mass features unraveling metabolic             S9). A direct comparison of the CRS fingerprint against each
+responses essential for exploring cellular metabolic alterations      individual metric (Supplementary Fig. S10) demonstrates the
+for a given compound or even across different compounds. The          ability of the CRS fingerprint to serve as a rapid scoring sys­
+CRS is a combination of the aforementioned factors (FZ and            tem for the identification of up- or down-regulated m/z fea­
+FV) and the magnitude of the curve (log2FC), with all three vari­     tures, thereby emphasizing the importance of combining
+ables weighted equally. The intention behind this definition is to    different scoring metrics.
+
+                                                                         A similar simple CRS fingerprint was computed for the
+                                                                      OATP2B1 transporter inhibition assay (Fig. 1c and
+M2ara                                                                3
+
+Figure 1. Schematic of the computational framework of M2ara for the interpretation and classification of metabolic drug responses in complex MALDI-TOF-           Downloaded from academic.oup.com/bioinformatics/article/40/11/btae694/7903287 by Hochschule Mannheim user on 22 November 2026
+MS assays. (a) The data interpretation pipeline of M2ara includes (i) data-preprocessing, (ii) fitting of a sigmoidal response curve, (iii) calculation of assay
+
+quality measures, and (iv) feature reduction based on an introduced Curve Response Score, a composite score taking into account different assay metrics.
+
+The drug action can be repeatedly calculated for multiple compounds (v), allowing for compound classification based on their potency or direct comparison
+of metabolic response patterns using CRS fingerprints outside of M2ara. Created in BioRender. https://BioRender.com/u34m733. (b) CRS fingerprint for the
+
+FASN inhibitor MALDI cell assay presented in Weigt et al. (2019), for A549 cells treated with compound GSK2194069. Lower panel shows characteristic
+drug–response curves of two selected mass features, malonyl-CoA (left) (m/z 854.1, [M þ H]þ) as an up-regulated responder as well as a nonresponder
+(PC34:1, putative, m/z 760.6, right). �Asterisk marks CRS of m/z 511.1, [M þ H]þ, CDP-choline, another reported mass feature from Weigt et al. (2019) (see
+
+Supplementary Fig. S3). (c) CRS fingerprint for the OATP2B1 inhibitor erlotinib based on a cell assay presented in Unger et al. (2020). Lower panel shows
+characteristic drug–response curves of two selected mass features E3S (estrone 3-sulfate) (m/z 349.1, [M−H]−) as a down-regulated responder, and m/z
+888.6 (�PS44:7 [M−H]−, putative) as a nonregulated. Uncertainties are presented as standard deviation of four technical replicates.
+
+Supplementary Fig. S11 for three technical replicates). As           concentration range would be expanded to cover the full range
+expected, the m/z value for the down-regulated substrate estrone-    of the drug-effect.
+3-sulfate (m/z 349.1, [M−H]−, annotation taken from original
+publication) yielded the highest CRS of 75.3%. More complex             Expanding the evaluation to multiple drugs allows com­
+patterns were found for the phenotypic assays presented by           pound classification based on either a single mass feature or
+Weigt et al. (2018) (Supplementary Fig. S12) and Schmidt et al.      the entire CRS fingerprint (Fig. 1a, v), exemplified for a small
+(2024), with e.g. glutathione (GSH) as the most significant re­      number of compounds using the FASN inhibitor dataset
+sponse marker identified in the latter case study (Supplementary     (Supplementary Fig. S15a and c). Supplementary Figure S15a
+Fig. S13). For the latter, we have computed the CRS for six differ­  shows the pEC50 as well as the CRS for different FASN
+ent conditions, where in each iteration the data point for the low­  inhibitors using malonyl-CoA (m/z 854.1, [MþH]þ) enrich­
+est intensity is removed from the dataset (Supplementary Fig.        ment as the read-out. Supplementary Figure S15b on the
+S14) to evaluate the case, where end-points are not covered by       other hand shows all m/z features with a nonzero CRS versus
+the experimentally chosen concentration range. As indicated,         their respective pEC50 values for different drugs and is an ex­
+even for the condition, where only half of the response curve is     ample of an untargeted approach where the response finger­
+covered (Supplementary Fig. S11d), GSH shows up in the CRS           print is of interest. This can be useful to identify off-target-
+fingerprint with a CRS of 68.4%. Experimentally, if such a be­       effects of known compounds.
+havior would be recognized during assay development, the
+                                                                        Besides univariate analysis, M2ara offers a set of multivari­
+                                                                     ate analysis tools. For example, the global response can be
+4                                                                                                                                               Enzlein et al.  Downloaded from academic.oup.com/bioinformatics/article/40/11/btae694/7903287 by Hochschule Mannheim user on 22 November 2026
+
+visualized with a PCA (Supplementary Fig. S15c). This approach        unequivocally identified on the MS2 level in follow-up
+can serve as a feasibility check for experiments at an early stage    experiments. M2ara can be used for both targeted and untar­
+of assay development. Moreover, by leveraging a sparse PCA            geted analysis of concentration-dependent responses. In the
+that uses an L1-norm to represent the large feature space with        absence of a definitive understanding of the mode of action,
+just a small subset of m/z features, it is also possible to identify  the discovery of potential markers in M2ara represents an ini­
+multivariate responses, where all curves examined alone might         tial but indispensable step in the rigorous characterization
+not cross the threshold to be identified as valid responses, but      and identification (e.g. with MS2 analysis) of such a marker.
+taken together provides insight into complex mechanisms.
+                                                                         Predominantly, M2ara serves as a computational tool in
+   Finally, to assess concentration response similarities, M2ara      whole-cell MALDI MS assay development for biomarker
+features the classification of response curves based on their sig­    identification, hit confirmation and follow up characteriza­
+moidal shape (Supplementary Fig. S6c). This serves as an addi­        tion in high-throughput screens and the investigation of alter­
+tional selection or similarity feature for deciphering metabolic      ations in cell metabolism upon drug treatment.
+responses. In particular, if response markers with a positive CRS
+are present, it may help to identify other m/z features with the      Acknowledgements
+same (but weaker/noisier) response curve characteristics. An ex­
+ample would be the identification of additional dysregulated Aβ-      We acknowledge the work of B. Munteanu, S. Schulz, M.
+species that, although below the CRS quality threshold, still fol­    Unger, and D. Weigt for their work in the development of cel­
+low the same trend as the Aβ-species detected by CRS alone            lular MALDI-TOF MS assays. Further, we thank B. Fro€hlich
+(Supplementary Fig. S6c and d). Additionally, this technique          for fruitful discussions on assay technology and his contribu­
+might also be used to identify markers with a reverse response.       tions in laboratory automation processes. In addition, we
+                                                                      thank S. Honarnejad, F. Kleinpenning, and N. Ottenheym
+3 Discussion                                                          from Pivot Park Screening Centre for sharing the cas-6 data­
+                                                                      set. In addition, we thank Novartis Technical Research and
+In the last decade, mass spectrometry based assay technology          Development for sharing the complement dependent cytotox­
+has emerged as a promising high-throughput technology in drug         icity (CDC) bioassay data.
+discovery (Unger et al. 2021, Duen~as et al. 2023) including
+MALDI MS or its variants like IR-MALDESI MS or acoustic               Author contributions
+mist ionization/acoustic ejection MS (Belov et al. 2020, Simon
+et al. 2020, 2021, Pu et al. 2023). Standardized protocols exist      Thomas Enzlein (Conceptualization, Data curation, Formal analy­
+for the establishment of both, biochemical or cellular assays (De     sis, Investigation, Methodology, Software, Validation,
+Cesare et al. 2020, Unger et al. 2020). The latter provide a          Visualization, Writing—original draft, Writing—review & edit­
+unique framework for early drug discovery as compounds are di­        ing), Alexander Geisel (Validation, Writing—review & editing),
+rectly tested in cells, offering the potential for identification of  Stefan Schmidt (Conceptualization, Methodology, Investigation,
+more specific target compounds (Unger et al. 2020, Pu et al.          Project administration, Writing—original draft, Writing—review
+2023). Beyond that, for phenotypic cellular experiments, in           & editing), Carsten Hopf (Conceptualization, Methodology,
+which the metabolic response to a pharmaceutical reagent is usu­      Supervision, Writing—original draft, Writing—review & editing)
+ally unknown, computational data evaluation pipelines imple­
+mented in a single platform are indispensable to handle data          Supplementary data
+load, data complexity and to provide a fast and user-friendly
+way for data visualization and data interpretation. With M2ara        Supplementary data are available at Bioinformatics online.
+it becomes straightforward to perform response curve analysis
+for the identification of e.g. potential response markers as well     Conflict of interest: None declared.
+as mode-of-action studies. M2ara facilitates the evaluation and
+classification of mass-specific response curves enabling fast deci­   Funding
+sion making in assay development. For compound library
+screens, M2ara provides statistical tools for the visualization and   This work was supported by the BMBF (German Federal
+analysis of screening results including similarity tests and po­      Ministry of Research) as part of the Innovation Partnership
+tency assignments of compounds. For next level analytical assay       “Multimodal Analytics and Intelligent Sensorics for the
+analysis, the import of trapped ion mobility data could be in­        Health Industry” (M2Aind), projects “Drugs4Future”
+cluded in future (Willems et al. 2021, Luu et al. 2022).              [12FH8I05IA] and “DrugsData” [13FH8I09IA] and by the
+Furthermore, advanced machine learning models might also              Ministerium fu€r Wissenschaft, Forschung und Kunst (MWK)
+help to further improve statistical evaluation and classification     Baden-Wu€rttemberg by the Mittelbauprogramm. In addition,
+of response curves, feature classification and pattern recognition.   this work was supported by DFG (German Research
+                                                                      Foundation) grant [INST874/9-1].
+   In summary, we present a novel, open-source software tool
+for the evaluation and interpretation of MHCS MALDI MS                Data availability
+datasets in whole-cell phenotypic and mechanistic cell assay
+as well as enzymatic assays. The data analysis pipeline facili­       The data underlying this article (Weigt et al. 2018, 2019,
+tates robust feature identification in minutes by introducing a       Unger et al. 2020, Koch et al. 2023, Schmidt et al. 2024) are
+Curve Response Score. Those drug-dependent metabolic fin­             available in FigShare, at https://doi.org/10.6084/m9.figshare.
+gerprints are reduced in features space to allow for fast and         25736541.v2. The Cas-6 data were provided by Pivot Park
+significant similarity tests across compounds. Novel response         Screening Centre by permission. Data will be shared on re­
+m/z biomarkers can be identified rapidly by ranking of signif­        quest to the corresponding author with permission of Pivot
+icant features including potency assignment and                       Park Screening Centre.
+M2ara                                                                                                                                                                5  Downloaded from academic.oup.com/bioinformatics/article/40/11/btae694/7903287 by Hochschule Mannheim user on 22 November 2026
+
+References                                                                 Ritz C, Baty F, Streibig JC et al. Dose–response analysis using R. PLoS
+                                                                               One 2015;10:e0146021.
+Bayer FP, Gander M, Kuster B et al. CurveCurator: a recalibrated F-sta­
+    tistic to assess, classify, and explore significance of dose-response  Schmidt S, Geisel A, Enzlein T et al. Label-free assessment of complement-
+    curves. Nat Commun 2023;14:7902.                                           dependent cytotoxicity of therapeutic antibodies via a whole-cell
+                                                                               MALDI mass spectrometry bioassay. Sci Rep 2024;14:21462.
+Belov AM, Kozole J, Bean MF et al. Acoustic mist ionization-mass spec­
+    trometry: a comparison to conventional high-throughput screening       Simon RP, H€abe TT, Ries R et al. Acoustic ejection mass spectrometry:
+    and compound profiling platforms. Anal Chem 2020;92:13847–54.              a fully automatable technology for high-throughput screening in
+                                                                               drug discovery. SLAS Discov 2021;26:961–73.
+Chauvenet W. A Manual of Spherical and Practical Astronomy: Theory
+    and Use of Astronomical Instruments, Method of Least Squares.,         Simon RP, Winter M, Kleiner C et al. MALDI-TOF mass spectrometry-
+    Philadelphia, Pennsylvania, U.S.A.: J. B. Lippincott Company &             based high-throughput screening for inhibitors of the cytosolic
+    Co, 1871.                                                                  DNA sensor cGAS. SLAS Discov 2020;25:372–83.
+
+De Cesare V, Moran J, Traynor R et al. High-throughput matrix-             Unger MS, Blank M, Enzlein T et al. Label-free cell assays to determine
+    assisted laser desorption/ionization time-of-flight (MALDI-TOF)            compound uptake or drug action using MALDI-TOF mass spec­
+    mass spectrometry-based deubiquitylating enzyme assay for drug             trometry. Nat Protoc 2021;16:5533–58.
+    discovery. Nat Protoc 2020;15:4034–57.
+                                                                           Unger MS, Schumacher L, Enzlein T et al. Direct automated MALDI
+Di Veroli GY, Fornari C, Goldlust I et al. An automated fitting proce­         mass spectrometry analysis of cellular transporter function: inhibition
+    dure and software for dose–response curves with multiphasic fea­           of OATP2B1 uptake by 294 drugs. Anal Chem 2020;92:11851–9.
+    tures. Sci Rep 2015;5:14701.
+                                                                           Wang D, Hensman J, Kutkaite G et al., GDSC Screening Team. A statis­
+Duen~as ME, Peltier-Heap RE, Leveridge M et al. Advances in high-              tical framework for assessing pharmacological responses and bio­
+    throughput mass spectrometry in drug discovery. EMBO Mol Med               markers using uncertainty estimates. Elife 2020;9:e60352.
+    2023;15:e14850.
+                                                                           Weigt D, Parrish CA, Krueger JA et al. Mechanistic MALDI-TOF cell-
+Gibb S, Strimmer K. MALDIquant: a versatile R package for the analy­           based assay for the discovery of potent and specific fatty acid syn­
+    sis of mass spectrometry data. Bioinformatics 2012;28:2270–1.              thase inhibitors. Cell Chem Biol 2019;26:1322–31.e4.
+
+Koch M, Enzlein T, Chen S-Y et al. APP substrate ectodomain defines        Weigt D, Sammour DA, Ulrich T et al. Automated analysis of lipid
+    amyloid-β peptide length by restraining γ-secretase processivity and       drug–response markers by combined fast and high-resolution whole
+    facilitating product release. EMBO J 2023;42:e114372.                      cell MALDI mass spectrometry biotyping. Sci Rep 2018;8:11260.
+
+Luu GT, Freitas MA, Lizama-Chamu I et al. TIMSCONVERT: a work­             Willems S, Voytik E, Skowronek P et al. AlphaTims: indexing trapped
+    flow to convert trapped ion mobility data to open data formats.            ion mobility spectrometry–TOF data for fast and easy accession and
+    Bioinformatics 2022;38:4046–7.                                             visualization. Mol Cell Proteomics 2021;20:100149.
+
+Pu F, Radosevich AJ, Bruckner BG et al. New platform for label-free,       Wu N, Nishioka WK, Derecki NC et al. High-throughput-compatible
+    proximal cellular pharmacodynamic assays: identification of gluta­         assays using a genetically-encoded calcium indicator. Sci Rep 2019;
+    minase inhibitors using infrared matrix-assisted laser desorption          9:12692.
+    electrospray ionization mass spectrometry. ACS Chem Biol 2023;
+    18:942–8.                                                              Yeyeodu ST, Witherspoon SM, Gilyazova N et al. A rapid, inexpensive
+                                                                               high throughput screen method for neurite outgrowth. Curr Chem
+                                                                               Genomics 2010;4:74–83.
+
+© The Author(s) 2024. Published by Oxford University Press.
+
+This is an Open Access article distributed under the terms of the Creative Commons Attribution License (https://creativecommons.org/licenses/by/4.0/), which permits
+unrestricted reuse, distribution, and reproduction in any medium, provided the original work is properly cited.
+Bioinformatics, 2024, 40, 1–5
+https://doi.org/10.1093/bioinformatics/btae694
+Applications Note
+

@@ -22,7 +22,7 @@ appServer <- function(input, output, session, defaults = NULL) {
   process_console_bucket <- reactiveVal(-1L)
   process_cache_key <- reactiveVal(NULL)
 
-  appData <- selectDir(appData, input, output, defaults = defaults)
+  appData <- selectDir(appData, input, output, defaults = defaults, session = session)
 
   observeEvent(input$preproc_settings, {
     appData <- setPreprocessSettings(input, appData)
@@ -79,6 +79,15 @@ appServer <- function(input, output, session, defaults = NULL) {
     state <- appData$info_state
     if (startsWith(state, "loadError") || identical(state, "errorMapping")) {
       setInfoState(appData, "dir_set")
+    }
+
+    # the concentrations are part of the loaded spectra, so they have to be read
+    # again with the new assignment on the next run
+    hadSpectra <- !is.null(appData$spec_all)
+    appData$spec_all <- NULL
+    appData$spec_idx <- NULL
+    if (hadSpectra) {
+      message(m2araTimeNow(), " concentrations changed; spectra will be read again\n")
     }
 
     # the spectra have to be read again when they were already loaded

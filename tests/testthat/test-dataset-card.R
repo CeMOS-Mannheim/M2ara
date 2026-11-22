@@ -64,7 +64,9 @@ test_that("a processed dataset knows whether the settings still fit", {
   appData$run_signature <- list(
     settings = processingSettings(input),
     preprocessing = list(),
-    concUnits = input$concUnits
+    concUnits = input$concUnits,
+    mapping = mappingHash(NULL),
+    excluded = character(0)
   )
   expect_equal(datasetStatus(appData, input)$class, "ok")
 

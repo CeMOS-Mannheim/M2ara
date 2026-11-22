@@ -1,4 +1,4 @@
-selectDir <- function(appData, input, output = NULL, defaults = NULL) {
+selectDir <- function(appData, input, output = NULL, defaults = NULL, session = NULL) {
   vol <- getVolumes()
   userSelectedDir <- FALSE  # flag to skip initial trigger
 
@@ -37,7 +37,7 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
         type = "warning", duration = 15)
       detected <- "mzml"
     }
-    if (detected %in% c("mzml", "bruker")) {
+    if (detected %in% c("mzml", "bruker") && !is.null(session)) {
       updateSelectInput(session, "fileFormat", selected = detected)
     }
     {
