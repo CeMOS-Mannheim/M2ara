@@ -17,7 +17,11 @@ appMainPanel <- function(defaults) {
                                          actionButton("clearCache",
                                                       "Clear result cache",
                                                       icon = icon("trash"),
-                                                      style = 'padding:6px; font-size:80%')
+                                                      style = 'padding:6px; font-size:80%'),
+                                         tags$div(
+                                           tags$small(textOutput("cacheInfo")),
+                                           style = "margin-top: 4px; color: #777;"
+                                         )
                                   ),
                                   column(3,
                                          actionButton("forceProcess",

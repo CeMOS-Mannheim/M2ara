@@ -2,9 +2,19 @@ loadSpectraData <- function(input, appData, mapping) {
   if (appData$info_state %in% c("dir_set",
                                 "loadErrorNum",
                                 "loadErrorFormat")) {
-    show_spinner()
+    showM2araSpinner()
 
     checkEmpty <- input$checkEmpty
+
+    # a sample sheet in the data folder counts like an uploaded one, so it has to
+    # be found before the file names are checked
+    if (is.null(mapping) || length(mapping) == 0L) {
+      auto <- findSampleSheet(appData$selected_dir)
+      mapping <- auto$mapping
+      if (!is.null(auto$error)) {
+        warning("Ignoring ", auto$file, " in the data folder: ", auto$error, "\n")
+      }
+    }
 
     # check if all spectra names are numeric/concentrations
     # for later: if pos and neg ctrls are included
@@ -13,33 +23,42 @@ loadSpectraData <- function(input, appData, mapping) {
       if (!checkSpecNamesNumeric(appData$selected_dir, input$fileFormat)) {
         warning("Found folder names that could not be converted to numeric and no mapping file found.
                 All folders/spectra need to have concentrations as names or mapping file with conc. needed.\n")
-        appData$info_state <- "loadErrorNum"
-        hide_spinner()
+        setInfoState(appData, "loadErrorNum")
+        hideM2araSpinner()
         return()
       }
     }
 
     if (!checkSpecNamesFormat(appData$selected_dir, input$fileFormat)) {
       warning("Could not find data with '", input$fileFormat, "' file format.\n")
-      appData$info_state <- "loadErrorFormat"
-      hide_spinner()
+      setInfoState(appData, "loadErrorFormat")
+      hideM2araSpinner()
       return()
     }
 
     switch(input$fileFormat,
            "bruker" = {
-             spec_raw <- loadSpectra(appData$selected_dir)
+             # only sub folders that contain a fid file are datasets, every
+             # other folder or file in the directory is ignored
+             dirs <- list.dirs(appData$selected_dir, recursive = FALSE, full.names = TRUE)
+             isDataset <- vapply(dirs, function(d) {
+               any(tolower(list.files(d)) == "fid")
+             }, logical(1))
+             skipped <- basename(dirs)[!isDataset]
+             appData$skipped <- skipped
+             spec_raw <- loadSpectra(appData$selected_dir, filter = skipped)
              # at the moment we assume Bruker flex data to always be continuous
              appData$centroided <- FALSE
            },
            "mzml" = {
+             files <- list.files(appData$selected_dir, recursive = FALSE)
+             isMzml <- grepl("\\.mzml$", files, ignore.case = TRUE)
+             skipped <- files[!isMzml]
+             appData$skipped <- skipped
 
              # check if data is centroided for first file
              # assume rest is also centroided
-             f <- list.files(appData$selected_dir,
-                             recursive = FALSE,
-                             full.names = TRUE,
-                             pattern = "mzML")
+             f <- file.path(appData$selected_dir, files[isMzml])
              centroided <- any(stringr::str_detect(readLines(f[1],
                                                              n = -1L),
                                                    pattern = "centroid spectrum"))
@@ -51,7 +70,8 @@ loadSpectraData <- function(input, appData, mapping) {
              # the mzML files may contain chromatograms, the parser warns for
              # every one of them - that is noise and not actionable
              spec_raw <- withCallingHandlers(
-               loadSpectraMzML(appData$selected_dir, centroided = centroided),
+               loadSpectraMzML(appData$selected_dir, filter = skipped,
+                               centroided = centroided),
                warning = function(w) {
                  if (grepl("tag is not supported", conditionMessage(w), fixed = TRUE)) {
                    invokeRestart("muffleWarning")
@@ -63,6 +83,13 @@ loadSpectraData <- function(input, appData, mapping) {
              appData$centroided <- centroided
              checkEmpty <- FALSE
            })
+
+    if (length(appData$skipped) > 0L) {
+      message("Skipped ", length(appData$skipped), " entry(ies) that are no ",
+              input$fileFormat, " dataset: ",
+              paste(utils::head(appData$skipped, 5), collapse = ", "),
+              if (length(appData$skipped) > 5L) " ..." else "")
+    }
     
     unique_mz <- purrr::map_lgl(spec_raw, function(x) {
       mz <- mass(x)
@@ -83,24 +110,73 @@ loadSpectraData <- function(input, appData, mapping) {
 
     if(any(!unique_mz)) {
       warning("Not all mz are unique. Did you use tims resolved data?\n")
-        appData$info_state <- "loadErrorUniqueMz"
-        hide_spinner()
+        setInfoState(appData, "loadErrorUniqueMz")
+        hideM2araSpinner()
         return()
     }
     
     
-    if(length(mapping) > 0) {
-      if(!length(mapping) == length(spec_raw)) {
-        warning("Number of concentrations in mapping file do not match number of spectra.\n")
-        appData$info_state <- "loadErrorMapping"
-        hide_spinner()
+    # concentrations: from the mapping (per file) or from the file names
+    files <- names(spec_raw)
+    spots <- vapply(spec_raw, function(x) {
+      patch <- metaData(x)[["patch"]]
+      if (is.null(patch) || length(patch) == 0L) "" else paste(patch, collapse = " ")
+    }, character(1))
+
+    concentrations <- NULL
+    if (!is.null(mapping) && length(mapping) > 0L) {
+      concentrations <- resolveMapping(mapping, files)
+      problem <- attr(concentrations, "problem")
+      if (is.null(concentrations) || !is.null(problem)) {
+        appData$load_problem <- problem
+        setInfoState(appData, "loadErrorMapping")
+        hideM2araSpinner()
         return()
       }
-      message("Changed spectra names using mapping file.\n")
-      names(spec_raw) <- mapping
+
+      unknown <- attr(concentrations, "unknown")
+      if (!is.null(unknown) && length(unknown) > 0L) {
+        message("Sample sheet lists files that are not in the folder: ",
+                paste(unknown, collapse = ", "))
+      }
+      message("Changed spectra names using the sample sheet.\n")
+    } else {
+      concentrations <- suppressWarnings(as.numeric(files))
+      if (anyNA(concentrations)) {
+        appData$load_problem <- paste0(
+          "These names are not numeric concentrations: ",
+          paste(unique(files[is.na(concentrations)]), collapse = ", "),
+          ". Provide a sample sheet with file names and concentrations.")
+        setInfoState(appData, "loadErrorNum")
+        hideM2araSpinner()
+        return()
+      }
     }
 
-    appData$info_state <- "loaded"
+    names(spec_raw) <- concentrations
+
+    # the optional group column (e.g. biological vs technical replicate) is kept
+    # in the exported sample sheet
+    groups <- NULL
+    if (!is.null(mapping) && identical(mapping$kind, "sheet") &&
+        "group" %in% names(mapping$sheet)) {
+      sheetGroups <- stats::setNames(mapping$sheet$group,
+                                     tolower(stripDataExtension(mapping$sheet$file)))
+      groups <- unname(sheetGroups[tolower(stripDataExtension(files))])
+    }
+
+    appData$samples <- sampleSheet(sheetFiles(files, appData$selected_dir, input$fileFormat),
+                                   concentrations, spots, groups)
+    appData$mapping_source <- if (is.null(mapping)) {
+      "file names"
+    } else if (identical(mapping$kind, "list")) {
+      "concentration list"
+    } else {
+      "sample sheet"
+    }
+
+
+    setInfoState(appData, "loaded")
 
     # make sure that the concentrations are in acending order
     spec_raw <- spec_raw[order(as.numeric(names(spec_raw)))]
@@ -109,7 +185,7 @@ loadSpectraData <- function(input, appData, mapping) {
 
     appData$spec_all <- spec_raw
     if(checkEmpty) {
-      message(MALDIcellassay:::timeNow(),  " check for empty spectra...\n")
+      message(m2araTimeNow(),  " check for empty spectra...\n")
 
       # MAD would be faster but may fail in some circumstances...
       peaks <- detectPeaks(appData$spec_all,
@@ -120,7 +196,7 @@ loadSpectraData <- function(input, appData, mapping) {
                                    ifelse(length(mz(x)) > 0, TRUE, FALSE)
                                  },
                                  FUN.VALUE = TRUE)
-      message(MALDIcellassay:::timeNow(), " ",
+      message(m2araTimeNow(), " ",
               sum(appData$spec_idx), "/", length(appData$spec_all),
               " spectra retained.\n")
     } else {
@@ -128,7 +204,7 @@ loadSpectraData <- function(input, appData, mapping) {
     }
 
 
-    hide_spinner()
+    hideM2araSpinner()
   }
   return(appData)
 }

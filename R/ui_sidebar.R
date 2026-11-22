@@ -98,18 +98,22 @@ appSidebar <- function(defaults) {
     createActionButton(inputId = "process",
                        label = "Process spectra",
                        icon = "redo"),
+    # the status is also shown while the spectra are read (synchronous), the
+    # cancel button only exists for the background job
     conditionalPanel(
-      condition = "output.processRunning",
+      condition = "output.processBusy",
       div(style = "margin-bottom: 8px;",
           uiOutput("processStatus"),
-          actionButton("cancelProcess", "Cancel",
-                       icon = icon("stop"),
-                       class = "btn-sm",
-                       style = "margin-top: 4px;")
+          conditionalPanel(
+            condition = "output.processRunning",
+            actionButton("cancelProcess", "Cancel",
+                         icon = icon("stop"),
+                         class = "btn-sm",
+                         style = "margin-top: 4px;")
+          )
       )
     ),
-    textOutput("info1", inline = FALSE),
-    textOutput("info2", inline = FALSE),
+    uiOutput("datasetCard"),
     textOutput("info3", inline = FALSE),
     width = 2L)
   return(s)

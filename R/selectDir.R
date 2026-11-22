@@ -7,7 +7,7 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
   if (!is.null(defaults[["dir"]])) {
     appData$selected_dir <- defaults[["dir"]]
     message("Dir set from loaded default value.\n")
-    appData$info_state <- "dir_set"
+    setInfoState(appData, "dir_set")
   }
 
   ### choose dir ####
@@ -29,7 +29,7 @@ selectDir <- function(appData, input, output = NULL, defaults = NULL) {
       appData$stats <- NULL
       appData$stats_original <- NULL
       appData$show_plot <- FALSE
-      appData$info_state <- "dir_set"
+      setInfoState(appData, "dir_set")
       # show notification only on actual user interaction, not on init
       if (userSelectedDir && !is.null(output) && is.character(appData$selected_dir)) {
         msg <- paste0("Folder '", basename(appData$selected_dir), "' selected.")

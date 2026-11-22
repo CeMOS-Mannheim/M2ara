@@ -46,12 +46,27 @@ The blue question mark icons (`r icon("question-circle")`) throughout the applic
 For best results, a concentration curve should consist of at least 7 points (better 9 points).
 To calculate all necessary [Scores](#scores) there should be at least two replicates (better 4) per concentration.
 
-For the curve fitting to work all spectra must have an associated concentration. This concentration can be supplied in two ways: 
-1. as filename (see below) 
-2. as mapping file (\*.txt) containing the concentrations of the spectra in the right order one per line.
+For the curve fitting to work all spectra must have an associated concentration. This concentration can be supplied in three ways:
 
-## Concentration mapping file 
-The mapping file can be uploaded before loading the spectra using Settings -\> Conc. mapping. This method can be used for [Bruker](#bruker) and [mzML](#mzml). As said the concentrations need to be in the right order, one concentration per line and the number of concentrations must match the number of spectra. Also please don't use any units or other characters (which cant be converted to numbers).
+1. as file name (see below), which is the default,
+2. as **sample sheet** (CSV/TSV) that maps file names to concentrations,
+3. as legacy list (*.txt) with one concentration per line, applied in file order.
+
+## Sample sheet {#sample-sheet}
+
+A sample sheet maps every file to its concentration and can be uploaded in the `Settings` tab (*Conc. mapping*) or placed in the data folder as `samples.csv`. It needs the columns `file` and `concentration`, optionally `spot` and `group`:
+
+```
+file,concentration,spot,group
+0.0032,0.0032,K11;L11;M11;N11,
+0.0225,0.0225,K9;L9;M9;N9,
+```
+
+One row per file: every spectrum of a file (i.e. every replicate) inherits its concentration, so files with several spots are supported. The optional `group` column documents how replicates belong together (e.g. biological versus technical replicates); it is written to the exported sample sheet. The file name is matched without its extension and case insensitive. Missing files, duplicated entries and non numeric concentrations are reported in the app.
+
+The assignment that was actually used is exported with the results (`sample_sheet.csv`) - also when the concentrations simply come from the file names - so it stays traceable which file had which concentration.
+Entries in the data folder that are not a dataset of the selected format (e.g. `samples.csv` or notes next to the spectra) are skipped and reported in the console; only files with the expected extension (and, for Bruker flex, sub folders containing a `fid`) are read.
+
 
 ## Bruker Flex format (\*.fid) {#bruker}
 
@@ -290,6 +305,8 @@ knitr::include_graphics("figures/clustering_curves.png")
 ```
 
 On the right the individual (black) curves for all signals are shown together with their average curves trajectory (colored). The left plot shows all trajectories in direct comparison.
+
+**Distance.** *shape only (SBD)* compares the shape of the curves and allows them to be shifted along the concentration axis, so a signal with the same behaviour but a different potency still counts as similar. *shape + potency (Euclidean)* requires the curves to run alike at the same concentration, so the potency matters as well. The distance is not a quality setting: which one is right depends on the question. The centroid should match the distance: `mean` is the least-squares centre of the Euclidean distance (fast, correct for *shape + potency*), `shape`/DBA is the prototype of SBD (correct for *shape only*), and `pam` (a real member curve) works for both but is slower.
 
 Using the slider the user needs to adjust the number of clusters to a reasonable value. The clustering metrics shown below can help but in the end non of these metrics is perfect and the clustering might work better for some data sets then for other. It is intended not as an analytic tool but rather as a helper to find curves with similar trajectories (e.g. identify all signals were the intensity goes up or down with increasing concentration). So the number of clusters should be selected in a way that the average trajectories line up as good as possible with the individual curves.
 

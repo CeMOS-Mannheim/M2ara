@@ -132,3 +132,51 @@ getDirectory <- function(object) {
   }
   return(object@settings$dir)
 }
+# current time for console messages (kept local instead of using an internal of
+# MALDIcellassay)
+m2araTimeNow <- function() {
+  format(Sys.time(), "%H:%M")
+}
+# label for the sidebar while the spectra are read synchronously
+spectraLoadingLabel <- function(dir, fileFormat = "mzml") {
+  if (is.null(dir) || length(dir) == 0L) {
+    return("Reading spectra ...")
+  }
+
+  pattern <- if (identical(fileFormat, "bruker")) "fid" else "mzML"
+  files <- list.files(dir, pattern = pattern, ignore.case = TRUE, recursive = FALSE)
+  n <- length(files)
+
+  if (n == 0L) {
+    return("Reading spectra ...")
+  }
+
+  sprintf("Reading %d %s file%s ...", n, pattern, if (n == 1L) "" else "s")
+}
+# entries of a dataset folder whose name is not a number (used for the message
+# when no concentration can be derived)
+nonNumericNames <- function(dir, fileFormat = "mzml") {
+  if (is.null(dir) || length(dir) == 0L || !dir.exists(dir)) {
+    return(character(0))
+  }
+
+  names <- if (identical(fileFormat, "bruker")) {
+    basename(list.dirs(dir, recursive = FALSE, full.names = TRUE))
+  } else {
+    # only files of the selected format are spectra, the rest is skipped anyway
+    stripDataExtension(list.files(dir, pattern = "\\.mzml$", ignore.case = TRUE))
+  }
+
+  names[is.na(suppressWarnings(as.numeric(names)))]
+}
+# The spinner of shinybusy needs a real session; these wrappers keep it harmless
+# when the server is driven without a browser (shiny::testServer).
+showM2araSpinner <- function() {
+  try(shinybusy::show_spinner(), silent = TRUE)
+  invisible(NULL)
+}
+
+hideM2araSpinner <- function() {
+  try(shinybusy::hide_spinner(), silent = TRUE)
+  invisible(NULL)
+}
