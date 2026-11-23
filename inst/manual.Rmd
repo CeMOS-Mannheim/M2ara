@@ -124,14 +124,14 @@ etc.
 knitr::include_graphics("figures/interface.png")
 ```
 
-1.  Click on the **Select folder**-button (1, see figure above) and select a folder containing your experiment (see [Requirements to the raw data](#requirements-to-the-raw-data)). The following dialog is displayed:\
+1.  Click on the **Select folder** button in the *Data* group of the sidebar (marked 1 in the figure above; the number is only a help, the text works without it) and select a folder containing your experiment (see [Requirements to the raw data](#requirements-to-the-raw-data)). The following dialog is displayed:\
     `r knitr::include_graphics("figures/selectFolder.png")`
 
 2.  Adjust the settings in the sidebar (2), then click the **Process spectra**-button at the bottom of the sidebar. This is the only button needed: it imports the spectra of the selected folder (30s - 3 minutes depending on the size of the experiment) and processes them.
 
 3.  The sidebar shows the progress of the run (current step and percentage) and offers a **Cancel**-button while it is running.
 
-4.  Analyze your data by clicking on entries in the table on bottom left (3). The plots for the curve and the peaks will change accordingly (4). You may want to display error bars or use the slider to change the displayed *m/z*-range (aka zoom) in the plot displaying the peaks. Note, you do not need to re-upload your data if you want to play with the settings. Just click the **Process spectra**-button again to re-do the calculations and after a short time your results will be updated.
+4.  Analyze your data by ticking a row in the peak table below the plots (3). The plots for the curve and the peaks change accordingly (4). You may want to display error bars or use the slider to change the displayed *m/z*-range (aka zoom) in the plot displaying the peaks. Note, you do not need to re-upload your data if you want to play with the settings. Just click the **Process spectra**-button again to re-do the calculations and after a short time your results will be updated.
 
 
    A click on a row shows that feature alone; for a comparison tick the checkboxes in the first column of the table (up to 4; the remaining boxes are disabled once four are ticked, and clicking a row does not change an explicit comparison): the curves are then drawn as one overlay (colour = *m/z*, tick **Normalize curves** to scale every curve to its own range) and the peak profiles as a 2 x 2 grid - each with the same order and colours.
@@ -308,7 +308,7 @@ Note that this analysis is **explorative**: it uses the same features as the cur
 knitr::include_graphics("figures/pca_loadings.png")
 ```
 
-Using the `Summarise loadings`-button either the summarized (see figure above) or full (in a loadings vs **m/z** spectrum) loading's can be visualized. Using the `Send to peak table`-button the numeric loading's can be send to the peak table on the [Curve](#curve-screen)-screen to investigate easily if the overlap with univariate signals of interest (high scores in *Z'*, *V'* or *CRS*) or if the represent a separate regulation cause by many smaller changes not strong enough to lead to high scores on their own.
+The figure above shows the full loadings (one plot per component, loading vs **m/z**). With the `Summarise loadings`-checkbox the loadings of the selected component are summarized into one plot. Using the `Send to peak table`-button the numeric loading's can be send to the peak table on the [Curve](#curve-screen)-screen to investigate easily if the overlap with univariate signals of interest (high scores in *Z'*, *V'* or *CRS*) or if the represent a separate regulation cause by many smaller changes not strong enough to lead to high scores on their own.
 
 ## Cluster tab {#cluster-tab}
 
