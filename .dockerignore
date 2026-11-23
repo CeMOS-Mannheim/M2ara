@@ -20,3 +20,4 @@ inst/figures/*.tmp.png
 # development scripts and tests (not needed in the image)
 tools/
 tests/
+.dsh_tmp/

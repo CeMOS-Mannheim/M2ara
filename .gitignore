@@ -23,3 +23,5 @@ pub.pdf
 pub_extracted.txt
 pubpdf.pdf
 research/
+# scratch folder of the local tooling
+.dsh_tmp/
