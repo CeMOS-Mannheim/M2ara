@@ -14,9 +14,11 @@ detectDataFormat <- function(dir) {
   hasMzml <- any(grepl("\\.mzml$", entries, ignore.case = TRUE))
 
   subdirs <- list.dirs(dir, recursive = FALSE, full.names = TRUE)
+  # a Bruker dataset has a fid somewhere inside: "<conc>/fid" as well as the usual
+  # "<conc>/<spot>/1/1SRef/fid" of a measurement series
   hasBruker <- length(subdirs) > 0L &&
     any(vapply(subdirs, function(d) {
-      any(tolower(list.files(d)) == "fid")
+      any(tolower(basename(list.files(d, recursive = TRUE, all.files = TRUE))) == "fid")
     }, logical(1)))
 
   if (hasMzml && hasBruker) {
