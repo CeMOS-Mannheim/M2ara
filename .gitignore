@@ -25,3 +25,9 @@ pubpdf.pdf
 research/
 # scratch folder of the local tooling
 .dsh_tmp/
+# local material for the fit engine comparison (paper, data, notes, harness)
+m2ara_supplementary_data.docx
+tools/fit-engine-plan.md
+tools/make-fit-reference.R
+tools/compare-fit-engines.R
+tools/reference/
