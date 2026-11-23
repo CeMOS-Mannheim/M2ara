@@ -14,7 +14,7 @@ This application simplifies the analysis of Molecular High Content Screening (MH
 
 This app is specifically designed for use with Bruker flex series raw data but also features support for mzML.
 
-For more detailed information please take a look at the [Manual](manual.md) that is also available inside the app.
+For more detailed information please take a look at the [Manual](inst/manual.md) that is also available inside the app.
 
 <img src="inst/figures/gui_example.png" alt="M²ara GUI overview" width="100%"/>
 

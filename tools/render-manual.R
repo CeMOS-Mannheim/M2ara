@@ -21,5 +21,15 @@ on.exit(setwd(old_wd), add = TRUE)
 
 knitr::knit(basename(rmd), output = "manual.md", quiet = TRUE)
 
+# The headings carry pandoc style anchors ("## Sample sheet {#sample-sheet}").
+# The app shows the markdown with markdown::markdownToHTML(), which does not
+# understand them - the anchors would appear as text and the links in the table of
+# contents would go nowhere. Turn them into real ids.
+md <- readLines("manual.md", warn = FALSE)
+md <- sub("^(#+ .*) \\{#([^}]+)\\}$", "\\1 {#\\2}", md)
+# markdown::markdownToHTML keeps raw HTML, so the id is written as an anchor tag
+md <- sub("^(#+) (.*) \\{#([^}]+)\\}$", "\\1 \\2 <a id=\"\\3\"></a>", md)
+writeLines(md, "manual.md", useBytes = TRUE)
+
 cat("rendered inst/manual.md (",
     file.size("manual.md"), " bytes)\n", sep = "")
