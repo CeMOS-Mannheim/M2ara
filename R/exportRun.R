@@ -132,14 +132,7 @@ runInfoJson <- function(res, centroided, settings_file, manifest, dataset,
     ),
     packages = list(
       MALDIcellassay = version_of("MALDIcellassay"),
-      MALDIquant = version_of("MALDIquant"),
-      # the fit engine decides what the metrics mean, so it is named here
-      nplr = version_of("nplr")
-    ),
-    fit = list(
-      engine = "nplr",
-      parameters = "4 (5 as fallback, 2 for a flat line)",
-      metrics = "pEC50 = -xmid, R2 = nplr::getGoodness()$gof"
+      MALDIquant = version_of("MALDIquant")
     ),
     dataset = list(
       name = dataset,
