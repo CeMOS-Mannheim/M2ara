@@ -1,3 +1,67 @@
+# M2ara 1.6.0
+
+## Concentrations
+
+- A sample sheet (CSV/TSV) maps file names to concentrations; every spectrum of a
+  file inherits its concentration, so files with several spots work. The sheet can
+  sit in the data folder as `samples.csv` or be filled in the app.
+- **Set concentrations ...** in the sidebar opens a dialog with one field per file,
+  prefilled where the file name or a sheet already says it. Files can be left out
+  of the analysis with a checkbox: they are dropped before processing, so they do
+  not appear in the plate map, the PCA or the statistics. The assignment can be
+  written into the folder as `samples.csv`.
+- The file format is detected from the selected folder (mzML or Bruker flex), so the
+  format menu and the mapping upload are gone from the settings.
+
+## Dataset card
+
+- The card shows the last two folders, the number of files (spectra and features
+  once known), the format, where the concentrations come from, and a coloured state:
+  not read yet, loaded, settings changed, up to date, failed.
+- A failed load says why and which files are affected, in the card and in the
+  notification. "Last run" appears only for a run that produced a result; a cached
+  result shows when it was computed.
+
+## Clustering
+
+- Runs in a background process with progress per k and can be cancelled.
+- Curves with a poor fit (weighted goodness of fit < 0.8) or without rise are left
+  out and reported; up to 2000 features are clustered.
+- Distance: shape only (SBD) or shape + potency (Euclidean). Centroid: mean, pam or
+  shape (DBA), each labelled with the distance it belongs to.
+- Metrics: ASW, Dunn, Davies-Bouldin and WRSS; a k is suggested from the votes of
+  silhouette, Dunn and Davies-Bouldin.
+- Clusters use the Okabe-Ito colours that the compared features do not use, ordered
+  by cluster label, so a cluster keeps its colour when k changes.
+
+## Interface
+
+- The sidebar is grouped (Data, Preprocess, Peaks, Normalize, Align) with short
+  labels; the help of each field opens as a modal.
+- The peak table shows readable numbers (`m/z` four decimals, SNR one, scores two,
+  R2 three, intensities three significant digits) without changing the values.
+- Buttons that cannot act are disabled; a failed run does not lock
+  **Process spectra** any more.
+- **Save plot** and **Export results (ZIP)** sit in one row above the plots. The
+  settings tab is grouped (Settings, Cache and sharing) and says where
+  `settings.csv` is and when it was saved last.
+- A single selected feature is drawn black again, and **Normalize curves** works for
+  it as well.
+
+## Cache and state
+
+- One cache entry per dataset with a small sidecar (key and time), written
+  atomically; the settings tab shows how many datasets are cached and how much space
+  they use.
+- Every state change goes through a state machine that reports unexpected jumps in
+  the log; the processing settings are checked before a run starts.
+
+## Manual
+
+- New screenshots of the interface, the QC tab, the PCA, the cluster tab and the
+  settings, and a table of contents with working anchors.
+- `tools/make-manual-screenshots.R` recreates the screenshots and
+  `tools/screenshots.md` explains how and what to check.
 # M2ara 1.5.0
 
 ## Processing
