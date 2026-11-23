@@ -74,7 +74,7 @@ All knobs live at the top of the workflow (`env:`):
 | --- | --- | --- |
 | `R_VERSION` | `release` | R version bundled in the installer. `release` follows the current R release, which has Windows binaries on CRAN and therefore keeps the build fast. Pin an exact version (`4.6.2`) for a reproducible payload. |
 | `R_SNAPSHOT` | `2026-11-17` | Frozen [Posit Package Manager](https://packagemanager.posit.co/) snapshot. It must be the snapshot that `pak.lock` was created from, otherwise the package check fails. |
-| `CHROME_CHANNEL` | `Stable` | Channel of [Chrome for Testing](https://chromelabs.github.io/chrome-for-testing/) |
+| `CHROME_CHANNEL` | `Stable` | Channel of [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/) |
 | `MALDI_CELLASSAY_REF` | *(empty)* | Git ref of `CeMOS-Mannheim/MALDIcellassay`. Empty means: use the commit pinned in `pak.lock`. |
 
 The R version used for the Docker image and mentioned in the README (`4.3.2`) is
