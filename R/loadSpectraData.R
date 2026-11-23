@@ -47,7 +47,9 @@ loadSpectraData <- function(input, appData, mapping) {
              # other folder or file in the directory is ignored
              dirs <- list.dirs(appData$selected_dir, recursive = FALSE, full.names = TRUE)
              isDataset <- vapply(dirs, function(d) {
-               any(tolower(list.files(d)) == "fid")
+               # a Bruker dataset has a fid somewhere inside: "<conc>/fid" as well
+               # as the usual "<conc>/<spot>/1/1SRef/fid" of a measurement series
+               any(tolower(basename(list.files(d, recursive = TRUE, all.files = TRUE))) == "fid")
              }, logical(1))
              skipped <- basename(dirs)[!isDataset]
              appData$skipped <- skipped
