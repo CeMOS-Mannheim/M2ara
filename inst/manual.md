@@ -33,7 +33,7 @@ The following features were already part of `MALDIcellassay`:
 -   curve clustering
 -   outlier detection \*
 
-\* The features marked with a asterisks were re-implemented to `MALDIcellassay`.
+\* Features marked with an asterisk are provided by `MALDIcellassay`.
 
 # General information
 
@@ -48,7 +48,7 @@ For the curve fitting to work all spectra must have an associated concentration.
 
 1. as file name (see below), which is the default,
 2. as **sample sheet** (CSV/TSV) that maps file names to concentrations,
-3. as legacy list (*.txt) with one concentration per line, applied in file order.
+3. as a plain list (*.txt) with one concentration per line, applied in file order.
 
 
 ## Contents
@@ -126,11 +126,11 @@ etc.
 1.  Click on the **Select folder** button in the *Data* group of the sidebar and select a folder containing your experiment (see [Requirements to the raw data](#requirements-to-the-raw-data)). The following dialog is displayed:\
     <img src="figures/selectFolder.png" alt="" width="1197" />
 
-2.  Adjust the settings in the groups of the sidebar (*Preprocess*, *Peaks*, *Normalize*, *Align*), then click the **Process spectra** button at the bottom of the sidebar. This is the only button needed: it imports the spectra of the selected folder (30s - 3 minutes depending on the size of the experiment) and processes them.
+2.  Adjust the settings in the groups of the sidebar (*Preprocess*, *Peaks*, *Normalize*, *Align*), then click the **Process spectra** button at the bottom of the sidebar. It imports the spectra of the selected folder (30 s to 3 minutes, depending on the size of the experiment) and processes them.
 
 3.  The sidebar shows the progress of the run (current step and percentage) and offers a **Cancel**-button while it is running.
 
-4.  Analyze your data by ticking a row in the peak table below the plots. The plots for the curve and the peaks change accordingly: the fitted curve with the data points in the *Curve* tab on the left and the individual peaks on the right. You may want to display error bars or use the slider to change the displayed *m/z*-range (aka zoom) in the plot displaying the peaks. Note, you do not need to re-upload your data if you want to play with the settings. Just click the **Process spectra**-button again to re-do the calculations and after a short time your results will be updated.
+4.  Analyze your data by ticking a row in the peak table below the plots. The plots for the curve and the peaks change accordingly: the fitted curve with the data points in the *Curve* tab on the left and the individual peaks on the right. You may want to display error bars or use the slider to change the displayed *m/z*-range (aka zoom) in the plot displaying the peaks. Play with the settings and click **Process spectra** again to redo the calculations; the results are updated after a short time.
 
 
    A click on a row shows that feature alone; for a comparison tick the checkboxes in the first column of the table (up to 4; the remaining boxes are disabled once four are ticked, and clicking a row does not change an explicit comparison): the curves are then drawn as one overlay (colour = *m/z*, tick **Normalize curves** to scale every curve to its own range) and the peak profiles as a 2 x 2 grid - each with the same order and colours.
