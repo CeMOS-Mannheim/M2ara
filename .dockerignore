@@ -17,3 +17,6 @@ exampledata/
 M2ara_*.tar.gz
 docs/
 inst/figures/*.tmp.png
+# development scripts and tests (not needed in the image)
+tools/
+tests/
